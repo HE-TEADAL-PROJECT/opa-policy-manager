@@ -141,6 +141,7 @@ func listDirectoriesInTarGz(filename string, mainDir string) ([]string, error) {
 	fmt.Println("Directories under", mainDir, ":")
 	for dir := range dirSet {
 		if !containsString(std_dir, dir) {
+			fmt.Println("- " + dir)
 			result = append(result, dir)
 		}
 	}
