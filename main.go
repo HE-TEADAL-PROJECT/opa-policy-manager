@@ -98,6 +98,7 @@ func deletePolicy(c *gin.Context) {
 func main() {
 
 	config.LoadConfigFromFile()
+	fmt.Println(config.Config)
 
 	r := gin.Default()
 

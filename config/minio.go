@@ -71,13 +71,13 @@ func SaveConfigToFile() error {
 func LoadConfigFromFile() error {
 	file, err := os.Open(config_file)
 	if err != nil {
-		fmt.Println("opa-policy-manager.config does not exist. Read initial values from env variables")
+		fmt.Println("opa-policy-manager.config does not exist. Read initial values from env variables" + os.Getenv("BUCKET_NAME"))
 		Config.Minio_Server = os.Getenv("MINIO_SERVER")
 		Config.Minio_Access_Key = os.Getenv("MINIO_ACCESS_KEY")
 		Config.Minio_Secret_Key = os.Getenv("MINIO_SECRET_KEY")
 		Config.Bucket_Name = os.Getenv("BUCKET_NAME")
 		Config.BundleName = os.Getenv("BUNDLE_NAME")
-		Config.Bucket_Name = os.Getenv("BUNDLE_NAME") + ".tar.gz"
+		Config.BundleFileName = os.Getenv("BUNDLE_NAME") + ".tar.gz"
 		SaveConfigToFile()
 
 		return nil
