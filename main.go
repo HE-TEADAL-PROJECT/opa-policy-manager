@@ -5,6 +5,7 @@ import (
 	"dspn-regogenerator/config"
 	"fmt"
 	"net/http"
+	"os"
 	"slices"
 	"sync"
 
@@ -99,6 +100,8 @@ func main() {
 
 	config.LoadConfigFromFile()
 	fmt.Println(config.Config)
+	os.MkdirAll(config.Root_bundle_dir, os.ModePerm)
+	os.MkdirAll(config.Root_output_dir, os.ModePerm)
 
 	r := gin.Default()
 
