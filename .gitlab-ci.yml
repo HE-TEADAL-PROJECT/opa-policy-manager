@@ -23,5 +23,5 @@ push_image:
       alias: docker
   stage: push_image
   script:
-    - docker buildx build --push --platform linux/amd64,linux/arm64 --progress plain -t $DOCKER_IMAGE_NAME .
+    - docker buildx build --push --platform linux/amd64 --progress plain -t $DOCKER_IMAGE_NAME .
     
