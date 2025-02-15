@@ -131,9 +131,12 @@ func listDirectoriesInTarGz(filename string, mainDir string) ([]string, error) {
 		//if header.Typeflag == tar.TypeDir {
 		//if strings.HasPrefix(header.Name, mainDir+"/") {
 		dirName := strings.TrimPrefix(header.Name, mainDir+"/")
+		if dirName != header.Name {
+			dirName = strings.TrimPrefix(header.Name, "/"+mainDir+"/")
+		}
 		dirName = strings.Split(dirName, "/")[0]
-		//dirSet[dirName] = struct{}{}
-		dirSet[header.Name] = struct{}{}
+		dirSet[dirName] = struct{}{}
+		//dirSet[header.Name] = struct{}{}
 
 		//}
 		//}
