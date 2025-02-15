@@ -30,7 +30,7 @@ func setConfig(c *gin.Context) {
 	var newConfig config.ConfigType
 	if err := c.ShouldBindJSON(&newConfig); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
-		return
+		//return
 	}
 	mutex.Lock()
 	config.Config = newConfig
@@ -50,7 +50,7 @@ func getPolicies(c *gin.Context) {
 	serviceList, err := commands.ListServicePolicies()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-		return
+		//return
 	} else {
 
 		mutex.Unlock()
@@ -69,8 +69,16 @@ func addPolicy(c *gin.Context) {
 		return
 	}
 	mutex.Lock()
-	commands.GenerateRegoFilesCmd(newPolicy.ServiceName, newPolicy.OpenAPISpec)
-	commands.GenerateBundleCmd(newPolicy.ServiceName)
+
+	if err := commands.GenerateRegoFilesCmd(newPolicy.ServiceName, newPolicy.OpenAPISpec); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	if err := commands.GenerateBundleCmd(newPolicy.ServiceName); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
 	mutex.Unlock()
 	c.Status(http.StatusOK)
 }
@@ -86,11 +94,14 @@ func deletePolicy(c *gin.Context) {
 	} else {
 		if !slices.Contains(serviceList, id) {
 			mutex.Unlock()
-			c.JSON(http.StatusNotFound, gin.H{"error": "Policy not found"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Policy not found"})
 			return
 		}
 
-		commands.DeleteServicePolicies(id)
+		if err := commands.DeleteServicePolicies(id); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Policy not found"})
+			return
+		}
 		mutex.Unlock()
 		c.Status(http.StatusOK)
 	}

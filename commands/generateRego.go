@@ -240,7 +240,7 @@ func downloadFile(url string, dest string) error {
 	return err
 }
 
-func GenerateRegoFilesCmd(service_name string, openAPI_URL string) {
+func GenerateRegoFilesCmd(service_name string, openAPI_URL string) error {
 	/*if len(os.Args) < 2 {
 		fmt.Println("Usage: go run main.go <service_name> <openAPI_file> [policy_dir]")
 		return
@@ -267,25 +267,25 @@ func GenerateRegoFilesCmd(service_name string, openAPI_URL string) {
 	err := downloadFile(openAPI_URL, openAPI_file)
 	if err != nil {
 		fmt.Println("Error downloading file:", err)
-		return
+		return err
 	}
 	fmt.Println("File downloaded successfully:", openAPI_file)
 
 	iam_provider_int, err := utils.ExtractItemsFromOpenAPI(openAPI_file, "x-teadal-IAM-provider")
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		return
+		return err
 	}
 	iam_provider, err = utils.ExtractServerName(iam_provider_int.(string))
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return err
 	}
 
 	users, users_permissions, err := utils.ExtractUsersPermissions(openAPI_file)
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return err
 	}
 
 	fmt.Println(users)
@@ -294,7 +294,7 @@ func GenerateRegoFilesCmd(service_name string, openAPI_URL string) {
 	roles, roles_permissions, err := utils.ExtractRolesPermissions(openAPI_file)
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return err
 	}
 
 	fmt.Println(roles)
@@ -305,6 +305,7 @@ func GenerateRegoFilesCmd(service_name string, openAPI_URL string) {
 	err = setupEnv(policy_dir, service_name)
 	if err != nil {
 		fmt.Println("Error in setting up the environment")
+		return err
 	}
 
 	//replace the placeholders
@@ -312,16 +313,21 @@ func GenerateRegoFilesCmd(service_name string, openAPI_URL string) {
 	err = replace_placeholder_oidc(iam_provider, strings.TrimSuffix(filepath.Base(oidc_file), ".rego"))
 	if err != nil {
 		fmt.Println("Error in updating the oidc file")
+		return err
 	}
 
 	err = replace_placeholder_service(service_name, strings.TrimSuffix(filepath.Base(oidc_file), ".rego"))
 	if err != nil {
 		fmt.Println("Error in updating the oidc file")
+		return err
 	}
 
 	err = replace_placeholder_rbacdb(service_name, roles, users, roles_permissions, users_permissions)
 	if err != nil {
 		fmt.Println("Error in updating the oidc file")
+		return err
 	}
+
+	return nil
 
 }

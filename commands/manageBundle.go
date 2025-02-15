@@ -172,7 +172,7 @@ func replace_placeholder_rego(mainrego_file string, new_import string, new_allow
 	return nil
 }
 
-func GenerateBundleCmd(serviceName string) {
+func GenerateBundleCmd(serviceName string) error {
 
 	var policyDir = config.Root_output_dir + serviceName
 
@@ -182,7 +182,7 @@ func GenerateBundleCmd(serviceName string) {
 	fmt.Println("Downloading existing bundle..." + "http://" + config.Config.Minio_Server + "/" + config.Config.Bucket_Name + "/" + config.Config.BundleFileName)
 	if err := utils.DownloadFile("http://"+config.Config.Minio_Server+"/"+config.Config.Bucket_Name+"/"+config.Config.BundleFileName, config.Root_bundle_dir+"/"+config.Config.BundleFileName); err != nil {
 		fmt.Println("Error:", err)
-		os.Exit(1)
+		return err
 	}
 	fmt.Println("Download completed successfully!")
 
@@ -193,7 +193,7 @@ func GenerateBundleCmd(serviceName string) {
 	fmt.Println("Extracting existing bundle in " + tempDir + "...")
 	if err := utils.ExtractTarGz(config.Root_bundle_dir+"/"+config.Config.BundleFileName, tempDir); err != nil {
 		fmt.Println("Error extracting bundle:", err)
-		os.Exit(1)
+		return err
 	}
 
 	//upload the old bucket with a new name
@@ -202,7 +202,7 @@ func GenerateBundleCmd(serviceName string) {
 
 	if err := os.Rename(config.Root_bundle_dir+"/"+config.Config.BundleFileName, config.Root_bundle_dir+"/"+newBundleFileName); err != nil {
 		fmt.Println("Error renaming file:", err)
-		os.Exit(1)
+		return err
 	}
 
 	fmt.Println("File renamed successfully from", config.Root_bundle_dir+"/"+config.Config.BundleFileName, "to", config.Root_bundle_dir+"/"+newBundleFileName)
@@ -213,13 +213,13 @@ func GenerateBundleCmd(serviceName string) {
 	})
 	if err != nil {
 		log.Fatalln("Failed to initialize MinIO client:", err)
-		os.Exit(1)
+		return err
 	}
 
 	info, err := minioClient.FPutObject(ctx, config.Config.Bucket_Name, newBundleFileName, config.Root_bundle_dir+"/"+newBundleFileName, minio.PutObjectOptions{ContentType: "application/x-gzip"})
 	if err != nil {
 		log.Fatalln(err)
-		os.Exit(1)
+		return err
 	}
 
 	log.Printf("Successfully uploaded %s of size %d\n", newBundleFileName, info.Size)
@@ -228,7 +228,7 @@ func GenerateBundleCmd(serviceName string) {
 	fmt.Println("Merging new policies...")
 	if err := utils.MoveDirectory(policyDir, config.Root_bundle_dir+"/"+config.Config.BundleName+"/rego"); err != nil {
 		fmt.Println("Error:", err)
-		os.Exit(1)
+		return err
 	}
 
 	fmt.Println("Successfully moved", policyDir, "to", config.Root_bundle_dir+"/"+config.Config.BundleName+"/rego")
@@ -239,11 +239,11 @@ func GenerateBundleCmd(serviceName string) {
 	content, err := os.ReadFile(config.Main_template_file)
 	if err != nil {
 		fmt.Println("Error reading template file: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 	if err := os.WriteFile(main_file, content, 0644); err != nil {
 		fmt.Println("Error duplicating template file: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	new_import := ""
@@ -251,7 +251,7 @@ func GenerateBundleCmd(serviceName string) {
 	//get list of services
 	if serviceList, err := getServiceList(); err != nil {
 		fmt.Println("Error", err)
-		os.Exit(1)
+		return err
 	} else {
 		fmt.Println("List of registered services with policies")
 		for service := range serviceList {
@@ -265,20 +265,22 @@ func GenerateBundleCmd(serviceName string) {
 
 	if err = replace_placeholder_rego(config.Root_bundle_dir+"/"+config.Config.BundleName+"/rego/main.rego", new_import, new_allow); err != nil {
 		fmt.Println("Error:", err)
-		os.Exit(1)
+		return err
 	}
 
 	//create the new bundle
 
 	if err = createBundle(config.Root_bundle_dir+"/"+config.Config.BundleName, config.Root_bundle_dir+"/"+config.Config.BundleFileName); err != nil {
 		fmt.Println("Error:", err)
-		os.Exit(1)
+		return err
 	}
 
 	info, err = minioClient.FPutObject(ctx, config.Config.Bucket_Name, config.Config.BundleFileName, config.Root_bundle_dir+"/"+config.Config.BundleFileName, minio.PutObjectOptions{ContentType: "application/x-gzip"})
 	if err != nil {
 		log.Fatalln(err)
+		return err
 	}
+	return nil
 
 }
 
@@ -288,18 +290,18 @@ func ListServicePolicies() ([]string, error) {
 
 }
 
-func DeleteServicePolicies(service_name string) {
+func DeleteServicePolicies(service_name string) error {
 
 	ctx := context.Background()
 
 	if serviceList, err := getServiceList(); err != nil {
 		fmt.Println("Error", err)
-		os.Exit(1)
+		return err
 	} else {
 		if !containsString(serviceList, service_name) {
 
 			fmt.Println("Service "+service_name+" is not registered", err)
-			os.Exit(1)
+			return err
 		} else {
 			fmt.Println("Service " + service_name + " found in the bundle")
 
@@ -307,18 +309,21 @@ func DeleteServicePolicies(service_name string) {
 			fmt.Println("Downloading existing bundle..." + "http://" + config.Config.Minio_Server + "/" + config.Config.Bucket_Name + "/" + config.Config.BundleFileName)
 			if err := utils.DownloadFile("http://"+config.Config.Minio_Server+"/"+config.Config.Bucket_Name+"/"+config.Config.BundleFileName, config.Root_bundle_dir+"/"+config.Config.BundleFileName); err != nil {
 				fmt.Println("Error:", err)
-				os.Exit(1)
+				return err
 			}
 			fmt.Println("Download completed successfully!")
 
 			//extract files from bundle
 			tempDir := config.Root_bundle_dir + "/" + config.Config.BundleName
-			os.MkdirAll(tempDir, os.ModePerm)
+			if err := os.MkdirAll(tempDir, os.ModePerm); err != nil {
+				fmt.Println("Error creating temp dir:", err)
+				return err
+			}
 
 			fmt.Println("Extracting existing bundle in " + tempDir + "...")
 			if err := utils.ExtractTarGz(config.Root_bundle_dir+"/"+config.Config.BundleFileName, tempDir); err != nil {
 				fmt.Println("Error extracting bundle:", err)
-				os.Exit(1)
+				return err
 			}
 
 			//upload the old bucket with a new name
@@ -327,7 +332,7 @@ func DeleteServicePolicies(service_name string) {
 
 			if err := os.Rename(config.Root_bundle_dir+"/"+config.Config.BundleFileName, config.Root_bundle_dir+"/"+newBundleFileName); err != nil {
 				fmt.Println("Error renaming file:", err)
-				os.Exit(1)
+				return err
 			}
 
 			fmt.Println("File renamed successfully from", config.Root_bundle_dir+"/"+config.Config.BundleFileName, "to", config.Root_bundle_dir+"/"+newBundleFileName)
@@ -338,13 +343,13 @@ func DeleteServicePolicies(service_name string) {
 			})
 			if err != nil {
 				log.Fatalln("Failed to initialize MinIO client:", err)
-				os.Exit(1)
+				return err
 			}
 
 			info, err := minioClient.FPutObject(ctx, config.Config.Bucket_Name, newBundleFileName, config.Root_bundle_dir+"/"+newBundleFileName, minio.PutObjectOptions{ContentType: "application/x-gzip"})
 			if err != nil {
 				log.Fatalln(err)
-				os.Exit(1)
+				return err
 			}
 
 			log.Printf("Successfully uploaded %s of size %d\n", newBundleFileName, info.Size)
@@ -358,11 +363,11 @@ func DeleteServicePolicies(service_name string) {
 			content, err := os.ReadFile(config.Main_template_file)
 			if err != nil {
 				fmt.Println("Error reading template file: %v\n", err)
-				os.Exit(1)
+				return err
 			}
 			if err := os.WriteFile(main_file, content, 0644); err != nil {
 				fmt.Println("Error duplicating template file: %v\n", err)
-				os.Exit(1)
+				return err
 			}
 
 			new_import := ""
@@ -370,7 +375,7 @@ func DeleteServicePolicies(service_name string) {
 			// get list of services
 			if serviceList, err := getServiceList(); err != nil {
 				fmt.Println("Error", err)
-				os.Exit(1)
+				return err
 			} else {
 				fmt.Println("List of registered services with policies")
 				for service := range serviceList {
@@ -384,19 +389,21 @@ func DeleteServicePolicies(service_name string) {
 
 			if err = replace_placeholder_rego(config.Root_bundle_dir+"/"+config.Config.BundleName+"/rego/main.rego", new_import, new_allow); err != nil {
 				fmt.Println("Error:", err)
-				os.Exit(1)
+				return err
 			}
 			if err = createBundle(config.Root_bundle_dir+"/"+config.Config.BundleName, config.Root_bundle_dir+"/"+config.Config.BundleFileName); err != nil {
 				fmt.Println("Error:", err)
-				os.Exit(1)
+				return err
 			}
 
 			info, err = minioClient.FPutObject(ctx, config.Config.Bucket_Name, config.Config.BundleFileName, config.Root_bundle_dir+"/"+config.Config.BundleFileName, minio.PutObjectOptions{ContentType: "application/x-gzip"})
 			if err != nil {
 				log.Fatalln(err)
+				return err
 			} else {
 				fmt.Print(info)
 			}
+			return nil
 		}
 
 	}
