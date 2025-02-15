@@ -132,7 +132,7 @@ func listDirectoriesInTarGz(filename string, mainDir string) ([]string, error) {
 		//if strings.HasPrefix(header.Name, mainDir+"/") {
 		fmt.Println("check" + header.Name)
 		dirName := strings.TrimPrefix(header.Name, mainDir+"/")
-		if dirName != header.Name {
+		if dirName == header.Name {
 			dirName = strings.TrimPrefix(header.Name, "/"+mainDir+"/")
 		}
 		dirName = strings.Split(dirName, "/")[0]
