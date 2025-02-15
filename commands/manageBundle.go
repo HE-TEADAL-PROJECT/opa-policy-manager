@@ -136,7 +136,9 @@ func listDirectoriesInTarGz(filename string, mainDir string) ([]string, error) {
 			dirName = strings.TrimPrefix(header.Name, "/"+mainDir+"/")
 		}
 		dirName = strings.Split(dirName, "/")[0]
-		dirSet[dirName] = struct{}{}
+		if dirName != "" {
+			dirSet[dirName] = struct{}{}
+		}
 		//dirSet[header.Name] = struct{}{}
 
 		//}
