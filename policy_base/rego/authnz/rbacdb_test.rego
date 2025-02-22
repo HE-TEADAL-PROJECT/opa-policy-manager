@@ -21,39 +21,39 @@ user2 := "sebs@teadal.eu"
 # the Web resources identified by the URLs matching the given regex.
 role_based_permissions := {
 	role1: [
- 	 {
-			"methods": http.do_anything,
-			"url_regex": "^/httpbin/anything",
-		},
-	 {
-			"methods": http.do_anything,
-			"url_regex": "^/httpbin/get$",
-	 },
+ 	 { 
+ 	 	 "methods": http.read, 
+ 	 	 "url_regex": "^/anything/.*"
+ 	 },
+ 	 { 
+ 	 	 "methods": http.read, 
+ 	 	 "url_regex": "^/basic-auth/{user}/{passwd}/.*"
+ 	 },
  	],
 	role2: [
- 	 {
-			"methods": http.read,
-			"url_regex": "^/httpbin/get$",
-		},
- 	]
+ 	 { 
+ 	 	 "methods": http.read, 
+ 	 	 "url_regex": "^/basic-auth/{user}/{passwd}/.*"
+ 	 },
+ 	 { 
+ 	 	 "methods": http.read, 
+ 	 	 "url_regex": "^/base64/{value}/.*"
+ 	 },
+ 	],
 }
 
 user_based_permissions := {
 	user1: [
- 	 {
-			"methods": http.do_anything,
-			"url_regex": "^/httpbin/anything/.*",
-		},
-		{
-			"methods": http.read,
-			"url_regex": "^/httpbin/get$",
-		},
+ 	 { 
+ 	 	 "methods": http.read, 
+ 	 	 "url_regex": "^/bearer/.*"
+ 	 },
  	],
 	user2: [
- 	 {
-			"methods": http.read,
-			"url_regex": "^/httpbin/get$",
-		}
+ 	 { 
+ 	 	 "methods": http.read, 
+ 	 	 "url_regex": "^/brotli/.*"
+ 	 },
  	],
 }
 
