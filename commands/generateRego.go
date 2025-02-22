@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -42,9 +41,9 @@ func setupEnv(path string, service_name string) error {
 		}
 	}
 
-	oidc_file = path + "/oidc_" + service_name + ".rego"
-	rbacdb_file = path + "/rbacdb_" + service_name + ".rego"
-	service_file = path + "/service_" + service_name + ".rego"
+	oidc_file = path + "/oidc.rego"
+	rbacdb_file = path + "/rbacdb.rego"
+	service_file = path + "/service.rego"
 
 	//duplicate oidc_template_file
 	content, err := os.ReadFile(config.Oidc_template_file)
@@ -88,11 +87,11 @@ func setupEnv(path string, service_name string) error {
 	return nil
 }
 
-func replace_placeholder_oidc(iam_provider string, oidc_name string) error {
+func replace_placeholder_oidc(iam_provider string, service_name string) error {
 
 	replacements := map[string]string{
-		"{{DNS_OR_IP}}": iam_provider,
-		"{{OIDC_NAME}}": oidc_name,
+		"{{DNS_OR_IP}}":    iam_provider,
+		"{{SERVICE_NAME}}": service_name,
 	}
 
 	if err := utils.ReplacePlaceholdersInFile(oidc_file, replacements); err != nil {
@@ -106,11 +105,10 @@ func replace_placeholder_oidc(iam_provider string, oidc_name string) error {
 	return nil
 }
 
-func replace_placeholder_service(service_name string, oidc_name string) error {
+func replace_placeholder_service(service_name string) error {
 
 	replacements := map[string]string{
 		"{{SERVICE_NAME}}": service_name,
-		"{{OIDC_NAME}}":    oidc_name,
 	}
 
 	if err := utils.ReplacePlaceholdersInFile(service_file, replacements); err != nil {
@@ -161,7 +159,7 @@ func replace_placeholder_rbacdb(service_name string, roles []string, users []str
 						already_found = true
 					}
 
-					formatted_users_permission = formatted_users_permission + "\n \t { \n \t \t \"methods\": http." + utils.GetMethodType(method_info[1]) + " \n \t \t \"url_regex\": \"^" + method_info[0] + "/.*\"\n \t },"
+					formatted_users_permission = formatted_users_permission + "\n \t { \n \t \t \"methods\": http." + utils.GetMethodType(method_info[1]) + ", \n \t \t \"url_regex\": \"^" + method_info[0] + "/.*\"\n \t },"
 				}
 
 			}
@@ -187,7 +185,7 @@ func replace_placeholder_rbacdb(service_name string, roles []string, users []str
 						already_found = true
 					}
 
-					formatted_roles_permission = formatted_roles_permission + "\n \t { \n \t \t \"methods\": http." + utils.GetMethodType(method_info[1]) + " \n \t \t \"url_regex\": \"^" + method_info[0] + "/.*\"\n \t },"
+					formatted_roles_permission = formatted_roles_permission + "\n \t { \n \t \t \"methods\": http." + utils.GetMethodType(method_info[1]) + ", \n \t \t \"url_regex\": \"^" + method_info[0] + "/.*\"\n \t },"
 				}
 
 			}
@@ -310,21 +308,21 @@ func GenerateRegoFilesCmd(service_name string, openAPI_URL string) error {
 
 	//replace the placeholders
 
-	err = replace_placeholder_oidc(iam_provider, strings.TrimSuffix(filepath.Base(oidc_file), ".rego"))
+	err = replace_placeholder_oidc(iam_provider, service_name)
 	if err != nil {
 		fmt.Println("Error in updating the oidc file")
 		return err
 	}
 
-	err = replace_placeholder_service(service_name, strings.TrimSuffix(filepath.Base(oidc_file), ".rego"))
+	err = replace_placeholder_service(service_name)
 	if err != nil {
-		fmt.Println("Error in updating the oidc file")
+		fmt.Println("Error in updating the service file")
 		return err
 	}
 
 	err = replace_placeholder_rbacdb(service_name, roles, users, roles_permissions, users_permissions)
 	if err != nil {
-		fmt.Println("Error in updating the oidc file")
+		fmt.Println("Error in updating the rbacdb file")
 		return err
 	}
 

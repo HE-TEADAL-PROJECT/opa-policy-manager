@@ -1,13 +1,13 @@
 #
-# Policy for the {{SERVICE_NAME}}.
+# Policy for the petstore.
 #
 
-package {{SERVICE_NAME}}.service
+package petstore.service
 
 import input.attributes.request.http as http_request
 import data.authnz.envopa as envopa
-import data.{{SERVICE_NAME}}.oidc as oidc_config
-import data.{{SERVICE_NAME}}.rbacdb as rbac_db
+import data.config.oidc_petstore as oidc_config
+import data.petstore.rbacdb as rbac_db
 
 
 default allow := false

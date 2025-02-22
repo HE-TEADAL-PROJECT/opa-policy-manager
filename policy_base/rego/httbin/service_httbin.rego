@@ -1,13 +1,13 @@
 #
-# Policy for the {{SERVICE_NAME}}.
+# Policy for the httbin.
 #
 
-package {{SERVICE_NAME}}.service
+package httbin.service
 
 import input.attributes.request.http as http_request
 import data.authnz.envopa as envopa
-import data.{{SERVICE_NAME}}.oidc as oidc_config
-import data.{{SERVICE_NAME}}.rbacdb as rbac_db
+import data.config.oidc_httbin as oidc_config
+import data.httbin.rbacdb as rbac_db
 
 
 default allow := false
