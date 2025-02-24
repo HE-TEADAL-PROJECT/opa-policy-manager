@@ -159,7 +159,7 @@ func replace_placeholder_rbacdb(service_name string, roles []string, users []str
 						already_found = true
 					}
 
-					formatted_users_permission = formatted_users_permission + "\n \t { \n \t \t \"methods\": http." + utils.GetMethodType(method_info[1]) + ", \n \t \t \"url_regex\": \"^" + method_info[0] + "/.*\"\n \t },"
+					formatted_users_permission = formatted_users_permission + "\n \t { \n \t \t \"methods\": http." + utils.GetMethodType(method_info[1]) + ", \n \t \t \"url_regex\": \"^" + service_name + method_info[0] + "/.*\"\n \t },"
 				}
 
 			}
