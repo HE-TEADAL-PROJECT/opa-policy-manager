@@ -6,8 +6,10 @@ import (
 	"context"
 	"dspn-regogenerator/config"
 	"dspn-regogenerator/utils"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -172,6 +174,25 @@ func replace_placeholder_rego(mainrego_file string, new_import string, new_allow
 	return nil
 }
 
+func ReadTextFileAsJSON(filename string) (map[string]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	byteValue, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	data := map[string]string{
+		"rego":    string(byteValue),
+		"service": filename,
+	}
+	return data, nil
+}
+
 func GenerateBundleCmd(serviceName string) error {
 
 	var policyDir = config.Root_output_dir + serviceName
@@ -288,6 +309,55 @@ func ListServicePolicies() ([]string, error) {
 
 	return getServiceList()
 
+}
+
+func GetServicePolicy(service_name string) (string, error) {
+
+	if serviceList, err := getServiceList(); err != nil {
+		fmt.Println("Error", err)
+		return "", err
+	} else {
+		if !containsString(serviceList, service_name) {
+
+			fmt.Println("Service "+service_name+" is not registered", err)
+			return "", err
+		} else {
+			fmt.Println("Service " + service_name + " found in the bundle")
+			// download existing bundle
+			fmt.Println("Downloading existing bundle..." + "http://" + config.Config.Minio_Server + "/" + config.Config.Bucket_Name + "/" + config.Config.BundleFileName)
+			if err := utils.DownloadFile("http://"+config.Config.Minio_Server+"/"+config.Config.Bucket_Name+"/"+config.Config.BundleFileName, config.Root_bundle_dir+"/"+config.Config.BundleFileName); err != nil {
+				fmt.Println("Error:", err)
+				return "", err
+			}
+			fmt.Println("Download completed successfully!")
+
+			// extract files from bundle
+			tempDir := config.Root_bundle_dir + "/" + config.Config.BundleName
+			if err := os.MkdirAll(tempDir, os.ModePerm); err != nil {
+				fmt.Println("Error creating temp dir:", err)
+				return "", err
+			}
+
+			fmt.Println("Extracting existing bundle in " + tempDir + "...")
+			if err := utils.ExtractTarGz(config.Root_bundle_dir+"/"+config.Config.BundleFileName, tempDir); err != nil {
+				fmt.Println("Error extracting bundle:", err)
+				return "", err
+			}
+
+			jsonData, err := ReadTextFileAsJSON(config.Root_bundle_dir + "/" + config.Config.BundleName + "/rego/" + service_name + "/rbacdb.rego")
+			if err != nil {
+				fmt.Println("Error:", err)
+				return "", err
+			}
+			jsonOutput, err := json.Marshal(jsonData)
+			if err != nil {
+				fmt.Println("Error encoding JSON:", err)
+				return "", err
+			}
+
+			return string(jsonOutput), nil
+		}
+	}
 }
 
 func DeleteServicePolicies(service_name string) error {

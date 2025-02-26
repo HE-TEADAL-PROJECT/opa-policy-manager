@@ -107,6 +107,31 @@ func deletePolicy(c *gin.Context) {
 	}
 }
 
+func getPolicy(c *gin.Context) {
+	id := c.Param("id")
+	mutex.Lock()
+
+	serviceList, err := commands.ListServicePolicies()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	} else {
+		if !slices.Contains(serviceList, id) {
+			mutex.Unlock()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Policy not found"})
+			return
+		}
+
+		policy, err := commands.GetServicePolicy(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Policy not found"})
+			return
+		}
+		mutex.Unlock()
+		c.JSON(http.StatusOK, policy)
+	}
+}
+
 func main() {
 
 	config.LoadConfigFromFile()
@@ -122,6 +147,7 @@ func main() {
 	r.GET("/policies", getPolicies)
 	r.POST("/policies", addPolicy)
 	r.DELETE("/policies/:id", deletePolicy)
+	r.GET("/policies/:id", getPolicy)
 
 	fmt.Println("Server running on port 8080...")
 	r.Run(":8080")
