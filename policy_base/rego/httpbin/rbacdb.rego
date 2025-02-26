@@ -54,13 +54,13 @@ user_based_permissions := {
 	user1: [
  	 { 
  	 	 "methods": http.read, 
- 	 	 "url_regex": "^httpbin/bearer/.*"
+ 	 	 "url_regex": "^/httpbin/bearer/.*"
  	 },
  	],
 	user2: [
  	 { 
  	 	 "methods": http.read, 
- 	 	 "url_regex": "^httpbin/brotli/.*"
+ 	 	 "url_regex": "^/httpbin/brotli/.*"
  	 },
  	],
 

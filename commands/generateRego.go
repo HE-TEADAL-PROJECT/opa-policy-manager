@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -122,6 +123,31 @@ func replace_placeholder_service(service_name string) error {
 	return nil
 }
 
+func create_regex_from_method(path string) string {
+
+	// Split the path by "/"
+	parts := strings.Split(path, "/")
+
+	// Regular expression to detect parameters inside {}
+	paramRegex := regexp.MustCompile(`\{[^}]+\}`)
+
+	first := true
+	for i, part := range parts {
+		if paramRegex.MatchString(part) {
+			// First occurrence of `{param}` gets ".+", others get "[^/]+"
+			if first {
+				parts[i] = ".+"
+				first = false
+			} else {
+				parts[i] = "[^/]+"
+			}
+		}
+	}
+
+	// Join parts back into a regex string
+	return "^" + strings.Join(parts, "/") + ".*"
+}
+
 func replace_placeholder_rbacdb(service_name string, roles []string, users []string, roles_permissions map[string][]interface{}, users_permissions map[string][]interface{}) error {
 
 	users_mapping := make(map[string]string)
@@ -159,7 +185,7 @@ func replace_placeholder_rbacdb(service_name string, roles []string, users []str
 						already_found = true
 					}
 
-					formatted_users_permission = formatted_users_permission + "\n \t { \n \t \t \"methods\": http." + utils.GetMethodType(method_info[1]) + ", \n \t \t \"url_regex\": \"^" + service_name + method_info[0] + "/.*\"\n \t },"
+					formatted_users_permission = formatted_users_permission + "\n \t { \n \t \t \"methods\": http." + utils.GetMethodType(method_info[1]) + ", \n \t \t \"url_regex\": \"" + create_regex_from_method("/"+service_name+method_info[0]) + "\n \t },"
 				}
 
 			}
@@ -185,7 +211,7 @@ func replace_placeholder_rbacdb(service_name string, roles []string, users []str
 						already_found = true
 					}
 
-					formatted_roles_permission = formatted_roles_permission + "\n \t { \n \t \t \"methods\": http." + utils.GetMethodType(method_info[1]) + ", \n \t \t \"url_regex\": \"^/" + service_name + method_info[0] + "/.*\"\n \t },"
+					formatted_roles_permission = formatted_roles_permission + "\n \t { \n \t \t \"methods\": http." + utils.GetMethodType(method_info[1]) + ", \n \t \t \"url_regex\": \"" + create_regex_from_method("/"+service_name+method_info[0]) + "\"\n \t },"
 				}
 
 			}

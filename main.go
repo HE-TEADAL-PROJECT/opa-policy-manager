@@ -134,6 +134,8 @@ func getPolicy(c *gin.Context) {
 
 func main() {
 
+	//fmt.Println(commands.Create_regex_from_method("/httpbin/bais-auth/{username}/{password}"))
+
 	config.LoadConfigFromFile()
 	fmt.Println(config.Config)
 	os.MkdirAll(config.Root_bundle_dir, os.ModePerm)
