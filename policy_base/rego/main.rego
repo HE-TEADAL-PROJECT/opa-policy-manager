@@ -14,8 +14,7 @@ package teadal
 
 
 import data.minio.service as minio
-import data.petstore.service as petstore
-import data.httbin.service as httbin
+import data.httpbin.service as httpbin
 
 default allow := false
 
@@ -26,11 +25,7 @@ allow {
 }
 
 allow {
-	 petstore.allow
-}
-
-allow {
-	 httbin.allow
+	 httpbin.allow
 }
 
 

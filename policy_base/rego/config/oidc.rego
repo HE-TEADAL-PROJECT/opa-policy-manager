@@ -12,5 +12,3 @@ jwks_preferred_urls := {
 }
 
 jwt_user_field_name := "email"
-jwt_realm_access_field_name := "realm_access"
-jwt_roles_field_name := "roles"

@@ -9,42 +9,37 @@ import data.authnz.rbacdb as rbac_db
 #}
 
 test_role_perms {
-	
 	role_perms(rbac_db, "researchers") == [
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/anything/.*"
- 	 },
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/basic-auth/{user}/{passwd}/.*"
- 	 },
- 	]
+		{
+			"methods": http.read,
+			"url_regex": "^/anything/.*",
+		},
+		{
+			"methods": http.read,
+			"url_regex": "^/basic-auth/{user}/{passwd}/.*",
+		},
+	]
 	role_perms(rbac_db, "doctors") == [
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/basic-auth/{user}/{passwd}/.*"
- 	 },
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/base64/{value}/.*"
- 	 },
- 	]
+		{
+			"methods": http.read,
+			"url_regex": "^/basic-auth/{user}/{passwd}/.*",
+		},
+		{
+			"methods": http.read,
+			"url_regex": "^/base64/{value}/.*",
+		},
+	]
 }
 
 test_user_perms {
-	user_perms(rbac_db, "jeejee@teadal.eu") == [
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/bearer/.*"
- 	 },
- 	]
-	user_perms(rbac_db, "sebs@teadal.eu") == [
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/brotli/.*"
- 	 },
- 	]
+	user_perms(rbac_db, "jeejee@teadal.eu") == [{
+		"methods": http.read,
+		"url_regex": "^/bearer/.*",
+	}]
+	user_perms(rbac_db, "sebs@teadal.eu") == [{
+		"methods": http.read,
+		"url_regex": "^/brotli/.*",
+	}]
 }
 
 assert_user_can_do_anything_on_path(user, path) {

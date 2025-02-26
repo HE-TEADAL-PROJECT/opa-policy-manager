@@ -5,14 +5,15 @@
 # it from a local disk.
 #
 
-package petstore.rbacdb
+package httpbin.rbacdb
 
 import data.authnz.http as http
 
 
 # Role defs.
 # example researchers := "researchers"
-role1 := "researchers"
+role1 := "doctors"
+role2 := "researchers"
 
 # User defs
 # example jeejee := "jeejee@teadal.eu"
@@ -29,7 +30,21 @@ role_based_permissions := {
 	role1: [
  	 { 
  	 	 "methods": http.read, 
- 	 	 "url_regex": "^/pets/.*"
+ 	 	 "url_regex": "^/httpbin/basic-auth/{user}/{passwd}/.*"
+ 	 },
+ 	 { 
+ 	 	 "methods": http.read, 
+ 	 	 "url_regex": "^/httpbin/base64/{value}/.*"
+ 	 },
+ 	],
+	role2: [
+ 	 { 
+ 	 	 "methods": http.read, 
+ 	 	 "url_regex": "^/httpbin/basic-auth/{user}/{passwd}/.*"
+ 	 },
+ 	 { 
+ 	 	 "methods": http.read, 
+ 	 	 "url_regex": "^/httpbin/anything/.*"
  	 },
  	],
 
@@ -39,17 +54,13 @@ user_based_permissions := {
 	user1: [
  	 { 
  	 	 "methods": http.read, 
- 	 	 "url_regex": "^/pets/{petId}/.*"
- 	 },
- 	 { 
- 	 	 "methods": http.write, 
- 	 	 "url_regex": "^/pets/.*"
+ 	 	 "url_regex": "^httpbin/bearer/.*"
  	 },
  	],
 	user2: [
  	 { 
- 	 	 "methods": http.write, 
- 	 	 "url_regex": "^/pets/.*"
+ 	 	 "methods": http.read, 
+ 	 	 "url_regex": "^httpbin/brotli/.*"
  	 },
  	],
 
