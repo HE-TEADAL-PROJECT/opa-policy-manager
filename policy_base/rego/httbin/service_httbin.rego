@@ -13,7 +13,14 @@ import data.httbin.rbacdb as rbac_db
 default allow := false
 
 allow = true {
-    user := envopa.allow(rbac_db, oidc_config)
+    envopa.allow_user(rbac_db, oidc_config)
+
+    # Put below this line any service-specific checks on e.g. http_request
+
+}
+
+allow = true {
+    envopa.allow_role(rbac_db, oidc_config)
 
     # Put below this line any service-specific checks on e.g. http_request
 

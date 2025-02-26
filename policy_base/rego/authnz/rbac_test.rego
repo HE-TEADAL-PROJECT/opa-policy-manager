@@ -96,9 +96,9 @@ assert_role_can_only_read_path(roles, path) {
 }
 
 test_check_perms {
-	assert_user_can_do_anything_on_path("sebs@teadal.eu", "/httpbin/anything/")
+	#assert_user_can_do_anything_on_path("jeejee@teadal.eu", "/httpbin/anything/")
 	#assert_user_can_only_read_path("sebs@teadal.eu", "/httpbin/get")
 	#assert_role_can_do_anything_on_path(["doctors"], "/httpbin/anything/")
-	#assert_role_can_do_anything_on_path(["researchers"], "/httpbin/get")
-	#assert_role_can_only_read_path(["doctors"], "/httpbin/get")
+	#assert_role_can_do_anything_on_path(["researchers"], "/anything/")
+	assert_role_can_only_read_path(["researchers"], "/anything/")
 }

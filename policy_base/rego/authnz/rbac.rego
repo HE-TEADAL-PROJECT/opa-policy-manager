@@ -51,10 +51,18 @@ check_user_permissions(rbac_db, user, request) {
 	
 	# check if the user has some rights
 	
-	perm := rbac_db.user_based_permissions[user][_]	
-	perm.methods[_] == request.method
+	#perm := rbac_db.user_based_permissions[user][_]	
+	#perm.methods[_] == request.method
+	#print(perm.url_regex, request.path, regex.match(perm.url_regex, request.path))
+	#regex.match(perm.url_regex, request.path)
+
+	print(rbac_db.user_based_permissions[user])
+	some perm in rbac_db.user_based_permissions[user]	
+	print(perm)
+	request.method in perm.methods
 	print(perm.url_regex, request.path, regex.match(perm.url_regex, request.path))
 	regex.match(perm.url_regex, request.path)
+
 }
 
 check_roles_permissions(rbac_db, roles1, request) {
