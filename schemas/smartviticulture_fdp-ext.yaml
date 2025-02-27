@@ -1,0 +1,94 @@
+openapi: '3.0.2'
+info:
+  title: Aquaview FDP
+  version: '1.0'
+  description: This defines the FDP for the smart viticulture pilot. An asynchronous FDP is not required as the amount of data transferred is very low.
+servers:
+  - url: https://fdp.aquaview.ch
+security:
+  - bearerAuth: []
+
+paths:
+  /measurement/soilmoisture/aois/{aoi_id}:
+    get:
+      parameters:
+        - in: path
+          name: aoi_id
+          schema: 
+            type: string
+          required: true
+        - in: query
+          name: start_date
+          schema:
+            type: string
+          description: the starting date from when the measurement should be returned
+        - in: query
+          name: end_date
+          schema:
+            type: string
+          description: the ending date from when the measurement should be returned
+      description: Retreive all measurements for an AOI
+      x-teadal-users-allowed: ["admin@teadal.eu", "own_vineyard@teadal.eu"]
+      responses:
+        200:
+          description: Measurement for the AOI
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Measurement'
+  /measurement/soilmoisture/aois:
+    get:
+      description: Retreive all AOIs
+      x-teadal-users-allowed: ["admin@teadal.eu", "own_vineyard@teadal.eu"]
+      responses:
+        200:
+          description: The list of AOI
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AoI'
+components:
+  securitySchemes:
+    bearerAuth: # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      x-teadal-IAM-provider: http://baseline.teadal.ubiwhere.eu/realms/master/.well-known/openid-configuration
+
+  schemas:
+    Measurement:
+      description: an area with moisture analysis values
+      type: object
+      properties:
+        aoi_id:
+          type: string
+          description: referenced AoI identifier (plot uuid)
+        created_at:
+          type: string
+          description: a measurement timestamp
+        lat:
+          type: float
+          description: measurement latitude coordinate (geo location)
+        lon:
+          type: float
+          description: measurement longitude coordinate (geo location)
+        org_id:
+          type: object
+          description: referenced organization identifier (customer uuid)
+        predicted:
+          type: bool
+          description: a flag indicating whether the value is an actual satellite reading or a model prediction
+        value:
+          type: float
+          description: a soil moisture value
+    AoI:
+      description: data about an AoI
+      type: object
+      properties:
+        aoi_id:
+          type: string
+          description: AoI identifier (plot uuid)
+        

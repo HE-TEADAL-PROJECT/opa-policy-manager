@@ -611,6 +611,7 @@ components:
     bearerAuth: # arbitrary name for the security scheme
       type: http
       scheme: bearer
+      x-teadal-IAM-provider: http://baseline.teadal.ubiwhere.eu/realms/master/.well-known/openid-configuration
 
   schemas:
     Person:
