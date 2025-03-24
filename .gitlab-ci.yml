@@ -5,7 +5,7 @@ default:
 variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
-  DOCKER_IMAGE_NAME: registry.teadal.ubiwhere.com/teadal-public-images/opa-policy-manager
+  DOCKER_IMAGE_NAME: registry.teadal.ubiwhere.com/teadal-public-images/opa-policy-manager:0.0.1
   DOCKER_USER_NAME: CI-token
   
 
