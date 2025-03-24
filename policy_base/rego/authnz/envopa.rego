@@ -10,7 +10,9 @@ import input.attributes.request.http as http_request
 
 allow_user(rbac_db, config) {
 	print("checking user permissions")
+	print(http_request)
 	payload := oidc.claims(http_request, config)
+	print(payload)
 	user := payload[config.jwt_user_field_name]
 	print("checking user permissions for user ")
 	print(user)
@@ -23,7 +25,6 @@ allow_user(rbac_db, config) {
 allow_role(rbac_db, config) {
 	print("checking roles permissions")
 	
-
 	payload := oidc.claims(http_request, config)
 	print(config.jwt_realm_access_field_name)
 	print(payload[config.jwt_realm_access_field_name])

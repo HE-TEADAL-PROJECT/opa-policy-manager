@@ -308,7 +308,7 @@ func GenerateRegoFilesCmd(service_name string, openAPI_URL string) error {
 
 	users, users_permissions, err := utils.ExtractUsersPermissions(openAPI_file)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("Error:A", err)
 		return err
 	}
 
@@ -317,7 +317,7 @@ func GenerateRegoFilesCmd(service_name string, openAPI_URL string) error {
 
 	roles, roles_permissions, err := utils.ExtractRolesPermissions(openAPI_file)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("ErrorB:", err)
 		return err
 	}
 

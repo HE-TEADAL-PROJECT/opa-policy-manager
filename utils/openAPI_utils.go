@@ -65,25 +65,25 @@ func GetPaths(data OpenAPIDocument) (map[string]interface{}, error) {
 func ExtractUsersPermissions(filename string) ([]string, map[string][]interface{}, error) {
 	doc, err := ParseOpenAPIFile(filename)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Printf("Error1: %v\n", err)
 		return nil, nil, err
 	}
 	paths, err := GetPaths(doc)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Printf("Error2: %v\n", err)
 		return nil, nil, err
 	}
 
 	users_permissions_list := make(map[string][]interface{}, 0)
 
-	for path:= range paths {
-		
+	for path := range paths {
+
 		method := paths[path].(map[string]interface{})
 		for method_name, method_info := range method {
-			
+
 			users, err := GetOpenAPIField(method_info.(map[string]interface{}), "x-teadal-users-allowed")
-			if err == nil {				
-				users_permissions_list[path + "@" + method_name] = users.([]interface{})
+			if err == nil {
+				users_permissions_list[path+"@"+method_name] = users.([]interface{})
 			}
 		}
 	}
@@ -94,12 +94,12 @@ func ExtractUsersPermissions(filename string) ([]string, map[string][]interface{
 func ExtractRolesPermissions(filename string) ([]string, map[string][]interface{}, error) {
 	doc, err := ParseOpenAPIFile(filename)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Printf("Error3: %v\n", err)
 		return nil, nil, err
 	}
 	paths, err := GetPaths(doc)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Printf("Error4: %v\n", err)
 		return nil, nil, err
 	}
 
@@ -108,14 +108,12 @@ func ExtractRolesPermissions(filename string) ([]string, map[string][]interface{
 	for path := range paths {
 		method := paths[path].(map[string]interface{})
 		for method_name, method_info := range method {
-			
+
 			roles, err := GetOpenAPIField(method_info.(map[string]interface{}), "x-teadal-roles-allowed")
 			if err == nil {
-				roles_permissions_list[path + "@" + method_name] = roles.([]interface{})
+				roles_permissions_list[path+"@"+method_name] = roles.([]interface{})
 			}
 		}
-
-		
 
 	}
 	return UniqueElements(roles_permissions_list), roles_permissions_list, nil

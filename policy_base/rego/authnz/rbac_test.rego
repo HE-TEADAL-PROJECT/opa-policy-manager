@@ -34,11 +34,11 @@ test_role_perms {
 test_user_perms {
 	user_perms(rbac_db, "jeejee@teadal.eu") == [{
 		"methods": http.read,
-		"url_regex": "^/bearer/.*",
+		"url_regex": "^/httpbin/bearer/.*",
 	}]
 	user_perms(rbac_db, "sebs@teadal.eu") == [{
 		"methods": http.read,
-		"url_regex": "^/brotli/.*",
+		"url_regex": "^/httpbin/brotli/.*",
 	}]
 }
 
@@ -90,10 +90,10 @@ assert_role_can_only_read_path(roles, path) {
 	not check_roles_permissions(rbac_db, roles, {"method": "TRACE", "path": path})
 }
 
-test_check_perms {
+tet_check_perms {
 	#assert_user_can_do_anything_on_path("jeejee@teadal.eu", "/httpbin/anything/")
-	#assert_user_can_only_read_path("sebs@teadal.eu", "/httpbin/get")
-	#assert_role_can_do_anything_on_path(["doctors"], "/httpbin/anything/")
-	#assert_role_can_do_anything_on_path(["researchers"], "/anything/")
-	assert_role_can_only_read_path(["researchers"], "/anything/")
+	#assert_user_can_only_read_path("sebs@teadal.eu", "/httpbin/brotli/")
+	#assert_role_can_do_anything_on_path(["doctors"], "/anything/")
+	assert_role_can_do_anything_on_path(["researchers"], "/anything/")
+	#assert_role_can_only_read_path(["researchers"], "/anything/")
 }
