@@ -1,4 +1,4 @@
-﻿{
+{
   "openapi": "3.0.0",
   "info": {
     "title": "TEADAL - Evidence based medicine - Node 01",
@@ -102,18 +102,6 @@
     },
     "/drug_exposures": {
       "get": {
-        "x-teadal-policies": [
-          {
-            "call": {
-              "value": [
-                {
-                  "max": 1000,
-                  "unit_of_measure": "call_per_month"
-                }
-              ]
-            }
-          }
-        ],
         "tags": [
           "drug_exposure"
         ],
@@ -147,23 +135,6 @@
       }
     },
     "/drug_exposures/{drug_exposure_id}": {
-      "x-teadal-policies": [
-        {
-          "call": {
-            "value": [
-              {
-                "max": 1000,
-                "unit_of_measure": "call_per_month"
-              }
-            ]
-          },
-          "user": {
-            "value": [
-              "jeejee@teadal.eu"
-            ]
-          }
-        }
-      ],
       "get": {
         "tags": [
           "drug_exposure"
