@@ -37,7 +37,7 @@ paths:
           operator: OR
         timeliness:
           value:
-          - min: '7'
+          - max: '7'
             unit_of_measure: days
       responses:
         '200':
@@ -59,7 +59,7 @@ paths:
           operator: OR
         timeliness:
           value:
-          - min: '7'
+          - max: '7'
             unit_of_measure: days
       responses:
         '200':
