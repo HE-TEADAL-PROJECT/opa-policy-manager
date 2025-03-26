@@ -52,8 +52,8 @@
           },
           "timeliness":{
             "value":[{
-              "min":"",
-              "max":""
+              "max":"7",
+              "unit_of_measure":"days"
             }]
           }
         }],
@@ -84,8 +84,8 @@
           },
           "timeliness":{
             "value":[{
-              "min":"",
-              "max":""
+              "max":"7",
+              "unit_of_measure":"days"
             }]
           }
         }],
