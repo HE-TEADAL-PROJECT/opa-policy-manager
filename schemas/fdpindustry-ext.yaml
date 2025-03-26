@@ -1,9 +1,9 @@
+---
 openapi: 3.0.0
-
 info:
   title: TEADAL - Evidence based medicine - TEST VERSION
   version: 1.0.0
-  description: "TEADAL FDP industry node Rest API."
+  description: TEADAL FDP industry node Rest API.
   termsOfService: https://www.teadal.eu/about-teadal/
   contact:
     name: ERT TEADAL API Support
@@ -12,54 +12,45 @@ info:
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0
-
 tags:
-  - name: service
-    description: Checks availability of the Teadal node.
-    externalDocs:
-      description: Find out more
-      url: http://swagger.io
-
-  - name: forecast
-    description:  Provides information about forecast.
-    externalDocs:
-      description: Find out more
-      url: http://swagger.io
-
-  - name: productions
-    description: Provides information about production.
-    externalDocs:
-      description: Find out more
-      url: http://swagger.io
-
-  - name: receptions
-    description: Provides information about receptions.
-    externalDocs:
-      description: Find out more
-      url: http://swagger.io
-
-  - name: sales
-    description: Provides information about sales.
-    externalDocs:
-      description: Find out more
-      url: http://swagger.io
-
-  - name: quality
-    description: Provides information about quality.
-    externalDocs:
-      description: Find out more
-      url: http://swagger.io
+- name: service
+  description: Checks availability of the Teadal node.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: forecast
+  description: Provides information about forecast.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: productions
+  description: Provides information about production.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: receptions
+  description: Provides information about receptions.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: sales
+  description: Provides information about sales.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: quality
+  description: Provides information about quality.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
 security:
-  - bearerAuth: []
-
-
+- bearerAuth: []
 paths:
-#  SERVICE ---------------------------------------------------------------------------------------------------------------------------------
-  /:
+  "/":
     get:
       tags:
-        - service
-      summary: Checks node's availability 
+      - service
+      summary: Checks node's availability
       operationId: root
       description: Confirms availability with a message
       responses:
@@ -70,23 +61,28 @@ paths:
               schema:
                 type: string
         '301':
-          $ref: '#/components/responses/301'
+          "$ref": "#/components/responses/301"
         '401':
-          $ref: '#/components/responses/401'
+          "$ref": "#/components/responses/401"
         '404':
-          $ref: '#/components/responses/404'
-        '5XX':
-          $ref: '#/components/responses/5XX'
-
-#  FORECAST ------------------------------------------------------------------------------------------------------------------------
-  /forecasts:
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/forecasts":
     get:
       tags:
-        - forecast
+      - forecast
       summary: Request for all forecasts
       operationId: GetForecastAll
-      description: The whole 'Forecast' dataset will be returned. No parameters are needed.
-      x-teadal-roles-allowed: ["admin", "top_management", "logistic_user"]
+      description: The whole 'Forecast' dataset will be returned. No parameters are
+        needed.
+      x-teadal-policies:
+      - roles:
+          value:
+          - admin
+          - top_management
+          - logistic_user
+          operator: OR
       responses:
         '200':
           description: Accepted
@@ -95,28 +91,33 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Forecast'
+                  "$ref": "#/components/schemas/Forecast"
         '401':
-          $ref: '#/components/responses/401'
+          "$ref": "#/components/responses/401"
         '404':
-          $ref: '#/components/responses/404'
-        '5XX':
-          $ref: '#/components/responses/5XX'
-
-  /forecasts/{forecast_id}:
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/forecasts/{forecast_id}":
     get:
       tags:
-        - forecast
+      - forecast
       summary: Request for a specific forecast
       operationId: GetForecastById
-      description: The forecast specified by 'forecast_id' will be returned. Parameter 'forecast_id' is mandatory.
+      description: The forecast specified by 'forecast_id' will be returned. Parameter
+        'forecast_id' is mandatory.
       parameters:
-        - in: path
-          name: forecast_id
-          required: true
-          schema:
-            type : integer
-      x-teadal-roles-allowed: ["admin", "top_management"]
+      - in: path
+        name: forecast_id
+        required: true
+        schema:
+          type: integer
+      x-teadal-policies:
+      - roles:
+          value:
+          - admin
+          - top_management
+          operator: OR
       responses:
         '200':
           description: Accepted
@@ -126,23 +127,28 @@ paths:
                 type: object
                 properties:
                   type:
-                    $ref: '#/components/schemas/Forecast'
+                    "$ref": "#/components/schemas/Forecast"
         '401':
-          $ref: '#/components/responses/401'
+          "$ref": "#/components/responses/401"
         '404':
-          $ref: '#/components/responses/404'
-        '5XX':
-          $ref: '#/components/responses/5XX'
-
-#  PRODUCTIONS ------------------------------------------------------------------------------------------------------------------------
-  /productions:
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/productions":
     get:
       tags:
-        - productions
+      - productions
       summary: Request for all productions
       operationId: GetProductionsAll
-      description: The whole 'Productions' dataset will be returned. No parameters are needed.
-      x-teadal-roles-allowed: ["admin", "top_management", "production_user"]
+      description: The whole 'Productions' dataset will be returned. No parameters
+        are needed.
+      x-teadal-policies:
+      - roles:
+          value:
+          - admin
+          - top_management
+          - production_user
+          operator: OR
       responses:
         '200':
           description: Accepted
@@ -151,28 +157,33 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Productions'
+                  "$ref": "#/components/schemas/Productions"
         '401':
-          $ref: '#/components/responses/401'
+          "$ref": "#/components/responses/401"
         '404':
-          $ref: '#/components/responses/404'
-        '5XX':
-          $ref: '#/components/responses/5XX'
-
-  /productions/{productions_id}:
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/productions/{productions_id}":
     get:
       tags:
-        - productions
+      - productions
       summary: Request for a specific productions
       operationId: GetProductionsById
-      description: The productions specified by 'productions_id' will be returned. Parameter 'productions_id' is mandatory.
+      description: The productions specified by 'productions_id' will be returned.
+        Parameter 'productions_id' is mandatory.
       parameters:
-        - in: path
-          name: forecast_id
-          required: true
-          schema:
-            type : integer
-      x-teadal-roles-allowed: ["admin", "top_management"]
+      - in: path
+        name: forecast_id
+        required: true
+        schema:
+          type: integer
+      x-teadal-policies:
+      - roles:
+          value:
+          - admin
+          - top_management
+          operator: OR
       responses:
         '200':
           description: Accepted
@@ -182,22 +193,28 @@ paths:
                 type: object
                 properties:
                   type:
-                    $ref: '#/components/schemas/Productions'
+                    "$ref": "#/components/schemas/Productions"
         '401':
-          $ref: '#/components/responses/401'
+          "$ref": "#/components/responses/401"
         '404':
-          $ref: '#/components/responses/404'
-        '5XX':
-          $ref: '#/components/responses/5XX'
-#  RECEPTIONS -----------------------------------------------------------------------------------------------------------------------------
-  /receptions:
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/receptions":
     get:
       tags:
-        - receptions
+      - receptions
       summary: Request for all receptions
       operationId: GetReceptionsAll
-      description: The whole 'Receptions' dataset will be returned. No parameters are needed.
-      x-teadal-roles-allowed: ["admin", "top_management", "logistic_user"]
+      description: The whole 'Receptions' dataset will be returned. No parameters
+        are needed.
+      x-teadal-policies:
+      - roles:
+          value:
+          - admin
+          - top_management
+          - logistic_user
+          operator: OR
       responses:
         '200':
           description: Accepted
@@ -206,28 +223,33 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Receptions'
+                  "$ref": "#/components/schemas/Receptions"
         '401':
-          $ref: '#/components/responses/401'
+          "$ref": "#/components/responses/401"
         '404':
-          $ref: '#/components/responses/404'
-        '5XX':
-          $ref: '#/components/responses/5XX'
-
-  /receptions/{receptions_id}:
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/receptions/{receptions_id}":
     get:
       tags:
-        - receptions
+      - receptions
       summary: Request for a specific receptions
       operationId: GetReceptionsById
-      description: The receptions specified by 'receptions_id' will be returned. Parameter 'receptions_id' is mandatory.
+      description: The receptions specified by 'receptions_id' will be returned. Parameter
+        'receptions_id' is mandatory.
       parameters:
-        - in: path
-          name: receptions_id
-          required: true
-          schema:
-            type : integer
-      x-teadal-roles-allowed: ["admin", "top_management"]
+      - in: path
+        name: receptions_id
+        required: true
+        schema:
+          type: integer
+      x-teadal-policies:
+      - roles:
+          value:
+          - admin
+          - top_management
+          operator: OR
       responses:
         '200':
           description: Accepted
@@ -237,23 +259,27 @@ paths:
                 type: object
                 properties:
                   type:
-                    $ref: '#/components/schemas/Receptions'
+                    "$ref": "#/components/schemas/Receptions"
         '401':
-          $ref: '#/components/responses/401'
+          "$ref": "#/components/responses/401"
         '404':
-          $ref: '#/components/responses/404'
-        '5XX':
-          $ref: '#/components/responses/5XX'
-
-#  SALES ---------------------------------------------------------------------------------------------------------------
-  /sales:
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/sales":
     get:
       tags:
-        - sales
+      - sales
       summary: Request for all sales
       operationId: GetSalesAll
       description: The whole 'Sales' dataset will be returned. No parameters are needed.
-      x-teadal-roles-allowed: ["admin", "top_management", "sales_user"]
+      x-teadal-policies:
+      - roles:
+          value:
+          - admin
+          - top_management
+          - sales_user
+          operator: OR
       responses:
         '200':
           description: Accepted
@@ -262,51 +288,61 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Sales'
+                  "$ref": "#/components/schemas/Sales"
         '401':
-          $ref: '#/components/responses/401'
+          "$ref": "#/components/responses/401"
         '404':
-          $ref: '#/components/responses/404'
-        '5XX':
-          $ref: '#/components/responses/5XX'
-
-  /sales/{sales_id}:
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/sales/{sales_id}":
     get:
       tags:
-        - sales
+      - sales
       summary: Request for a specific sales
       operationId: GetSalesById
-      description: The sales specified by 'sales_id' will be returned. Parameter 'sales_id' is mandatory.
+      description: The sales specified by 'sales_id' will be returned. Parameter 'sales_id'
+        is mandatory.
       parameters:
-        - in: path
-          name: sales_id
-          required: true
-          schema:
-            type : integer
-      x-teadal-roles-allowed: ["admin", "top_management"]
+      - in: path
+        name: sales_id
+        required: true
+        schema:
+          type: integer
+      x-teadal-policies:
+      - roles:
+          value:
+          - admin
+          - top_management
+          operator: OR
       responses:
         '200':
           description: Accepted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Sales'
+                "$ref": "#/components/schemas/Sales"
         '401':
-          $ref: '#/components/responses/401'
+          "$ref": "#/components/responses/401"
         '404':
-          $ref: '#/components/responses/404'
-        '5XX':
-          $ref: '#/components/responses/5XX'
-
- # QUALITY ------------------------------------------------------------------------------------------------------------
-  /quality:
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/quality":
     get:
       tags:
-        - quality
+      - quality
       summary: Request for all quality information
       operationId: GetQualityAll
-      description: The whole 'Quality' dataset will be returned. No parameters are needed.
-      x-teadal-roles-allowed: ["admin", "top_management", "quality_user"]
+      description: The whole 'Quality' dataset will be returned. No parameters are
+        needed.
+      x-teadal-policies:
+      - roles:
+          value:
+          - admin
+          - top_management
+          - quality_user
+          operator: OR
       responses:
         '200':
           description: Accepted
@@ -315,49 +351,52 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Quality'
+                  "$ref": "#/components/schemas/Quality"
         '401':
-          $ref: '#/components/responses/401'
+          "$ref": "#/components/responses/401"
         '404':
-          $ref: '#/components/responses/404'
-        '5XX':
-          $ref: '#/components/responses/5XX'
-
-  /quality/{quality_id}:
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/quality/{quality_id}":
     get:
       tags:
-        - quality
+      - quality
       summary: Request for a specific quality information.
       operationId: GetQualityById
-      description: The quality measure specified by 'quality_id' will be returned. Parameter 'quality_id' is mandatory.
+      description: The quality measure specified by 'quality_id' will be returned.
+        Parameter 'quality_id' is mandatory.
       parameters:
-        - in: path
-          name: quality_id
-          required: true
-          schema:
-            type : integer
-      x-teadal-roles-allowed: ["admin", "top_management"]
+      - in: path
+        name: quality_id
+        required: true
+        schema:
+          type: integer
+      x-teadal-policies:
+      - roles:
+          value:
+          - admin
+          - top_management
+          operator: OR
       responses:
         '200':
           description: Accepted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Quality'
+                "$ref": "#/components/schemas/Quality"
         '401':
-          $ref: '#/components/responses/401'
+          "$ref": "#/components/responses/401"
         '404':
-          $ref: '#/components/responses/404'
-        '5XX':
-          $ref: '#/components/responses/5XX'
-
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
 components:
   securitySchemes:
-    bearerAuth: # arbitrary name for the security scheme
+    bearerAuth:
       type: http
       scheme: bearer
       x-teadal-IAM-provider: http://baseline.teadal.ubiwhere.eu/realms/master/.well-known/openid-configuration
-
   schemas:
     Forecast:
       type: object
@@ -429,7 +468,6 @@ components:
         ZFCY_0:
           type: string
           description: Factory
-
     Productions:
       type: object
       properties:
@@ -661,7 +699,6 @@ components:
           type: number
           format: double
           description: Utilized quantity
-
     Receptions:
       type: object
       properties:
@@ -870,7 +907,6 @@ components:
           type: number
           format: double
           description: Commercial discount
-
     Sales:
       type: object
       properties:
@@ -1143,7 +1179,6 @@ components:
         Conta2:
           type: string
           description: Account 2
-
     Quality:
       type: object
       properties:
@@ -1225,21 +1260,20 @@ components:
           type: number
           format: float
           description: Standard Cost
-
   responses:
-    200:
+    '200':
       description: OK
-    202:
+    '202':
       description: Request accepted but not completed.
-    204:
+    '204':
       description: No content.
-    301:
+    '301':
       description: Resource moved permanently. Redirecting...
-    400:
+    '400':
       description: Bad request.
-    401:
+    '401':
       description: Authorization information is missing or invalid.
-    404:
+    '404':
       description: The specified resource was not found.
     5XX:
       description: Unexpected error.
