@@ -45,10 +45,18 @@
           }
         ],
         "description": "Retreive all measurements for an AOI",
-        "x-teadal-users-allowed": [
-          "admin@teadal.eu",
-          "own_vineyard@teadal.eu"
-        ],
+        "x-teadal-policies":[{ 
+          "users":{
+              "value": ["admin@teadal.eu","own_vineyard@teadal.eu"],
+              "operator": "OR"
+          },
+          "timeliness":{
+            "value":[{
+              "min":"",
+              "max":""
+            }]
+          }
+        }],
         "responses": {
           "200": {
             "description": "Measurement for the AOI",
@@ -69,10 +77,18 @@
     "/measurement/soilmoisture/aois": {
       "get": {
         "description": "Retreive all AOIs",
-        "x-teadal-users-allowed": [
-          "admin@teadal.eu",
-          "own_vineyard@teadal.eu"
-        ],
+        "x-teadal-policies":[{ 
+          "users":{
+              "value": ["admin@teadal.eu","own_vineyard@teadal.eu"],
+              "operator": "OR"
+          },
+          "timeliness":{
+            "value":[{
+              "min":"",
+              "max":""
+            }]
+          }
+        }],
         "responses": {
           "200": {
             "description": "The list of AOI",
