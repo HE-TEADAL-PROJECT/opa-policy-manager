@@ -28,7 +28,7 @@
           {
             "roles": {
               "value": [
-                "Generic User"
+                "Generic_User"
               ],
               "timeliness": {
                 "value": [
@@ -43,7 +43,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -82,7 +82,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -128,7 +128,7 @@
           {
             "roles": {
               "value": [
-                "Generic User"
+                "Generic_User"
               ],
               "timeliness": {
                 "value": [
@@ -143,7 +143,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -182,7 +182,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -228,7 +228,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -277,7 +277,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -326,7 +326,7 @@
           {
             "roles": {
               "value": [
-                "Generic User"
+                "Generic_User"
               ],
               "timeliness": {
                 "value": [
@@ -341,7 +341,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -380,7 +380,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -426,7 +426,7 @@
           {
             "roles": {
               "value": [
-                "Generic User"
+                "Generic_User"
               ],
               "timeliness": {
                 "value": [
@@ -441,7 +441,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -480,7 +480,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -526,7 +526,7 @@
           {
             "roles": {
               "value": [
-                "Generic User"
+                "Generic_User"
               ],
               "timeliness": {
                 "value": [
@@ -541,7 +541,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -580,7 +580,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -626,7 +626,7 @@
           {
             "roles": {
               "value": [
-                "Generic User"
+                "Generic_User"
               ],
               "timeliness": {
                 "value": [
@@ -641,7 +641,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -680,7 +680,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -726,7 +726,7 @@
           {
             "roles": {
               "value": [
-                "Generic User"
+                "Generic_User"
               ],
               "timeliness": {
                 "value": [
@@ -741,7 +741,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }
@@ -780,7 +780,7 @@
           {
             "roles": {
               "value": [
-                "Federated User"
+                "Federated_User"
               ]
             }
           }

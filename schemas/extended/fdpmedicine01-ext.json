@@ -61,7 +61,7 @@
       {
         "roles": {
           "value": [
-            "Federated User"
+            "Federated_User"
           ]
         }
       }

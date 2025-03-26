@@ -44,7 +44,7 @@ security:
       
 
 paths:
-  x-teadal-policies : [ { "roles": { "value": ["Federated User"] } }]
+  x-teadal-policies : [ { "roles": { "value": ["Federated_User"] } }]
 
 #  SERVICE ---------------------------------------------------------------------------------------------------------------------------------
   /:
