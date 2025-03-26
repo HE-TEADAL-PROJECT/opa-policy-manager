@@ -51,11 +51,6 @@
       "description": "Provides information about records of a person suggesting the presence of a disease or medical condition stated as a diagnosis, a sign or a symptom, which is either observed by a Provider or reported by the patient."
     }
   ],
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
   "paths": {
     "/": {
       "get": {
@@ -133,9 +128,6 @@
         "summary": "Request for a specific drug exposure",
         "operationId": "GetDrugExposureById",
         "description": "The drug exposure specified by 'drug_exposure_id' will be returned. Parameter 'drug_exposure_id' is mandatory.",
-        "x-teadal-roles-allowed": [
-          "researchers"
-        ],
         "parameters": [
           {
             "in": "path",
@@ -182,9 +174,6 @@
         "summary": "Request a drug exposure related to a person",
         "operationId": "GetDrugExposureByPersonId",
         "description": "The drug exposure related to a person specified by 'person_id' will be returned. Parameter 'person_id' is mandatory.",
-        "x-teadal-users-allowed": [
-          "jeejee@teadal.eu"
-        ],
         "parameters": [
           {
             "in": "path",
@@ -896,13 +885,6 @@
     }
   },
   "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "x-teadal-IAM-provider": "http://baseline.teadal.ubiwhere.eu/realms/master/.well-known/openid-configuration"
-      }
-    },
     "schemas": {
       "Person": {
         "type": "object",

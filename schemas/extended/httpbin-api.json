@@ -1757,7 +1757,7 @@
         "bearerAuth": {
           "type": "http",
           "scheme": "bearer",
-          "x-teadal-IAM-provider": "http://baseline.teadal.ubiwhere.eu/realms/master/.well-known/openid-configuration"
+          "x-teadal-IAM-provider": "http://localhost/keycloak/realms/master/.well-known/openid-configuration"
         }
       },
       "x-lifecycle": {

@@ -9,11 +9,6 @@
       "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
     }
   },
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
   "paths": {
     "/routes": {
       "get": {
@@ -21,9 +16,6 @@
         "operationId": "getRoutes",
         "x-router-controller": "routes",
         "description": "Returns all the routes available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the routes dataset.",
@@ -57,9 +49,6 @@
             }
           }
         ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
-        ],
         "responses": {
           "200": {
             "description": "Details of the specified row.",
@@ -80,9 +69,6 @@
         "operationId": "getTrips",
         "x-router-controller": "trips",
         "description": "Returns all the trips available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the trips dataset.",
@@ -116,9 +102,6 @@
             }
           }
         ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
-        ],
         "responses": {
           "200": {
             "description": "Details of the specified row.",
@@ -148,9 +131,6 @@
               "type": "integer"
             }
           }
-        ],
-        "x-teadal-roles-allowed":[
-          "admin", "federated_user"
         ],
         "responses": {
           "200": {
@@ -185,9 +165,6 @@
             }
           }
         ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
-        ],
         "responses": {
           "200": {
             "description": "Details of the specified row.",
@@ -211,9 +188,6 @@
         "operationId": "getCalendars",
         "x-router-controller": "calendar",
         "description": "Returns all calendar entries available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the calendar dataset.",
@@ -247,9 +221,6 @@
             }
           }
         ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
-        ],
         "responses": {
           "200": {
             "description": "Details of the specified row.",
@@ -270,9 +241,6 @@
         "operationId": "getAgencies",
         "x-router-controller": "agency",
         "description": "Returns all agency entries available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the agency dataset.",
@@ -306,9 +274,6 @@
             }
           }
         ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
-        ],
         "responses": {
           "200": {
             "description": "Details of the specified row.",
@@ -329,9 +294,6 @@
         "operationId": "getShapes",
         "x-router-controller": "shapes",
         "description": "Returns all shape entries available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the shapes dataset.",
@@ -365,9 +327,6 @@
             }
           }
         ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
-        ],
         "responses": {
           "200": {
             "description": "Details of the specified row.",
@@ -388,9 +347,6 @@
         "operationId": "getStops",
         "x-router-controller": "stops",
         "description": "Returns all stop entries available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the stops dataset.",
@@ -424,9 +380,6 @@
             }
           }
         ],
-        "x-teadal-roles-allowed":[
-          "admin", "federated_user"
-        ],
         "responses": {
           "200": {
             "description": "Details of the specified row.",
@@ -447,9 +400,6 @@
         "operationId": "getStopTimes",
         "x-router-controller": "stoptimes",
         "description": "Returns all stop time entries available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the stop_times dataset.",
@@ -483,9 +433,6 @@
             }
           }
         ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
-        ],
         "responses": {
           "200": {
             "description": "Details of the specified row.",
@@ -502,13 +449,6 @@
     }
   },
   "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "x-teadal-IAM-provider": "http://baseline.teadal.ubiwhere.eu/realms/master/.well-known/openid-configuration"
-      }
-    },
     "schemas": {
       "Route": {
         "type": "object",
