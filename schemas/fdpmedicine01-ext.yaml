@@ -44,6 +44,8 @@ security:
       
 
 paths:
+  x-teadal-policies : [ { "roles": { "value": ["Federated User"] } }]
+
 #  SERVICE ---------------------------------------------------------------------------------------------------------------------------------
   /:
     get:
@@ -71,6 +73,7 @@ paths:
 #  DRUG_EXPOSURE ----------------------------------------------------------------------------------------------------------------------
   /drug_exposures:
     get:
+      x-teadal-policies: [ { "call" : {"value": [{ "max": 1000, "unit_of_measure": "call_per_month"}]}}]
       tags:
         - drug_exposure
       summary: Request for all drug exposures
@@ -93,13 +96,13 @@ paths:
           $ref: '#/components/responses/5XX'
 
   /drug_exposures/{drug_exposure_id}:
+    x-teadal-policies: [ { "call" : {"value": [{ "max": 1000, "unit_of_measure": "call_per_month"}]}, "user": { "value": ["jeejee@teadal.eu"] } }]
     get:
       tags:
         - drug_exposure
       summary: Request for a specific drug exposure
       operationId: GetDrugExposureById
       description: The drug exposure specified by 'drug_exposure_id' will be returned. Parameter 'drug_exposure_id' is mandatory.
-      x-teadal-roles-allowed: ["researchers"]
       parameters:
         - in: path
           name: drug_exposure_id
@@ -130,7 +133,6 @@ paths:
       summary: Request a drug exposure related to a person
       operationId: GetDrugExposureByPersonId
       description: The drug exposure related to a person specified by 'person_id' will be returned. Parameter 'person_id' is mandatory.
-      x-teadal-users-allowed: ["jeejee@teadal.eu"]
       parameters:
         - in: path
           name: person_id

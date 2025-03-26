@@ -1,4 +1,4 @@
-    {
+﻿{
   "openapi": "3.0.0",
   "info": {
     "title": "AMTS GTFS static data FDP",
@@ -17,13 +17,41 @@
   "paths": {
     "/routes": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Generic User"
+              ],
+              "timeliness": {
+                "value": [
+                  {
+                    "min": 10,
+                    "unit_of_measure": "minutes"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve all rows from the routes dataset.",
         "operationId": "getRoutes",
         "x-router-controller": "routes",
         "description": "Returns all the routes available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the routes dataset.",
@@ -43,6 +71,22 @@
     },
     "/routes/{route_id}": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve a specific row from the routes dataset based on route_id.",
         "operationId": "getRouteById",
         "x-router-controller": "routes",
@@ -56,9 +100,6 @@
               "type": "integer"
             }
           }
-        ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
         ],
         "responses": {
           "200": {
@@ -76,13 +117,41 @@
     },
     "/trips": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Generic User"
+              ],
+              "timeliness": {
+                "value": [
+                  {
+                    "min": 10,
+                    "unit_of_measure": "minutes"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve all rows from the trips dataset.",
         "operationId": "getTrips",
         "x-router-controller": "trips",
         "description": "Returns all the trips available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the trips dataset.",
@@ -102,6 +171,22 @@
     },
     "/trips/{trip_id}": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve a specific row from the trips dataset based on trip_id.",
         "operationId": "getTripById",
         "x-router-controller": "trips",
@@ -115,9 +200,6 @@
               "type": "string"
             }
           }
-        ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
         ],
         "responses": {
           "200": {
@@ -135,6 +217,22 @@
     },
     "/trips/route/{route_id}": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve the trips of a specific route from the trips dataset based on route_id.",
         "operationId": "getTripsByRouteId",
         "x-router-controller": "trips",
@@ -148,9 +246,6 @@
               "type": "integer"
             }
           }
-        ],
-        "x-teadal-roles-allowed":[
-          "admin", "federated_user"
         ],
         "responses": {
           "200": {
@@ -171,6 +266,22 @@
     },
     "/trips/service/{service_id}": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve the trips of a specific service from the trips dataset based on service_id.",
         "operationId": "getTripsByServiceId",
         "x-router-controller": "trips",
@@ -184,9 +295,6 @@
               "type": "integer"
             }
           }
-        ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
         ],
         "responses": {
           "200": {
@@ -207,13 +315,41 @@
     },
     "/calendar": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Generic User"
+              ],
+              "timeliness": {
+                "value": [
+                  {
+                    "min": 10,
+                    "unit_of_measure": "minutes"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve all rows from the calendar dataset.",
         "operationId": "getCalendars",
         "x-router-controller": "calendar",
         "description": "Returns all calendar entries available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the calendar dataset.",
@@ -233,6 +369,22 @@
     },
     "/calendar/{service_id}": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve a specific row from the calendar dataset based on service_id.",
         "operationId": "getCalendarById",
         "x-router-controller": "calendar",
@@ -246,9 +398,6 @@
               "type": "string"
             }
           }
-        ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
         ],
         "responses": {
           "200": {
@@ -266,13 +415,41 @@
     },
     "/agency": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Generic User"
+              ],
+              "timeliness": {
+                "value": [
+                  {
+                    "min": 10,
+                    "unit_of_measure": "minutes"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve all rows from the agency dataset.",
         "operationId": "getAgencies",
         "x-router-controller": "agency",
         "description": "Returns all agency entries available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the agency dataset.",
@@ -292,6 +469,22 @@
     },
     "/agency/{agency_id}": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve a specific row from the agency dataset based on agency_id.",
         "operationId": "getAgencyById",
         "x-router-controller": "agency",
@@ -305,9 +498,6 @@
               "type": "string"
             }
           }
-        ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
         ],
         "responses": {
           "200": {
@@ -325,13 +515,41 @@
     },
     "/shapes": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Generic User"
+              ],
+              "timeliness": {
+                "value": [
+                  {
+                    "min": 10,
+                    "unit_of_measure": "minutes"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve all rows from the shapes dataset.",
         "operationId": "getShapes",
         "x-router-controller": "shapes",
         "description": "Returns all shape entries available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the shapes dataset.",
@@ -351,6 +569,22 @@
     },
     "/shapes/{shape_id}": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve a specific row from the shapes dataset based on shape_id.",
         "operationId": "getShapeById",
         "x-router-controller": "shapes",
@@ -364,9 +598,6 @@
               "type": "integer"
             }
           }
-        ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
         ],
         "responses": {
           "200": {
@@ -384,13 +615,41 @@
     },
     "/stops": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Generic User"
+              ],
+              "timeliness": {
+                "value": [
+                  {
+                    "min": 10,
+                    "unit_of_measure": "minutes"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve all rows from the stops dataset.",
         "operationId": "getStops",
         "x-router-controller": "stops",
         "description": "Returns all stop entries available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the stops dataset.",
@@ -410,6 +669,22 @@
     },
     "/stops/{stop_id}": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve a specific row from the stops dataset based on trip_id.",
         "operationId": "getStopById",
         "x-router-controller": "stops",
@@ -423,9 +698,6 @@
               "type": "integer"
             }
           }
-        ],
-        "x-teadal-roles-allowed":[
-          "admin", "federated_user"
         ],
         "responses": {
           "200": {
@@ -443,13 +715,41 @@
     },
     "/stop_times": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Generic User"
+              ],
+              "timeliness": {
+                "value": [
+                  {
+                    "min": 10,
+                    "unit_of_measure": "minutes"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve all rows from the stop_times dataset.",
         "operationId": "getStopTimes",
         "x-router-controller": "stoptimes",
         "description": "Returns all stop time entries available in the dataset.\n",
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user", "generic_data_consumer"
-        ],
         "responses": {
           "200": {
             "description": "A list of all rows in the stop_times dataset.",
@@ -469,6 +769,22 @@
     },
     "/stop_times/{trip_id}": {
       "get": {
+        "x-teadal-policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "Federated User"
+              ]
+            }
+          }
+        ],
         "summary": "Retrieve a specific row from the stop_times dataset based on trip_id.",
         "operationId": "getStopTimeByTripId",
         "x-router-controller": "stoptimes",
@@ -482,9 +798,6 @@
               "type": "integer"
             }
           }
-        ],
-        "x-teadal-roles-allowed": [
-          "admin", "federated_user"
         ],
         "responses": {
           "200": {
