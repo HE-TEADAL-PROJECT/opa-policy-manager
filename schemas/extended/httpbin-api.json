@@ -399,6 +399,22 @@
         }
       },
       "/bearer": {
+        "x-teadal-policies":[{ 
+          "roles":{
+              "value": ["role3","role2"],
+              "operator":"OR"
+          }
+        },
+        { 
+          "user":{
+            "value": ["user1@teadal.eu","user2@teadal.eu"],
+            "operator":"OR"
+          },
+          "storage_location": {
+            "value": ["Italy", "Spain"],
+            "operator":"OR"
+          }
+        }],
         "get": {
           "parameters": [
             {
@@ -426,6 +442,24 @@
       },
       "/brotli": {
         "get": {
+          "x-teadal-policies":[{ 
+          "roles":{
+              "value": ["role1","role2"],
+              "operator":"OR"
+          }
+        },
+        {
+          "storage_location": {
+            "value": ["Italy", "Spain"],
+            "operator":"OR"
+          },
+          "timeliness":{
+            "value":[{
+              "min":"10",
+              "unit_of_measure":"minutes"
+            }]  
+          }
+        }],
           "responses": {
             "200": {
               "description": "Brotli-encoded data."
