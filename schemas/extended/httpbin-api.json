@@ -210,7 +210,46 @@
         }
       },
       "/anything/{anything}": {
+        "x-teadal-policies":[{ 
+          "roles": {
+            "value": [
+              "Admin"
+            ]
+          },
+          "call": {
+            "value": [{
+                "max":1200,
+                "unit_of_measure": "call_per_month"
+                }]
+          }
+        },
+        {
+          "storage-location": {
+            "value": [
+              "Italy"
+            ]
+          }
+        }],
         "delete": {
+          "x-teadal-policies":[{ 
+            "call":{
+              "value":[{
+                "max":"7",
+                "unit_of_measure":"call_per_day"
+              }]  
+            }
+         },
+        {
+          "timeliness":{
+            "value":[{
+              "min":"7",
+              "unit_of_measure":"days"
+            }]  
+          },
+          "roles": {
+            "value": ["role1", "role2"]
+          }
+        }],
           "parameters": [
             {
               "in": "path",
@@ -232,6 +271,30 @@
           ]
         },
         "get": {
+          "x-teadal-policies":[{ 
+            "roles":{
+                "value": ["role3"]
+            },
+            "call": {
+              "value": [{
+                  "max":100,
+                  "unit_of_measure": "call_per_month"
+                  }]
+              }
+        },
+        {
+          "roles":{
+            "value": ["researchers","role4"],
+            "operator":"OR"
+        },
+        "call": {
+          "value": [{
+              "max":1250,
+              "unit_of_measure": "call_per_month"
+              }]
+          }
+        }
+      ],
           "parameters": [
             {
               "in": "path",
@@ -253,6 +316,26 @@
           ]
         },
         "patch": {
+          "x-teadal-policies":[{ 
+            "roles":{
+                "value": ["role1"]
+            },
+            "storage_location": {
+                "value": ["Milan"]
+            }
+          },
+          { 
+              "roles":{
+                  "value": ["role5"]
+              },
+              "call": {
+                "value": [{
+                  "min":5,
+                  "unit_of_measure": "call_per_day"
+                  }]
+              }
+          }
+        ],
           "parameters": [
             {
               "in": "path",
@@ -274,6 +357,25 @@
           ]
         },
         "post": {
+          "x-teadal-policies":[{ 
+            "roles":{
+                "value": ["role2, role3"],
+                "operation": "AND"
+            }
+          },
+          { 
+              "roles":{
+                  "value": ["role4"]
+              },
+              "call": {
+                "value": [{
+                  "min":5,
+                  "max": 1000,
+                  "unit_of_measure": "call_per_day"
+                  }]
+              }
+          }
+        ],
           "parameters": [
             {
               "in": "path",
@@ -295,6 +397,29 @@
           ]
         },
         "put": {
+          "x-teadal-policies":[{ 
+            "call": {
+              "value": [{
+                "max":500,
+                "unit_of_measure": "call_per_day"
+                }]
+            },
+            "storage_location": {
+                "value": ["NYC"]
+            }
+          },
+          { 
+              "roles":{
+                  "value": ["role1"]
+              },
+              "call": {
+                "value": [{
+                  "min":1,
+                  "unit_of_measure": "call_per_week"
+                  }]
+              }
+          }
+        ],
           "parameters": [
             {
               "in": "path",
@@ -316,6 +441,23 @@
           ]
         },
         "trace": {
+          "x-teadal-policies":[{ 
+            "roles":{
+                "value": ["role3"]
+            }
+          },
+          { 
+            "roles":{
+                "value": ["role5"]
+            },
+          "call": {
+            "value": [{
+                "max":100,
+                "unit_of_measure": "call_per_day"
+                }]
+            }
+          }
+        ],
           "parameters": [
             {
               "in": "path",
@@ -339,6 +481,20 @@
       },
       "/base64/{value}": {
         "get": {
+          "x-teadal-policies":[{ 
+            "roles":{
+                "value": ["Admin"]
+            }
+          },
+          { 
+            "user":{
+              "value": ["user1@teadal.eu","user4@teadal.eu"],
+              "operator":"OR"
+            },
+            "storage_location": {
+              "value": ["Italy"]
+            }
+          }],
           "parameters": [
             {
               "in": "path",
@@ -363,6 +519,22 @@
         }
       },
       "/basic-auth/{user}/{passwd}": {
+        "x-teadal-policies":[{ 
+            "roles":{
+                "value": ["Admin"]
+            }
+          },
+          { 
+            "roles":{
+              "value": ["researchers"]
+          },
+          "call": {
+            "value": [{
+                "max":100,
+                "unit_of_measure": "call_per_day"
+                }]
+            }
+          }],
         "get": {
           "parameters": [
             {
