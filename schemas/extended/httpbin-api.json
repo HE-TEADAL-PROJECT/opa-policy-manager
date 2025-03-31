@@ -108,7 +108,7 @@
         "get": {
           "x-teadal-policies":[{ 
             "roles":{
-                "value": ["role3","role4"],
+                "value": ["researchers","role4"],
                 "operator":"OR"
             },
             "call": {
@@ -123,7 +123,6 @@
               "description": "Anything passed in request"
             }
           },
-          "x-teadal-roles-allowed": ["researchers"],
           "summary": "Returns anything passed in request data.",
           "tags": [
             "Anything"
@@ -416,6 +415,11 @@
           }
         }],
         "get": {
+          "x-teadal-policies":[{ 
+            "user":{
+              "value": ["jeejee@teadal.eu"]
+            }
+          }],
           "parameters": [
             {
               "in": "header",
@@ -433,7 +437,6 @@
               "description": "Unsuccessful authentication."
             }
           },
-          "x-teadal-users-allowed": ["jeejee@teadal.eu"],
           "summary": "Prompts the user for authorization using bearer authentication.",
           "tags": [
             "Auth"
@@ -459,13 +462,17 @@
               "unit_of_measure":"minutes"
             }]  
           }
+        },
+        { 
+          "user":{
+            "value": ["sebs@teadal.eu"]
+          }
         }],
           "responses": {
             "200": {
               "description": "Brotli-encoded data."
             }
           },
-          "x-teadal-users-allowed": ["sebs@teadal.eu"],
           "summary": "Returns Brotli-encoded data.",
           "tags": [
             "Response formats"
