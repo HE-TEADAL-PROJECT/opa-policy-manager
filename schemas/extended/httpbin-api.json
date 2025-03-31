@@ -22,17 +22,40 @@
     "paths": {
       "x-teadal-policies":[{ 
             "storage_location":{
-                "value": ["Europe","USA"]
+                "value": ["Europe","USA"],
+                "operator":"OR"
             },
             "call": {
               "value": [{
                   "max":50000,
-                  "unit_of_measure": "call_per_month"
+                  "unit_of_measure": "call_per_year"
                   }]
               }
         }], 
       "/absolute-redirect/{n}": {
         "get": {
+          "x-teadal-policies":[{ 
+            "storage_location":{
+                "value": ["Italy","NYC"],
+                "operator":"OR"
+            },
+            "call": {
+              "value": [{
+                  "max":15000,
+                  "unit_of_measure": "call_per_month"
+                  }]
+            },
+            "users":{
+              "value": ["user1@teadal.eu","user2@teadal.eu"],
+              "operator": "OR"
+            }
+          },
+          { 
+            "roles":{
+              "value": ["role1","role2"],
+              "operator": "AND"
+          }
+          }],
           "parameters": [
             {
               "in": "path",
@@ -55,7 +78,23 @@
         }
       },
       "/anything": {
+        "x-teadal-policies":[{ 
+          "call": {
+            "value": [{
+                "max":10000,
+                "unit_of_measure": "call_per_year"
+                }]
+          }
+        }],
         "delete": {
+          "x-teadal-policies":[{ 
+            "timeliness":{
+              "value":[{
+                "max":"7",
+                "unit_of_measure":"days"
+              }]  
+            }
+         }],
           "responses": {
             "200": {
               "description": "Anything passed in request"
@@ -67,6 +106,18 @@
           ]
         },
         "get": {
+          "x-teadal-policies":[{ 
+            "roles":{
+                "value": ["role3","role4"],
+                "operator":"OR"
+            },
+            "call": {
+              "value": [{
+                  "max":1000,
+                  "unit_of_measure": "call_per_month"
+                  }]
+              }
+        }], 
           "responses": {
             "200": {
               "description": "Anything passed in request"
@@ -79,6 +130,18 @@
           ]
         },
         "patch": {
+          "x-teadal-policies":[{ 
+            "roles":{
+                "value": ["role5","role4"],
+                "operator":"OR"
+            },
+            "call": {
+              "value": [{
+                  "max":1000,
+                  "unit_of_measure": "call_per_month"
+                  }]
+              }
+        }], 
           "responses": {
             "200": {
               "description": "Anything passed in request"
@@ -90,6 +153,17 @@
           ]
         },
         "post": {
+          "x-teadal-policies":[{ 
+            "roles":{
+                "value": ["role3"]
+            },
+            "call": {
+              "value": [{
+                  "max":1000,
+                  "unit_of_measure": "call_per_month"
+                  }]
+              }
+        }], 
           "responses": {
             "200": {
               "description": "Anything passed in request"
@@ -101,6 +175,14 @@
           ]
         },
         "put": {
+          "x-teadal-policies":[{ 
+            "roles":{
+                "value": ["role3"]
+            },
+            "storage_location": {
+                "value": ["Milan"]
+            }
+          }],
           "responses": {
             "200": {
               "description": "Anything passed in request"
@@ -112,6 +194,11 @@
           ]
         },
         "trace": {
+          "x-teadal-policies":[{ 
+            "roles":{
+                "value": ["role3"]
+            }
+          }],
           "responses": {
             "200": {
               "description": "Anything passed in request"
