@@ -20,6 +20,17 @@
       "version": "0.9.2"
     },
     "paths": {
+      "x-teadal-policies":[{ 
+            "storage_location":{
+                "value": ["Europe","USA"]
+            },
+            "call": {
+              "value": [{
+                  "max":50000,
+                  "unit_of_measure": "call_per_month"
+                  }]
+              }
+        }], 
       "/absolute-redirect/{n}": {
         "get": {
           "parameters": [
