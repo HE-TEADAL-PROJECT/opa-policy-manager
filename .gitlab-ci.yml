@@ -5,7 +5,7 @@ default:
 variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
-  DOCKER_IMAGE_NAME: registry.teadal.ubiwhere.com/teadal-public-images/opa-policy-manager:0.0.1
+  DOCKER_IMAGE_NAME: registry.teadal.ubiwhere.com/teadal-public-images/opa-policy-manager:0.0.2
   DOCKER_USER_NAME: CI-token
   
 
@@ -23,5 +23,6 @@ push_image:
       alias: docker
   stage: push_image
   script:
-    - docker buildx build --push --platform linux/amd64,linux/arm64 --progress plain -t $DOCKER_IMAGE_NAME .
+#    - docker buildx build --push --platform linux/amd64,linux/arm64 --progress plain -t $DOCKER_IMAGE_NAME .
+    - docker buildx build --push --platform linux/amd64 --progress plain -t $DOCKER_IMAGE_NAME .
     
