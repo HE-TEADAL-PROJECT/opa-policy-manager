@@ -57,15 +57,18 @@
     }
   ],
   "paths": {
-    "x-teadal-policies": [
-      {
-        "roles": {
-          "value": [
-            "Federated_User"
-          ]
+    "x-teadal-policies": {
+      "description": "placeholder (TODO fixme)",
+      "policies": [
+        {
+          "roles": {
+            "value": [
+              "Federated_User"
+            ]
+          }
         }
-      }
-    ],
+      ]
+    },
     "/": {
       "get": {
         "tags": [

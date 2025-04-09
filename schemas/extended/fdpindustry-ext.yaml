@@ -77,12 +77,14 @@ paths:
       description: The whole 'Forecast' dataset will be returned. No parameters are
         needed.
       x-teadal-policies:
-      - roles:
-          value:
-          - admin
-          - top_management
-          - logistic_user
-          operator: OR
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - admin
+            - top_management
+            - logistic_user
+            operator: OR
       responses:
         '200':
           description: Accepted
@@ -113,11 +115,13 @@ paths:
         schema:
           type: integer
       x-teadal-policies:
-      - roles:
-          value:
-          - admin
-          - top_management
-          operator: OR
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - admin
+            - top_management
+            operator: OR
       responses:
         '200':
           description: Accepted
@@ -143,12 +147,14 @@ paths:
       description: The whole 'Productions' dataset will be returned. No parameters
         are needed.
       x-teadal-policies:
-      - roles:
-          value:
-          - admin
-          - top_management
-          - production_user
-          operator: OR
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - admin
+            - top_management
+            - production_user
+            operator: OR
       responses:
         '200':
           description: Accepted
@@ -179,11 +185,13 @@ paths:
         schema:
           type: integer
       x-teadal-policies:
-      - roles:
-          value:
-          - admin
-          - top_management
-          operator: OR
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - admin
+            - top_management
+            operator: OR
       responses:
         '200':
           description: Accepted
@@ -209,12 +217,14 @@ paths:
       description: The whole 'Receptions' dataset will be returned. No parameters
         are needed.
       x-teadal-policies:
-      - roles:
-          value:
-          - admin
-          - top_management
-          - logistic_user
-          operator: OR
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - admin
+            - top_management
+            - logistic_user
+            operator: OR
       responses:
         '200':
           description: Accepted
@@ -245,11 +255,13 @@ paths:
         schema:
           type: integer
       x-teadal-policies:
-      - roles:
-          value:
-          - admin
-          - top_management
-          operator: OR
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - admin
+            - top_management
+            operator: OR
       responses:
         '200':
           description: Accepted
@@ -274,12 +286,14 @@ paths:
       operationId: GetSalesAll
       description: The whole 'Sales' dataset will be returned. No parameters are needed.
       x-teadal-policies:
-      - roles:
-          value:
-          - admin
-          - top_management
-          - sales_user
-          operator: OR
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - admin
+            - top_management
+            - sales_user
+            operator: OR
       responses:
         '200':
           description: Accepted
@@ -310,11 +324,13 @@ paths:
         schema:
           type: integer
       x-teadal-policies:
-      - roles:
-          value:
-          - admin
-          - top_management
-          operator: OR
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - admin
+            - top_management
+            operator: OR
       responses:
         '200':
           description: Accepted
@@ -337,12 +353,14 @@ paths:
       description: The whole 'Quality' dataset will be returned. No parameters are
         needed.
       x-teadal-policies:
-      - roles:
-          value:
-          - admin
-          - top_management
-          - quality_user
-          operator: OR
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - admin
+            - top_management
+            - quality_user
+            operator: OR
       responses:
         '200':
           description: Accepted
@@ -373,11 +391,13 @@ paths:
         schema:
           type: integer
       x-teadal-policies:
-      - roles:
-          value:
-          - admin
-          - top_management
-          operator: OR
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - admin
+            - top_management
+            operator: OR
       responses:
         '200':
           description: Accepted

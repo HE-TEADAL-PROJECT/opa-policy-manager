@@ -44,13 +44,16 @@ security:
       
 
 paths:
-  x-teadal-policies : [ { "roles": { "value": ["Federated_User"] } }]
-
-#  SERVICE ---------------------------------------------------------------------------------------------------------------------------------
+  x-teadal-policies:
+    description: placeholder (TODO fixme)
+    policies:
+    - roles:
+        value:
+        - Federated_User
   /:
     get:
       tags:
-        - service
+      - service
       summary: Checks availability and redirections if any
       operationId: root
       description: Confirms availability with a message

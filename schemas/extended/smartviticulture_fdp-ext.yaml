@@ -1,4 +1,3 @@
----
 openapi: 3.0.2
 info:
   title: Aquaview FDP
@@ -30,15 +29,17 @@ paths:
         description: the ending date from when the measurement should be returned
       description: Retreive all measurements for an AOI
       x-teadal-policies:
-      - users:
-          value:
-          - admin@teadal.eu
-          - own_vineyard@teadal.eu
-          operator: OR
-        timeliness:
-          value:
-          - max: '7'
-            unit_of_measure: days
+        description: placeholder (TODO fixme)
+        policies:
+        - users:
+            value:
+            - admin@teadal.eu
+            - own_vineyard@teadal.eu
+            operator: OR
+          timeliness:
+            value:
+            - max: '7'
+              unit_of_measure: days
       responses:
         '200':
           description: Measurement for the AOI
@@ -52,15 +53,17 @@ paths:
     get:
       description: Retreive all AOIs
       x-teadal-policies:
-      - users:
-          value:
-          - admin@teadal.eu
-          - own_vineyard@teadal.eu
-          operator: OR
-        timeliness:
-          value:
-          - max: '7'
-            unit_of_measure: days
+        description: placeholder (TODO fixme)
+        policies:
+        - users:
+            value:
+            - admin@teadal.eu
+            - own_vineyard@teadal.eu
+            operator: OR
+          timeliness:
+            value:
+            - max: '7'
+              unit_of_measure: days
       responses:
         '200':
           description: The list of AOI

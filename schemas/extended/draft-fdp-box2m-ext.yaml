@@ -1,4 +1,3 @@
----
 openapi: 3.0.0
 servers:
 - description: SwaggerHub API Auto Mocking
@@ -14,16 +13,20 @@ security:
 - bearerAuth: []
 paths:
   x-teadal-policies:
-  - storage_location:
-      value:
-      - Europe
-  "/":
+    description: placeholder (TODO fixme)
+    policies:
+    - storage_location:
+        value:
+        - Europe
+  /:
     get:
       x-teadal-policies:
-      - call:
-          value:
-          - max: 1000
-            unit_of_measure: call_per_month
+        description: placeholder (TODO fixme)
+        policies:
+        - call:
+            value:
+            - max: 1000
+              unit_of_measure: call_per_month
       summary: return list of all sensor data
       operationId: getAllSensorData
       description: 'Returns all data retrived from BOX2M system in a JSON format.

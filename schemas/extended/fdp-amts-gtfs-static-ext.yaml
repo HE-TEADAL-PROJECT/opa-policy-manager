@@ -12,7 +12,22 @@ security:
 paths:
   /routes:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Generic_User"],"timeliness": {"value": [{"min": 10, "unit_of_measure": "minutes"}]}}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Generic_User
+            timeliness:
+              value:
+              - min: 10
+                unit_of_measure: minutes
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve all rows from the routes dataset.
       operationId: getRoutes
       x-router-controller: routes
@@ -29,7 +44,15 @@ paths:
                   $ref: '#/components/schemas/Route'
   /routes/{route_id}:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve a specific row from the routes dataset based on route_id.
       operationId: getRouteById
       x-router-controller: routes
@@ -49,7 +72,22 @@ paths:
                 $ref: '#/components/schemas/Route'
   /trips:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Generic_User"],"timeliness": {"value": [{"min": 10, "unit_of_measure": "minutes"}]}}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Generic_User
+            timeliness:
+              value:
+              - min: 10
+                unit_of_measure: minutes
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve all rows from the trips dataset.
       operationId: getTrips
       x-router-controller: trips
@@ -66,7 +104,15 @@ paths:
                   $ref: '#/components/schemas/Trip'
   /trips/{trip_id}:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve a specific row from the trips dataset based on trip_id.
       operationId: getTripById
       x-router-controller: trips
@@ -86,8 +132,17 @@ paths:
                 $ref: '#/components/schemas/Trip'
   /trips/route/{route_id}:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Federated_User"]}}]
-      summary: Retrieve the trips of a specific route from the trips dataset based on route_id.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Federated_User
+      summary: Retrieve the trips of a specific route from the trips dataset based
+        on route_id.
       operationId: getTripsByRouteId
       x-router-controller: trips
       description: Returns the details of all trips of a specific route using its unique identifier.
@@ -108,8 +163,17 @@ paths:
                   $ref: '#/components/schemas/Trip'
   /trips/service/{service_id}:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Federated_User"]}}]
-      summary: Retrieve the trips of a specific service from the trips dataset based on service_id.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Federated_User
+      summary: Retrieve the trips of a specific service from the trips dataset based
+        on service_id.
       operationId: getTripsByServiceId
       x-router-controller: trips
       description: Returns the details of all trips of a specific service using its unique identifier.
@@ -130,7 +194,22 @@ paths:
                   $ref: '#/components/schemas/Trip'
   /calendar:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Generic_User"],"timeliness": {"value": [{"min": 10, "unit_of_measure": "minutes"}]}}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Generic_User
+            timeliness:
+              value:
+              - min: 10
+                unit_of_measure: minutes
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve all rows from the calendar dataset.
       operationId: getCalendars
       x-router-controller: calendar
@@ -147,7 +226,15 @@ paths:
                   $ref: '#/components/schemas/Calendar'
   /calendar/{service_id}:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve a specific row from the calendar dataset based on service_id.
       operationId: getCalendarById
       x-router-controller: calendar
@@ -167,7 +254,22 @@ paths:
                 $ref: '#/components/schemas/Calendar'
   /agency:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Generic_User"],"timeliness": {"value": [{"min": 10, "unit_of_measure": "minutes"}]}}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Generic_User
+            timeliness:
+              value:
+              - min: 10
+                unit_of_measure: minutes
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve all rows from the agency dataset.
       operationId: getAgencies
       x-router-controller: agency
@@ -184,7 +286,15 @@ paths:
                   $ref: '#/components/schemas/Agency'
   /agency/{agency_id}:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve a specific row from the agency dataset based on agency_id.
       operationId: getAgencyById
       x-router-controller: agency
@@ -204,7 +314,22 @@ paths:
                 $ref: '#/components/schemas/Agency'
   /shapes:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Generic_User"],"timeliness": {"value": [{"min": 10, "unit_of_measure": "minutes"}]}}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Generic_User
+            timeliness:
+              value:
+              - min: 10
+                unit_of_measure: minutes
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve all rows from the shapes dataset.
       operationId: getShapes
       x-router-controller: shapes
@@ -221,7 +346,15 @@ paths:
                   $ref: '#/components/schemas/Shape'
   /shapes/{shape_id}:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve a specific row from the shapes dataset based on shape_id.
       operationId: getShapeById
       x-router-controller: shapes
@@ -241,7 +374,22 @@ paths:
                 $ref: '#/components/schemas/Shape'
   /stops:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Generic_User"],"timeliness": {"value": [{"min": 10, "unit_of_measure": "minutes"}]}}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Generic_User
+            timeliness:
+              value:
+              - min: 10
+                unit_of_measure: minutes
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve all rows from the stops dataset.
       operationId: getStops
       x-router-controller: stops
@@ -258,7 +406,15 @@ paths:
                   $ref: '#/components/schemas/Stop'
   /stops/{stop_id}:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve a specific row from the stops dataset based on trip_id.
       operationId: getStopById
       x-router-controller: stops
@@ -278,7 +434,22 @@ paths:
                 $ref: '#/components/schemas/Stop'
   /stop_times:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Generic_User"],"timeliness": {"value": [{"min": 10, "unit_of_measure": "minutes"}]}}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Generic_User
+            timeliness:
+              value:
+              - min: 10
+                unit_of_measure: minutes
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve all rows from the stop_times dataset.
       operationId: getStopTimes
       x-router-controller: stoptimes
@@ -295,7 +466,15 @@ paths:
                   $ref: '#/components/schemas/StopTime'
   /stop_times/{trip_id}:
     get:
-      x-teadal-policies : [{"roles": {"value": ["Admin"]}},{"roles" : {"value": ["Federated_User"]}}]
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        policies:
+        - roles:
+            value:
+            - Admin
+        - roles:
+            value:
+            - Federated_User
       summary: Retrieve a specific row from the stop_times dataset based on trip_id.
       operationId: getStopTimeByTripId
       x-router-controller: stoptimes

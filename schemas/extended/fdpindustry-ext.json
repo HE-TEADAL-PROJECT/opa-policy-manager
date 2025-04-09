@@ -113,12 +113,21 @@
         "summary": "Request for all forecasts",
         "operationId": "GetForecastAll",
         "description": "The whole 'Forecast' dataset will be returned. No parameters are needed.",
-        "x-teadal-policies":[{ 
-            "roles":{
-                "value": ["admin","top_management","logistic_user"],
+        "x-teadal-policies": {
+          "description": "placeholder (TODO fixme)",
+          "policies": [
+            {
+              "roles": {
+                "value": [
+                  "admin",
+                  "top_management",
+                  "logistic_user"
+                ],
                 "operator": "OR"
+              }
             }
-        }],
+          ]
+        },
         "responses": {
           "200": {
             "description": "Accepted",
@@ -163,12 +172,20 @@
             }
           }
         ],
-        "x-teadal-policies":[{ 
-            "roles":{
-                "value": ["admin","top_management"],
+        "x-teadal-policies": {
+          "description": "placeholder (TODO fixme)",
+          "policies": [
+            {
+              "roles": {
+                "value": [
+                  "admin",
+                  "top_management"
+                ],
                 "operator": "OR"
+              }
             }
-        }],
+          ]
+        },
         "responses": {
           "200": {
             "description": "Accepted",
@@ -205,12 +222,21 @@
         "summary": "Request for all productions",
         "operationId": "GetProductionsAll",
         "description": "The whole 'Productions' dataset will be returned. No parameters are needed.",
-        "x-teadal-policies":[{ 
-            "roles":{
-                "value": ["admin","top_management","production_user"],
+        "x-teadal-policies": {
+          "description": "placeholder (TODO fixme)",
+          "policies": [
+            {
+              "roles": {
+                "value": [
+                  "admin",
+                  "top_management",
+                  "production_user"
+                ],
                 "operator": "OR"
+              }
             }
-        }],
+          ]
+        },
         "responses": {
           "200": {
             "description": "Accepted",
@@ -255,12 +281,20 @@
             }
           }
         ],
-        "x-teadal-policies":[{ 
-            "roles":{
-                "value": ["admin","top_management"],
+        "x-teadal-policies": {
+          "description": "placeholder (TODO fixme)",
+          "policies": [
+            {
+              "roles": {
+                "value": [
+                  "admin",
+                  "top_management"
+                ],
                 "operator": "OR"
+              }
             }
-        }],
+          ]
+        },
         "responses": {
           "200": {
             "description": "Accepted",
@@ -297,12 +331,21 @@
         "summary": "Request for all receptions",
         "operationId": "GetReceptionsAll",
         "description": "The whole 'Receptions' dataset will be returned. No parameters are needed.",
-        "x-teadal-policies":[{ 
-            "roles":{
-                "value": ["admin","top_management","logistic_user"],
+        "x-teadal-policies": {
+          "description": "placeholder (TODO fixme)",
+          "policies": [
+            {
+              "roles": {
+                "value": [
+                  "admin",
+                  "top_management",
+                  "logistic_user"
+                ],
                 "operator": "OR"
+              }
             }
-        }],
+          ]
+        },
         "responses": {
           "200": {
             "description": "Accepted",
@@ -347,12 +390,20 @@
             }
           }
         ],
-        "x-teadal-policies":[{ 
-            "roles":{
-                "value": ["admin","top_management"],
+        "x-teadal-policies": {
+          "description": "placeholder (TODO fixme)",
+          "policies": [
+            {
+              "roles": {
+                "value": [
+                  "admin",
+                  "top_management"
+                ],
                 "operator": "OR"
+              }
             }
-        }],
+          ]
+        },
         "responses": {
           "200": {
             "description": "Accepted",
@@ -389,12 +440,21 @@
         "summary": "Request for all sales",
         "operationId": "GetSalesAll",
         "description": "The whole 'Sales' dataset will be returned. No parameters are needed.",
-        "x-teadal-policies":[{ 
-            "roles":{
-                "value": ["admin","top_management","sales_user"],
+        "x-teadal-policies": {
+          "description": "placeholder (TODO fixme)",
+          "policies": [
+            {
+              "roles": {
+                "value": [
+                  "admin",
+                  "top_management",
+                  "sales_user"
+                ],
                 "operator": "OR"
+              }
             }
-        }],
+          ]
+        },
         "responses": {
           "200": {
             "description": "Accepted",
@@ -439,12 +499,20 @@
             }
           }
         ],
-        "x-teadal-policies":[{ 
-            "roles":{
-                "value": ["admin","top_management"],
+        "x-teadal-policies": {
+          "description": "placeholder (TODO fixme)",
+          "policies": [
+            {
+              "roles": {
+                "value": [
+                  "admin",
+                  "top_management"
+                ],
                 "operator": "OR"
+              }
             }
-        }],
+          ]
+        },
         "responses": {
           "200": {
             "description": "Accepted",
@@ -476,12 +544,21 @@
         "summary": "Request for all quality information",
         "operationId": "GetQualityAll",
         "description": "The whole 'Quality' dataset will be returned. No parameters are needed.",
-        "x-teadal-policies":[{ 
-            "roles":{
-                "value": ["admin","top_management","quality_user"],
+        "x-teadal-policies": {
+          "description": "placeholder (TODO fixme)",
+          "policies": [
+            {
+              "roles": {
+                "value": [
+                  "admin",
+                  "top_management",
+                  "quality_user"
+                ],
                 "operator": "OR"
+              }
             }
-        }],
+          ]
+        },
         "responses": {
           "200": {
             "description": "Accepted",
@@ -526,12 +603,20 @@
             }
           }
         ],
-        "x-teadal-policies":[{ 
-            "roles":{
-                "value": ["admin","top_management"],
+        "x-teadal-policies": {
+          "description": "placeholder (TODO fixme)",
+          "policies": [
+            {
+              "roles": {
+                "value": [
+                  "admin",
+                  "top_management"
+                ],
                 "operator": "OR"
+              }
             }
-        }],
+          ]
+        },
         "responses": {
           "200": {
             "description": "Accepted",
