@@ -45,7 +45,7 @@ jwks_tasty_config := {"keys": [rsa_pub_key_jwk]}
 # the private key in its well-known JWKs. It's just annoying for
 # testing as we need to generate an extra object.
 
-generate_tasty_token(payload) := jwt {
+generate_tasty_token(payload) := jwt if {
 	header := {
 		"alg": "RS256",
 		"kid": "k1",
@@ -54,6 +54,6 @@ generate_tasty_token(payload) := jwt {
 	jwt := io.jwt.encode_sign(header, payload, rsa_key_pair_jwk)
 }
 
-make_bearer_auth(jwt) := auth {
+make_bearer_auth(jwt) := auth if {
 	auth := sprintf("Bearer %s", [jwt])
 }

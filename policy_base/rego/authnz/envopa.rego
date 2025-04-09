@@ -8,7 +8,7 @@ import data.authnz.oidc as oidc
 import data.authnz.rbac as rbac
 import input.attributes.request.http as http_request
 
-allow_user(rbac_db, config) {
+allow_user(rbac_db, config) if {
 	print("checking user permissions")
 	print(http_request)
 	payload := oidc.claims(http_request, config)
@@ -22,7 +22,7 @@ allow_user(rbac_db, config) {
 	#rbac.check_roles_permissions(rbac_db, roles, http_request)
 }
 
-allow_role(rbac_db, config) {
+allow_role(rbac_db, config) if {
 	print("checking roles permissions")
 	
 	payload := oidc.claims(http_request, config)

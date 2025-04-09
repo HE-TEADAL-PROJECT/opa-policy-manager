@@ -12,19 +12,19 @@ package authnz.rbac
 import future.keywords.in
 
 # Find all the roles associated to the given user.
-#user_roles(rbac_db, user) := roles {
+#user_roles(rbac_db, user) := roles if {
 #	roles := rbac_db.user_to_roles[user]
 #}
 
 # Find all the permissions associated the the given role.
-role_perms(rbac_db, role) := perms {
+role_perms(rbac_db, role) := perms if {
 	#print(role)
 	#print(rbac_db.role_based_permissions)
 	perms := rbac_db.role_based_permissions[role]
 }
 
 # Find all the permissions associated the the given user.
-user_perms(rbac_db, user) := perms {
+user_perms(rbac_db, user) := perms if {
 	#print("rbacdb")
 	#print(rbac_db)
 	#print("user ", user)
@@ -33,7 +33,7 @@ user_perms(rbac_db, user) := perms {
 }
 
 # Find all the permissions associated the the given user.
-#user_perms(rbac_db, user) := perms {
+#user_perms(rbac_db, user) := perms if {
 #roles := user_roles(rbac_db, user)
 #perm_sets := {rbac_db.role_to_perms[k] | roles[k]}
 #perms := union(perm_sets)
@@ -46,7 +46,7 @@ user_perms(rbac_db, user) := perms {
 # fields. `method` is the HTTP request method whereas `path` is the
 # HTTP request path. Typically, when using the OPA Envoy plugin, you'd
 # pass in `input.attributes.request.http` for the request param.
-check_user_permissions(rbac_db, user, request) {
+check_user_permissions(rbac_db, user, request) if {
 	# check if the user has some rights
 
 	#perm := rbac_db.user_based_permissions[user][_]	
@@ -62,12 +62,12 @@ check_user_permissions(rbac_db, user, request) {
 	regex.match(perm.url_regex, request.path)
 }
 
-check_roles_permissions(rbac_db, roles1, request) {
+check_roles_permissions(rbac_db, roles1, request) if {
 	some rolez in roles1
 	check_role_permissions(rbac_db.role_based_permissions[rolez], request)
 }
 
-check_role_permissions(perms, request) {
+check_role_permissions(perms, request) if {
 	some perm in perms
 	request.method in perm.methods
 	print(perm.url_regex, request.path, regex.match(perm.url_regex, request.path))

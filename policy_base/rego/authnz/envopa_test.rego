@@ -36,7 +36,7 @@ http_request_example := {
 }
 
 
-test_allow_user {
+test_allow_user if {
 
     print(oidc_config.internal_keycloak_jwks_url)
 

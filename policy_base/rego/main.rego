@@ -20,11 +20,11 @@ default allow := false
 
 
 
-allow {
+allow if {
 	 minio.allow
 }
 
-allow {
+allow if {
 	 httpbin.allow
 }
 
