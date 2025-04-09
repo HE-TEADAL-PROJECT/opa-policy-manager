@@ -12,7 +12,7 @@ package authnz.rbac
 import rego.v1
 
 # Find all the roles associated to the given user.
-#user_roles(rbac_db, user) := roles {
+#user_roles(rbac_db, user) := roles if {
 #	roles := rbac_db.user_to_roles[user]
 #}
 
@@ -33,7 +33,7 @@ user_perms(rbac_db, user) := perms if {
 }
 
 # Find all the permissions associated the the given user.
-#user_perms(rbac_db, user) := perms {
+#user_perms(rbac_db, user) := perms if {
 #roles := user_roles(rbac_db, user)
 #perm_sets := {rbac_db.role_to_perms[k] | roles[k]}
 #perms := union(perm_sets)

@@ -5,7 +5,7 @@ import rego.v1
 import data.authnz.http as http
 import data.authnz.rbacdb as rbac_db
 
-#test_role_lookup {
+#test_role_lookup if {
 #	user_roles(rbac_db, "jeejee") == {"product_owner", "product_consumer"}
 #	user_roles(rbac_db, "sebs") == {"product_consumer"}
 #}
