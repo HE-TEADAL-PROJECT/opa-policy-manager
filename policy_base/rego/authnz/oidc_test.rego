@@ -1,5 +1,7 @@
 package authnz.oidc
 
+import rego.v1
+
 test_preferred_token_jwks_url_1 if {
 	want := "http://keycloak/realms/master/protocol/openid-connect/certs"
 	token_payload := {"iss": "http://localhost/keycloak/realms/master"}

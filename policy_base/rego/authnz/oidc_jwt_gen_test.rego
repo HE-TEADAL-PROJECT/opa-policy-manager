@@ -4,6 +4,8 @@
 
 package authnz.oidc
 
+import rego.v1
+
 # RSA keys and JWKs generated on https://mkjwk.org/
 # using the parameters below
 #

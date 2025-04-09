@@ -4,6 +4,8 @@
 #
 package config.oidc
 
+import rego.v1
+
 internal_keycloak_jwks_url := "http://keycloak:8080/keycloak/realms/teadal/protocol/openid-connect/certs"
 
 jwks_preferred_urls := {

@@ -4,6 +4,8 @@
 
 package authnz.http
 
+import rego.v1
+
 # HTTP methods to use for policy definitions.
 get := "GET"
 

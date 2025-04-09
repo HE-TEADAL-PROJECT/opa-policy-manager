@@ -1,5 +1,7 @@
 package authnz.rbac
 
+import rego.v1
+
 import data.authnz.http as http
 import data.authnz.rbacdb as rbac_db
 

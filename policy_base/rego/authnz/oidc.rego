@@ -11,6 +11,8 @@
 
 package authnz.oidc
 
+import rego.v1
+
 # Verify the JWT token and extract its payload. Expect the token to be
 # in the "Authorization" header as a "Bearer" token. Depending on config,
 # either automatically download issuer keys and cache them for a day or
@@ -112,7 +114,7 @@ bearer_token(request) := token if {
 #   url_lookup["https://keycloak.external"] =
 #       http://kc.internal/realms/master/protocol/openid-connect/certs
 # then use this ^ URL to download the JWKS.
-token_jwks(token_payload, url_lookup) = jwks if {
+token_jwks(token_payload, url_lookup) := jwks if {
 	url := preferred_token_jwks_url(token_payload, url_lookup)
 	print(
 		"Downloading JWKS for: ", token_payload.iss,
@@ -125,7 +127,7 @@ token_jwks(token_payload, url_lookup) = jwks if {
 # If there's no preferred URL configured in `url_lookup`, then use the
 # issuer's OIDC well-known config to find out where to download the JWKS
 # from.
-token_jwks(token_payload, url_lookup) = jwks if {
+token_jwks(token_payload, url_lookup) := jwks if {
 	not preferred_token_jwks_url(token_payload, url_lookup)
 
 	print(
@@ -149,7 +151,7 @@ preferred_token_jwks_url(token_payload, url_lookup) := url if {
 
 # Use `token_payload.iss` as a base URL to build the well-known OIDC
 # config URL.
-token_issuer_config_url(token_payload) = url if {
+token_issuer_config_url(token_payload) := url if {
 	not endswith(token_payload.iss, "/")
 	config_path := ".well-known/openid-configuration"
 	url := concat("/", [token_payload.iss, config_path])
@@ -157,7 +159,7 @@ token_issuer_config_url(token_payload) = url if {
 
 # Use `token_payload.iss` as a base URL to build the well-known OIDC
 # config URL.
-token_issuer_config_url(token_payload) = url if {
+token_issuer_config_url(token_payload) := url if {
 	endswith(token_payload.iss, "/")
 	config_path := ".well-known/openid-configuration"
 	url := concat("", [token_payload.iss, config_path])

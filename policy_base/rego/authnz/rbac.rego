@@ -9,7 +9,7 @@
 
 package authnz.rbac
 
-import future.keywords.in
+import rego.v1
 
 # Find all the roles associated to the given user.
 #user_roles(rbac_db, user) := roles if {
@@ -49,7 +49,7 @@ user_perms(rbac_db, user) := perms if {
 check_user_permissions(rbac_db, user, request) if {
 	# check if the user has some rights
 
-	#perm := rbac_db.user_based_permissions[user][_]	
+	#perm := rbac_db.user_based_permissions[user][_]
 	#perm.methods[_] == request.method
 	#print(perm.url_regex, request.path, regex.match(perm.url_regex, request.path))
 	#regex.match(perm.url_regex, request.path)

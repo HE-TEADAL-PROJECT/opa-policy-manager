@@ -4,6 +4,8 @@
 
 package authnz.config
 
+import rego.v1
+
 #
 # The name of the JWT field containing the user handle. You set this value
 # to tell `authnz` which token payload field contains the user handle. The
