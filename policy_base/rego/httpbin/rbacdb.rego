@@ -7,63 +7,57 @@
 
 package httpbin.rbacdb
 
-import data.authnz.http as http
+import rego.v1
 
+import data.authnz.http as http
 
 # Role defs.
 # example researchers := "researchers"
 role1 := "doctors"
+
 role2 := "researchers"
 
 # User defs
 # example jeejee := "jeejee@teadal.eu"
 user1 := "jeejee@teadal.eu"
+
 user2 := "sebs@teadal.eu"
-
-
-
 
 # Map each role to a list of permission objects.
 # Each permission object specifies a set of allowed HTTP methods for
 # the Web resources identified by the URLs matching the given regex.
 role_based_permissions := {
 	role1: [
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/httpbin/basic-auth/{user}/{passwd}/.*"
- 	 },
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/httpbin/base64/{value}/.*"
- 	 },
- 	],
+		{
+			"methods": http.read,
+			"url_regex": "^/httpbin/basic-auth/{user}/{passwd}/.*",
+		},
+		{
+			"methods": http.read,
+			"url_regex": "^/httpbin/base64/{value}/.*",
+		},
+	],
 	role2: [
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/httpbin/basic-auth/{user}/{passwd}/.*"
- 	 },
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/httpbin/anything/.*"
- 	 },
- 	],
-
+		{
+			"methods": http.read,
+			"url_regex": "^/httpbin/basic-auth/{user}/{passwd}/.*",
+		},
+		{
+			"methods": http.read,
+			"url_regex": "^/httpbin/anything/.*",
+		},
+	],
 }
 
 user_based_permissions := {
-	user1: [
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/httpbin/bearer/.*"
- 	 },
- 	],
-	user2: [
- 	 { 
- 	 	 "methods": http.read, 
- 	 	 "url_regex": "^/httpbin/brotli/.*"
- 	 },
- 	],
-
+	user1: [{
+		"methods": http.read,
+		"url_regex": "^/httpbin/bearer/.*",
+	}],
+	user2: [{
+		"methods": http.read,
+		"url_regex": "^/httpbin/brotli/.*",
+	}],
 }
 
 ## permissions Example

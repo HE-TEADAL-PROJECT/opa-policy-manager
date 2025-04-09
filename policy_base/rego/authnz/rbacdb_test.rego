@@ -4,6 +4,8 @@
 
 package authnz.rbacdb
 
+import rego.v1
+
 import data.authnz.http as http
 
 # Role defs.

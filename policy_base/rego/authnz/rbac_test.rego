@@ -1,5 +1,7 @@
 package authnz.rbac
 
+import rego.v1
+
 import data.authnz.http as http
 import data.authnz.rbacdb as rbac_db
 
@@ -8,7 +10,7 @@ import data.authnz.rbacdb as rbac_db
 #	user_roles(rbac_db, "sebs") == {"product_consumer"}
 #}
 
-test_role_perms {
+test_role_perms if {
 	role_perms(rbac_db, "researchers") == [
 		{
 			"methods": http.read,
@@ -31,7 +33,7 @@ test_role_perms {
 	]
 }
 
-test_user_perms {
+test_user_perms if {
 	user_perms(rbac_db, "jeejee@teadal.eu") == [{
 		"methods": http.read,
 		"url_regex": "^/httpbin/bearer/.*",
@@ -42,7 +44,7 @@ test_user_perms {
 	}]
 }
 
-assert_user_can_do_anything_on_path(user, path) {
+assert_user_can_do_anything_on_path(user, path) if {
 	check_user_permissions(rbac_db, user, {"method": "GET", "path": path})
 	check_user_permissions(rbac_db, user, {"method": "HEAD", "path": path})
 	check_user_permissions(rbac_db, user, {"method": "OPTIONS", "path": path})
@@ -54,7 +56,7 @@ assert_user_can_do_anything_on_path(user, path) {
 	check_user_permissions(rbac_db, user, {"method": "TRACE", "path": path})
 }
 
-assert_role_can_do_anything_on_path(roles, path) {
+assert_role_can_do_anything_on_path(roles, path) if {
 	check_roles_permissions(rbac_db, roles, {"method": "GET", "path": path})
 	check_roles_permissions(rbac_db, roles, {"method": "HEAD", "path": path})
 	check_roles_permissions(rbac_db, roles, {"method": "OPTIONS", "path": path})
@@ -66,7 +68,7 @@ assert_role_can_do_anything_on_path(roles, path) {
 	check_roles_permissions(rbac_db, roles, {"method": "TRACE", "path": path})
 }
 
-assert_user_can_only_read_path(user, path) {
+assert_user_can_only_read_path(user, path) if {
 	check_user_permissions(rbac_db, user, {"method": "GET", "path": path})
 	check_user_permissions(rbac_db, user, {"method": "HEAD", "path": path})
 	check_user_permissions(rbac_db, user, {"method": "OPTIONS", "path": path})
@@ -78,7 +80,7 @@ assert_user_can_only_read_path(user, path) {
 	not check_user_permissions(rbac_db, user, {"method": "TRACE", "path": path})
 }
 
-assert_role_can_only_read_path(roles, path) {
+assert_role_can_only_read_path(roles, path) if {
 	check_roles_permissions(rbac_db, roles, {"method": "GET", "path": path})
 	check_roles_permissions(rbac_db, roles, {"method": "HEAD", "path": path})
 	check_roles_permissions(rbac_db, roles, {"method": "OPTIONS", "path": path})
@@ -90,7 +92,7 @@ assert_role_can_only_read_path(roles, path) {
 	not check_roles_permissions(rbac_db, roles, {"method": "TRACE", "path": path})
 }
 
-tet_check_perms {
+tet_check_perms if {
 	#assert_user_can_do_anything_on_path("jeejee@teadal.eu", "/httpbin/anything/")
 	#assert_user_can_only_read_path("sebs@teadal.eu", "/httpbin/brotli/")
 	#assert_role_can_do_anything_on_path(["doctors"], "/anything/")

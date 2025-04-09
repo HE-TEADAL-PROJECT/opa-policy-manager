@@ -12,22 +12,20 @@
 
 package teadal
 
+import rego.v1
 
-import data.minio.service as minio
 import data.httpbin.service as httpbin
+import data.minio.service as minio
 
 default allow := false
 
-
-
-allow {
-	 minio.allow
+allow if {
+	minio.allow
 }
 
-allow {
-	 httpbin.allow
+allow if {
+	httpbin.allow
 }
-
 
 # NOTE. These two policies are mutually exclusive. In fact, the
 # httpbin policy denies access if request path doesn't start with
