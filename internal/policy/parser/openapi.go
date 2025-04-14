@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"dspn-regogenerator/policy"
+	"dspn-regogenerator/internal/policy"
 	"fmt"
 	"os"
 

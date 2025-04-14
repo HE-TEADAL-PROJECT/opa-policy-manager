@@ -1,7 +1,7 @@
 package policy_test
 
 import (
-	"dspn-regogenerator/policy"
+	"dspn-regogenerator/internal/policy"
 	"testing"
 )
 

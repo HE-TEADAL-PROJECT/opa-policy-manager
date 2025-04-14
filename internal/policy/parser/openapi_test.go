@@ -1,7 +1,7 @@
 package parser_test
 
 import (
-	"dspn-regogenerator/policy/parser"
+	"dspn-regogenerator/internal/policy/parser"
 	"os"
 	"strings"
 	"testing"
