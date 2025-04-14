@@ -3,6 +3,8 @@ package main
 import (
 	"dspn-regogenerator/commands"
 	"dspn-regogenerator/config"
+	"dspn-regogenerator/internal/generator"
+	"dspn-regogenerator/internal/policy/parser"
 	"fmt"
 	"os"
 
@@ -47,8 +49,29 @@ func main() {
 		Use:   "add",
 		Short: "Add policies related to a service",
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.GenerateRegoFilesCmd(serviceName, openAPISpec)
-			commands.GenerateBundleCmd(serviceName)
+			outputDir := "./output/bundletest"
+			spec, err := loadBundle(openAPISpec)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error loading bundle: %v\n", err)
+				os.Exit(1)
+			}
+			policies, err := parser.ParseOpenAPIPolicies(spec)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error parsing OpenAPI policies: %v\n", err)
+				os.Exit(1)
+			}
+			IAMprovider, err := parser.ParseOpenAPIIAM(spec)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error parsing OpenAPI IAM: %v\n", err)
+				os.Exit(1)
+			}
+			err = generator.GenerateServiceFolder(serviceName, outputDir, *IAMprovider, policies)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error generating service folder: %v\n", err)
+				os.Exit(1)
+			}
+			generator.GenerateStaticFolders(outputDir)
+			fmt.Printf("Service folder generated successfully at %s\n", outputDir)
 		},
 	}
 	addServicePolicyCmd.Flags().StringVar(&serviceName, "service_name", "", "Name of the service (required)")
