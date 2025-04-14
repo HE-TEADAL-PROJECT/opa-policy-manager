@@ -6,6 +6,12 @@ import (
 	"os"
 
 	"github.com/pb33f/libopenapi"
+	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+)
+
+const (
+	XTeadalPoliciesKey = "x-teadal-policies"
+	XTeadalIAMKey      = "x-teadal-IAM-provider"
 )
 
 type XTeadalPolicies struct {
@@ -16,17 +22,9 @@ type XTeadalPolicies struct {
 type StructuredPolicies = policy.GeneralPolicies
 
 func ParseOpenAPIPolicies(specByteArray []byte) (*StructuredPolicies, error) {
-	// Parsing and creating the document model
-	document, err := libopenapi.NewDocument(specByteArray)
+	docModel, err := getDocumentFromData(specByteArray)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse OpenAPI spec: %v", err)
-	}
-	docModel, errors := document.BuildV3Model()
-	if len(errors) > 0 {
-		for i := range errors {
-			fmt.Printf("error: %e\n", errors[i])
-		}
-		panic(fmt.Sprintf("cannot create v3 model from document: %d errors reported", len(errors)))
 	}
 
 	result := policy.NewGeneralPolicies()
@@ -113,4 +111,54 @@ func ParseOpenAPIPolicies(specByteArray []byte) (*StructuredPolicies, error) {
 	}
 
 	return result, nil
+}
+
+func ParseOpenAPIIAM(specByteArray []byte) (*string, error) {
+	docModel, err := getDocumentFromData(specByteArray)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse OpenAPI spec: %v", err)
+	}
+	// Check if the document has any security requirements
+	if docModel.Model.Components.SecuritySchemes.Len() == 0 {
+		return nil, fmt.Errorf("no security requirements found in OpenAPI spec")
+	}
+	if docModel.Model.Components.SecuritySchemes.Len() > 1 {
+		fmt.Fprintf(os.Stderr, "Warning: multiple security requirements found in OpenAPI spec\n")
+	}
+	securityTag := docModel.Model.Components.SecuritySchemes.First()
+	for securityTag != nil && securityTag.Key() != "bearerAuth" {
+		securityTag = securityTag.Next()
+	}
+	if securityTag == nil {
+		return nil, fmt.Errorf("bearerAuth security requirement not found in OpenAPI spec")
+	}
+	// Decode the security requirement value
+	exts := securityTag.Value().Extensions.First()
+	for exts != nil && exts.Key() != XTeadalIAMKey {
+		exts = exts.Next()
+	}
+	if exts == nil {
+		return nil, fmt.Errorf(XTeadalIAMKey + "extension not found in bearerAuth security requirement")
+	}
+	url := ""
+	err = exts.Value().Decode(&url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode value for bearerAuth security requirement: %v", err)
+	}
+	return &url, nil
+}
+
+func getDocumentFromData(specByteArray []byte) (*libopenapi.DocumentModel[v3.Document], error) {
+	document, err := libopenapi.NewDocument(specByteArray)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse OpenAPI spec: %v", err)
+	}
+	docModel, errors := document.BuildV3Model()
+	if len(errors) > 0 {
+		for i := range errors {
+			fmt.Printf("error: %e\n", errors[i])
+		}
+		panic(fmt.Sprintf("cannot create v3 model from document: %d errors reported", len(errors)))
+	}
+	return docModel, nil
 }

@@ -85,3 +85,23 @@ func TestParseOpenAPISpecializedPathMethodConditions(t *testing.T) {
 		t.Errorf("Expected specialized path /anything, got %v", el)
 	}
 }
+
+func TestParsing(t *testing.T) {
+	cwd, _ := os.Getwd()
+	cwd = strings.Split(cwd, "/policy")[0]
+	os.Chdir(cwd)
+	file, err := os.ReadFile("./testdata/schemas/httpbin-api.json")
+	if err != nil {
+		t.Fatalf("Failed to read OpenAPI file: %v", err)
+	}
+	url, err := parser.ParseOpenAPIIAM(file)
+	if err != nil {
+		t.Fatalf("Failed to parse OpenAPI file: %v", err)
+	}
+	if url == nil {
+		t.Fatalf("Expected non-nil result, got nil")
+	}
+	if *url != "http://localhost/keycloak/realms/master/.well-known/openid-configuration" {
+		t.Errorf("Expected URL http://localhost/keycloak/realms/master/.well-known/openid-configuration, got %s", *url)
+	}
+}
