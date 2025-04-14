@@ -1,8 +1,8 @@
 package parser_test
 
 import (
+	"dspn-regogenerator/policy/parser"
 	"os"
-	"policy/policy/parser"
 	"strings"
 	"testing"
 )
@@ -17,7 +17,7 @@ func TestParseOpenAPIPathsConditions(t *testing.T) {
 		t.Fatalf("Failed to read OpenAPI file: %v", err)
 	}
 	// Parse the OpenAPI document
-	r, err := parser.ParseOpenAPI(file)
+	r, err := parser.ParseOpenAPIPolicies(file)
 	if err != nil {
 		t.Fatalf("Failed to parse OpenAPI file: %v", err)
 	}
@@ -47,7 +47,7 @@ func TestParseOpenAPISpecializedPathConditions(t *testing.T) {
 		t.Fatalf("Failed to read OpenAPI file: %v", err)
 	}
 	// Parse the OpenAPI document
-	r, err := parser.ParseOpenAPI(file)
+	r, err := parser.ParseOpenAPIPolicies(file)
 	if err != nil {
 		t.Fatalf("Failed to parse OpenAPI file: %v", err)
 	}
@@ -71,7 +71,7 @@ func TestParseOpenAPISpecializedPathMethodConditions(t *testing.T) {
 		t.Fatalf("Failed to read OpenAPI file: %v", err)
 	}
 	// Parse the OpenAPI document
-	r, err := parser.ParseOpenAPI(file)
+	r, err := parser.ParseOpenAPIPolicies(file)
 	if err != nil {
 		t.Fatalf("Failed to parse OpenAPI file: %v", err)
 	}

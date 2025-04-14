@@ -1,9 +1,9 @@
 package parser
 
 import (
+	"dspn-regogenerator/policy"
 	"fmt"
 	"os"
-	"policy/policy"
 
 	"github.com/pb33f/libopenapi"
 )
@@ -15,7 +15,7 @@ type XTeadalPolicies struct {
 
 type StructuredPolicies = policy.GeneralPolicies
 
-func ParseOpenAPI(specByteArray []byte) (*StructuredPolicies, error) {
+func ParseOpenAPIPolicies(specByteArray []byte) (*StructuredPolicies, error) {
 	// Parsing and creating the document model
 	document, err := libopenapi.NewDocument(specByteArray)
 	if err != nil {
