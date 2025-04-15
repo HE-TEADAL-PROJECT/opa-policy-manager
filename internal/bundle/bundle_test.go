@@ -6,6 +6,7 @@ import (
 	"dspn-regogenerator/internal/bundle"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/minio/minio-go/v7"
@@ -251,5 +252,42 @@ default allow = false
 	}
 	if len(b.Modules) != 1 {
 		t.Fatalf("Expected bundle to contain 1 module, got %d", len(b.Modules))
+	}
+}
+
+func TestListBundleDirectories(t *testing.T) {
+	// Create rego directory in temp
+	tempDir := t.TempDir()
+	mainDir := "rego"
+	if err := os.Mkdir(filepath.Join(tempDir, mainDir), 0755); err != nil {
+		t.Fatalf("Failed to create rego directory: %v", err)
+	}
+	if err := os.Mkdir(filepath.Join(tempDir, mainDir, "serviceA"), 0755); err != nil {
+		t.Fatalf("Failed to create rego/serviceA")
+	}
+
+	// Create example rego file
+	mainFile := filepath.Join(tempDir, mainDir, "main.rego")
+	policyFile := filepath.Join(tempDir, mainDir, "serviceA", "example.rego")
+	if err := os.WriteFile(mainFile, []byte(`package main
+default allow = false`), 0644); err != nil {
+		t.Fatalf("Failed to create policy file: %v", err)
+	}
+	if err := os.WriteFile(policyFile, []byte(`package example
+default allow = false`), 0644); err != nil {
+		t.Fatalf("Failed to create policy file: %v", err)
+	}
+
+	b, err := bundle.BuildBundle(tempDir, mainDir)
+	if err != nil {
+		t.Fatalf("Failed to build bundle: %v", err)
+	}
+
+	dirs := bundle.ListBundleFiles(b)
+	if len(dirs) != 2 {
+		t.Errorf("Expected only 2 element in the list, got %d", len(dirs))
+	}
+	if !slices.Contains(dirs, "main.rego") || !slices.Contains(dirs, "serviceA/example.rego") {
+		t.Errorf("Expected to contain \"main.rego\" and \"serviceA/example.rego\", got %v", dirs)
 	}
 }

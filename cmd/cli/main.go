@@ -8,6 +8,7 @@ import (
 	"dspn-regogenerator/internal/policy/parser"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -96,23 +97,19 @@ func main() {
 		Use:   "list",
 		Short: "Add policies related to a service",
 		Run: func(cmd *cobra.Command, args []string) {
-			/* if serviceList, err := commands.ListServicePolicies(); err != nil {
-				fmt.Println("Error", err)
-				os.Exit(1)
-			} else {
-				fmt.Println("List of registered services with policies")
-				for service := range serviceList {
-					fmt.Println(serviceList[service])
-				}
-			} */
-			bundle, err := bundle.LoadBundleFromMinio(config.Config.BundleFileName)
+			b, err := bundle.LoadBundleFromMinio(config.Config.BundleFileName)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error loading bundle from Minio: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Println(bundle.Manifest.Roots)
-			for _, file := range bundle.Modules {
-				fmt.Println(file.Path)
+			files := bundle.ListBundleFiles(b)
+			services := map[string]struct{}{}
+			fmt.Println("services available")
+			for _, f := range files {
+				services[filepath.Dir(f)] = struct{}{}
+			}
+			for k := range services {
+				fmt.Println(k)
 			}
 		},
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -17,7 +18,9 @@ import (
 // It uses the OPA compiler to compile the bundle and returns the compiled bundle.
 func BuildBundle(bundleDir string, mainDir string) (*bundle.Bundle, error) {
 	// Create a new compiler
-	compiler := compile.New().WithAsBundle(true).WithFS(os.DirFS(bundleDir)).WithPaths(mainDir)
+	compiler := compile.New().WithAsBundle(true).WithFS(os.DirFS(bundleDir)).WithPaths(mainDir).WithMetadata(&map[string]interface{}{
+		"main": mainDir,
+	}).WithRoots(mainDir)
 
 	// Compile the directory
 	if err := compiler.Build(context.Background()); err != nil {
@@ -123,4 +126,20 @@ func LoadBundleFromMinio(bundleFileName string) (*bundle.Bundle, error) {
 	}
 
 	return &b, nil
+}
+
+func ListBundleFiles(b *bundle.Bundle) []string {
+	dirs := make([]string, 0)
+	mainDir, ok := b.Manifest.Metadata["main"].(string)
+	if !ok {
+		for _, mod := range b.Modules {
+			dirs = append(dirs, mod.Path)
+		}
+		return dirs
+	}
+	// List the directories in the bundle
+	for _, mod := range b.Modules {
+		dirs = append(dirs, strings.Split(mod.Path, mainDir+"/")[1])
+	}
+	return dirs
 }
