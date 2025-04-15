@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 
+	opabundle "github.com/open-policy-agent/opa/v1/bundle"
+
 	"github.com/spf13/cobra"
 )
 
@@ -51,9 +53,10 @@ func main() {
 		Use:   "add",
 		Short: "Add policies related to a service",
 		Run: func(cmd *cobra.Command, args []string) {
-			outputDir := "./output"
+			outputDir, _ := filepath.Abs("./output")
+			bundleDir, _ := os.MkdirTemp(outputDir, "bundle*")
 			mainDir := "rego"
-			policyDir := outputDir + mainDir
+			regoOutput := filepath.Join(bundleDir, mainDir)
 			spec, err := loadBundle(openAPISpec)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error loading bundle: %v\n", err)
@@ -69,17 +72,20 @@ func main() {
 				fmt.Fprintf(os.Stderr, "Error parsing OpenAPI IAM: %v\n", err)
 				os.Exit(1)
 			}
-			err = generator.GenerateServiceFolder(serviceName, policyDir, *IAMprovider, policies)
+			err = generator.GenerateServiceFolder(serviceName, regoOutput, *IAMprovider, policies)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error generating service folder: %v\n", err)
 				os.Exit(1)
 			}
-			generator.GenerateStaticFolders(policyDir)
+			generator.GenerateStaticFolders(regoOutput)
 			fmt.Printf("Service folder generated successfully at %s\n", outputDir)
-			b, err := bundle.BuildBundle(outputDir, outputDir)
+			b, err := bundle.BuildBundle(bundleDir, mainDir)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error building bundle: %v\n", err)
 				os.Exit(1)
+			}
+			for _, mod := range b.Modules {
+				fmt.Println("Module path:", mod.Path)
 			}
 			err = bundle.WriteBundleToFile(b, outputDir+"/bundle.tar.gz")
 			if err != nil {
@@ -93,14 +99,25 @@ func main() {
 	addServicePolicyCmd.MarkFlagRequired("service_name")
 	addServicePolicyCmd.MarkFlagRequired("openAPIspec")
 
+	var localPath = ""
 	var ListServicePoliciesCmd = &cobra.Command{
 		Use:   "list",
 		Short: "Add policies related to a service",
 		Run: func(cmd *cobra.Command, args []string) {
-			b, err := bundle.LoadBundleFromMinio(config.Config.BundleFileName)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error loading bundle from Minio: %v\n", err)
-				os.Exit(1)
+			var b = new(opabundle.Bundle)
+			var err error
+			if localPath != "" {
+				b, err = bundle.LoadBundleFromFile(localPath)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error loading bundle from local path: %v\n", err)
+					os.Exit(1)
+				}
+			} else {
+				b, err = bundle.LoadBundleFromMinio(config.Config.BundleFileName)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error loading bundle from Minio: %v\n", err)
+					os.Exit(1)
+				}
 			}
 			files := bundle.ListBundleFiles(b)
 			services := map[string]struct{}{}
@@ -113,6 +130,7 @@ func main() {
 			}
 		},
 	}
+	ListServicePoliciesCmd.Flags().StringVar(&localPath, "local-path", "", "")
 
 	var DeleteServicePolicyCmd = &cobra.Command{
 		Use:   "delete",

@@ -39,7 +39,7 @@ func WriteBundleToFile(b *bundle.Bundle, outputFilePath string) error {
 	if err != nil {
 		return fmt.Errorf("write bundle: failed to open file %w", err)
 	}
-	bundle.NewWriter(file).Write(*b)
+	bundle.NewWriter(file).UseModulePath(true).Write(*b)
 	return nil
 }
 
