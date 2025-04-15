@@ -3,6 +3,7 @@ package main
 import (
 	"dspn-regogenerator/commands"
 	"dspn-regogenerator/config"
+	"dspn-regogenerator/internal/bundle"
 	"dspn-regogenerator/internal/generator"
 	"dspn-regogenerator/internal/policy/parser"
 	"fmt"
@@ -72,6 +73,16 @@ func main() {
 			}
 			generator.GenerateStaticFolders(outputDir)
 			fmt.Printf("Service folder generated successfully at %s\n", outputDir)
+			b, err := bundle.BuildBundle(outputDir, outputDir)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error building bundle: %v\n", err)
+				os.Exit(1)
+			}
+			err = bundle.WriteBundleToFile(b, outputDir+"/bundle.tar.gz")
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error writing bundle to file: %v\n", err)
+				os.Exit(1)
+			}
 		},
 	}
 	addServicePolicyCmd.Flags().StringVar(&serviceName, "service_name", "", "Name of the service (required)")
