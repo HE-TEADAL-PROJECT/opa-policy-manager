@@ -128,6 +128,36 @@ func LoadBundleFromMinio(bundleFileName string) (*bundle.Bundle, error) {
 	return &b, nil
 }
 
+func CheckBundleFileExists(bundleFileName string) (bool, error) {
+	// Check if the file exists
+	client, err := minio.New(config.Config.Minio_Server, &minio.Options{
+		Creds: credentials.NewStaticV4(config.Config.Minio_Access_Key, config.Config.Minio_Secret_Key, "")})
+	if err != nil {
+		return false, fmt.Errorf("load bundle: failed to create minio client %w", err)
+	}
+
+	// Check if the object exists in the bucket
+	exists, err := client.BucketExists(context.Background(), config.Config.Bucket_Name)
+	if err != nil {
+		return false, fmt.Errorf("load bundle: failed to check if bucket exists %w", err)
+	}
+	if !exists {
+		return false, fmt.Errorf("load bundle: bucket %s does not exist", config.Config.Bucket_Name)
+	}
+	// Check if the object exists in the bucket
+	objectInfo, err := client.StatObject(context.Background(), config.Config.Bucket_Name, bundleFileName, minio.StatObjectOptions{})
+	if err != nil {
+		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
+			return false, nil // Object does not exist
+		}
+		return false, fmt.Errorf("load bundle: failed to check if object exists %w", err)
+	}
+	if objectInfo.Size == 0 {
+		return false, fmt.Errorf("load bundle: object %s is empty", bundleFileName)
+	}
+	return true, nil // Object exists
+}
+
 func ListBundleFiles(b *bundle.Bundle) []string {
 	dirs := make([]string, 0)
 	mainDir, ok := b.Manifest.Metadata["main"].(string)

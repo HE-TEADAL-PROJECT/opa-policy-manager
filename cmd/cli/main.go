@@ -53,44 +53,50 @@ func main() {
 		Use:   "add",
 		Short: "Add policies related to a service",
 		Run: func(cmd *cobra.Command, args []string) {
-			outputDir, _ := filepath.Abs("./output")
-			bundleDir, _ := os.MkdirTemp(outputDir, "bundle*")
-			mainDir := "rego"
-			regoOutput := filepath.Join(bundleDir, mainDir)
-			spec, err := loadBundle(openAPISpec)
+			exists, err := bundle.CheckBundleFileExists(config.Config.BundleFileName)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error loading bundle: %v\n", err)
+				fmt.Fprintf(os.Stderr, "Error checking if service exists: %v\n", err)
 				os.Exit(1)
 			}
-			policies, err := parser.ParseOpenAPIPolicies(spec)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error parsing OpenAPI policies: %v\n", err)
-				os.Exit(1)
-			}
-			IAMprovider, err := parser.ParseOpenAPIIAM(spec)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error parsing OpenAPI IAM: %v\n", err)
-				os.Exit(1)
-			}
-			err = generator.GenerateServiceFolder(serviceName, regoOutput, *IAMprovider, policies)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error generating service folder: %v\n", err)
-				os.Exit(1)
-			}
-			generator.GenerateStaticFolders(regoOutput)
-			fmt.Printf("Service folder generated successfully at %s\n", outputDir)
-			b, err := bundle.BuildBundle(bundleDir, mainDir)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error building bundle: %v\n", err)
-				os.Exit(1)
-			}
-			for _, mod := range b.Modules {
-				fmt.Println("Module path:", mod.Path)
-			}
-			err = bundle.WriteBundleToFile(b, outputDir+"/bundle.tar.gz")
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error writing bundle to file: %v\n", err)
-				os.Exit(1)
+			if !exists {
+				outputDir, _ := filepath.Abs("./output")
+				bundleDir, _ := os.MkdirTemp(outputDir, "bundle*")
+				mainDir := "rego"
+				regoOutput := filepath.Join(bundleDir, mainDir)
+				spec, err := loadBundle(openAPISpec)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error loading bundle: %v\n", err)
+					os.Exit(1)
+				}
+				policies, err := parser.ParseOpenAPIPolicies(spec)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error parsing OpenAPI policies: %v\n", err)
+					os.Exit(1)
+				}
+				IAMprovider, err := parser.ParseOpenAPIIAM(spec)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error parsing OpenAPI IAM: %v\n", err)
+					os.Exit(1)
+				}
+				err = generator.GenerateServiceFolder(serviceName, regoOutput, *IAMprovider, policies)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error generating service folder: %v\n", err)
+					os.Exit(1)
+				}
+				generator.GenerateStaticFolders(regoOutput)
+				fmt.Printf("Service folder generated successfully at %s\n", outputDir)
+				b, err := bundle.BuildBundle(bundleDir, mainDir)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error building bundle: %v\n", err)
+					os.Exit(1)
+				}
+				err = bundle.WriteBundleToMinio(b, config.Config.BundleFileName)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error writing bundle to minio: %v\n", err)
+					os.Exit(1)
+				}
+			} else {
+				fmt.Println("Service already exists in the bundle.")
 			}
 		},
 	}
