@@ -18,8 +18,10 @@ func TestBuildBundle(t *testing.T) {
 	// Create a temporary directory for the test
 	tempDir := t.TempDir()
 
+	mainDir := "rego"
+
 	// Create a mock bundle directory with a sample policy file
-	bundleDir := filepath.Join(tempDir, "bundle")
+	bundleDir := filepath.Join(tempDir, mainDir)
 	err := os.Mkdir(bundleDir, 0755)
 	if err != nil {
 		t.Fatalf("Failed to create bundle directory: %v", err)
@@ -34,13 +36,19 @@ func TestBuildBundle(t *testing.T) {
 	}
 
 	// Call BuildBundle
-	b, err := bundle.BuildBundle(bundleDir, tempDir)
+	b, err := bundle.BuildBundle(tempDir, mainDir)
 	if err != nil {
 		t.Fatalf("Failed to build bundle: %v", err)
 	}
 	// Verify the bundle is not nil
 	if b == nil {
 		t.Fatal("Expected a non-nil bundle")
+	}
+	if len(b.Modules) != 1 {
+		t.Fatalf("Expected bundle to contain 1 module, got %d", len(b.Modules))
+	}
+	if b.Modules[0].Path != "rego/example.rego" {
+		t.Fatalf("Expected module path to be 'rego/example.rego', got '%s'", b.Modules[0].Path)
 	}
 }
 

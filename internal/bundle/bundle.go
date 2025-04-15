@@ -5,7 +5,6 @@ import (
 	"dspn-regogenerator/config"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"github.com/minio/minio-go/v7"
@@ -16,13 +15,13 @@ import (
 
 // BuildBundle compiles the bundle from the given directory and returns it as a bundle object.
 // It uses the OPA compiler to compile the bundle and returns the compiled bundle.
-func BuildBundle(bundleDir, outputDir string) (*bundle.Bundle, error) {
+func BuildBundle(bundleDir string, mainDir string) (*bundle.Bundle, error) {
 	// Create a new compiler
-	compiler := compile.New().WithAsBundle(true).WithPaths(bundleDir)
+	compiler := compile.New().WithAsBundle(true).WithFS(os.DirFS(bundleDir)).WithPaths(mainDir)
 
 	// Compile the directory
 	if err := compiler.Build(context.Background()); err != nil {
-		log.Fatalf("Failed to compile: %v", err)
+		return nil, fmt.Errorf("build bundle: failed to compile %s (mainDir %s): %w", bundleDir, mainDir, err)
 	}
 
 	// Access the compiled bundle

@@ -50,7 +50,9 @@ func main() {
 		Use:   "add",
 		Short: "Add policies related to a service",
 		Run: func(cmd *cobra.Command, args []string) {
-			outputDir := "./output/bundletest"
+			outputDir := "./output"
+			mainDir := "rego"
+			policyDir := outputDir + mainDir
 			spec, err := loadBundle(openAPISpec)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error loading bundle: %v\n", err)
@@ -66,12 +68,12 @@ func main() {
 				fmt.Fprintf(os.Stderr, "Error parsing OpenAPI IAM: %v\n", err)
 				os.Exit(1)
 			}
-			err = generator.GenerateServiceFolder(serviceName, outputDir, *IAMprovider, policies)
+			err = generator.GenerateServiceFolder(serviceName, policyDir, *IAMprovider, policies)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error generating service folder: %v\n", err)
 				os.Exit(1)
 			}
-			generator.GenerateStaticFolders(outputDir)
+			generator.GenerateStaticFolders(policyDir)
 			fmt.Printf("Service folder generated successfully at %s\n", outputDir)
 			b, err := bundle.BuildBundle(outputDir, outputDir)
 			if err != nil {
@@ -94,7 +96,7 @@ func main() {
 		Use:   "list",
 		Short: "Add policies related to a service",
 		Run: func(cmd *cobra.Command, args []string) {
-			if serviceList, err := commands.ListServicePolicies(); err != nil {
+			/* if serviceList, err := commands.ListServicePolicies(); err != nil {
 				fmt.Println("Error", err)
 				os.Exit(1)
 			} else {
@@ -102,8 +104,16 @@ func main() {
 				for service := range serviceList {
 					fmt.Println(serviceList[service])
 				}
+			} */
+			bundle, err := bundle.LoadBundleFromMinio(config.Config.BundleFileName)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error loading bundle from Minio: %v\n", err)
+				os.Exit(1)
 			}
-
+			fmt.Println(bundle.Manifest.Roots)
+			for _, file := range bundle.Modules {
+				fmt.Println(file.Path)
+			}
 		},
 	}
 
