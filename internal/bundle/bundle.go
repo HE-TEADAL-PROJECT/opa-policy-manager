@@ -14,6 +14,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/compile"
 )
 
+// BuildBundle compiles the bundle from the given directory and returns it as a bundle object.
+// It uses the OPA compiler to compile the bundle and returns the compiled bundle.
 func BuildBundle(bundleDir, outputDir string) (*bundle.Bundle, error) {
 	// Create a new compiler
 	compiler := compile.New().WithAsBundle(true).WithPaths(bundleDir)
@@ -27,9 +29,11 @@ func BuildBundle(bundleDir, outputDir string) (*bundle.Bundle, error) {
 	return compiler.Bundle(), nil
 }
 
-func WriteBundleToFile(b *bundle.Bundle, outputDir string) error {
+// WriteBundleToFile writes the bundle to a file in the specified output file path.
+// It overwrites the file if it already exists, truncating it to zero length.
+func WriteBundleToFile(b *bundle.Bundle, outputFilePath string) error {
 	// Write the bundle to a file
-	file, err := os.OpenFile(outputDir, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	file, err := os.OpenFile(outputFilePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("write bundle: failed to open file %w", err)
 	}
@@ -37,6 +41,7 @@ func WriteBundleToFile(b *bundle.Bundle, outputDir string) error {
 	return nil
 }
 
+// LoadBundleFromFile reads the bundle from the specified file path and returns it as a bundle object.
 func LoadBundleFromFile(filePath string) (*bundle.Bundle, error) {
 	// Open the bundle file
 	file, err := os.Open(filePath)
@@ -55,7 +60,10 @@ func LoadBundleFromFile(filePath string) (*bundle.Bundle, error) {
 	return &b, nil
 }
 
-func WriteBundleToMinio(b *bundle.Bundle) error {
+// WriteBundleToMinio writes the bundle to MinIO using the MinIO client.
+// It creates a new bucket if it doesn't exist and uploads the bundle to the specified bucket.
+// The configuration for the MinIO server, access key, secret key, and bucket name is taken from the config package.
+func WriteBundleToMinio(b *bundle.Bundle, bundleFileName string) error {
 	client, err := minio.New(config.Config.Minio_Server, &minio.Options{
 		Creds: credentials.NewStaticV4(config.Config.Minio_Access_Key, config.Config.Minio_Secret_Key, "")})
 	if err != nil {
@@ -85,14 +93,16 @@ func WriteBundleToMinio(b *bundle.Bundle) error {
 		}
 	}()
 
-	if _, err := client.PutObject(context.Background(), config.Config.Bucket_Name, config.Config.BundleFileName, reader, -1, minio.PutObjectOptions{}); err != nil {
+	if _, err := client.PutObject(context.Background(), config.Config.Bucket_Name, bundleFileName, reader, -1, minio.PutObjectOptions{}); err != nil {
 		return fmt.Errorf("write bundle: failed to upload to MinIO %w", err)
 	}
 
 	return nil
 }
 
-func LoadBundleFromMinio() (*bundle.Bundle, error) {
+// LoadBundleFromMinio loads the bundle from MinIO using the MinIO client.
+// It retrieves the bundle file from the specified bucket and returns it as a bundle object.
+func LoadBundleFromMinio(bundleFileName string) (*bundle.Bundle, error) {
 	client, err := minio.New(config.Config.Minio_Server, &minio.Options{
 		Creds: credentials.NewStaticV4(config.Config.Minio_Access_Key, config.Config.Minio_Secret_Key, "")})
 	if err != nil {
@@ -100,7 +110,7 @@ func LoadBundleFromMinio() (*bundle.Bundle, error) {
 	}
 
 	// Get the object from MinIO
-	object, err := client.GetObject(context.Background(), config.Config.Bucket_Name, config.Config.BundleFileName, minio.GetObjectOptions{})
+	object, err := client.GetObject(context.Background(), config.Config.Bucket_Name, bundleFileName, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("load bundle: failed to get object from MinIO %w", err)
 	}

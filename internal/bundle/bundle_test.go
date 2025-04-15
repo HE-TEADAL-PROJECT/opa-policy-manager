@@ -129,7 +129,7 @@ func TestWriteBundleToMinio(t *testing.T) {
 	}
 
 	// Call WriteBundleToMinio
-	err := bundle.WriteBundleToMinio(b)
+	err := bundle.WriteBundleToMinio(b, config.Config.BundleFileName)
 	if err != nil {
 		t.Fatalf("Failed to write bundle to MinIO: %v", err)
 	}
@@ -232,7 +232,7 @@ default allow = false
 	}()
 
 	// Call LoadBundleFromMinio
-	b, err := bundle.LoadBundleFromMinio()
+	b, err := bundle.LoadBundleFromMinio(config.Config.BundleFileName)
 	if err != nil {
 		t.Fatalf("Failed to load bundle from MinIO: %v", err)
 	}
