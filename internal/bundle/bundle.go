@@ -5,11 +5,14 @@ import (
 	"dspn-regogenerator/config"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/compile"
 )
@@ -89,7 +92,7 @@ func WriteBundleToMinio(b *bundle.Bundle, bundleFileName string) error {
 	// Start a goroutine to write the bundle to the pipe
 	go func() {
 		defer writer.Close()
-		bundleWriter := bundle.NewWriter(writer)
+		bundleWriter := bundle.NewWriter(writer).UseModulePath(true)
 		if err := bundleWriter.Write(*b); err != nil {
 			fmt.Fprintf(os.Stderr, "write bundle: failed to write bundle to pipe %v\n", err)
 		}
@@ -172,4 +175,99 @@ func ListBundleFiles(b *bundle.Bundle) []string {
 		dirs = append(dirs, strings.Split(mod.Path, mainDir+"/")[1])
 	}
 	return dirs
+}
+
+// AddRegoFilesFromDirectory creates a new bundle with all content from the original bundle
+// plus Rego files loaded from the specified directory path
+func AddRegoFilesFromDirectory(originalBundle *bundle.Bundle, bundleRootDir string) (*bundle.Bundle, error) {
+	// Create a copy of the existing bundle
+	newBundle := originalBundle.Copy()
+
+	// Ensure the manifest is initialized
+	newBundle.Manifest.Init()
+
+	// Get the parser options based on the bundle's Rego version
+	parserOpts := ast.ParserOptions{
+		ProcessAnnotation: true,
+		Capabilities:      ast.CapabilitiesForThisVersion(),
+		RegoVersion:       newBundle.RegoVersion(ast.DefaultRegoVersion),
+	}
+
+	// Track the directories we find Rego files in
+	regoDirs := make(map[string]struct{})
+
+	// Walk through the directory and process each .rego file
+	err := filepath.Walk(bundleRootDir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip directories and non-rego files
+		if info.IsDir() || !strings.HasSuffix(strings.ToLower(info.Name()), bundle.RegoExt) {
+			return nil
+		}
+
+		// Read the file content
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("failed to read file %s: %w", path, err)
+		}
+
+		// Calculate relative path within the bundle
+		relPath, err := filepath.Rel(bundleRootDir, path)
+		if err != nil {
+			return fmt.Errorf("failed to determine relative path for %s: %w", path, err)
+		}
+
+		// Normalize the path for OPA bundle (use forward slashes)
+		normalizedPath := filepath.ToSlash(relPath)
+
+		// Parse the Rego module
+		parsedModule, err := ast.ParseModuleWithOpts(normalizedPath, string(content), parserOpts)
+		if err != nil {
+			return fmt.Errorf("failed to parse module %s: %w", normalizedPath, err)
+		}
+
+		// Create the ModuleFile
+		moduleFile := bundle.ModuleFile{
+			Path:         normalizedPath,
+			URL:          normalizedPath,
+			RelativePath: normalizedPath,
+			Raw:          content,
+			Parsed:       parsedModule,
+		}
+
+		// Add the module to the bundle
+		newBundle.Modules = append(newBundle.Modules, moduleFile)
+
+		// Remember this directory for adding to roots
+		moduleDir := filepath.Dir(normalizedPath)
+		if moduleDir != "" && moduleDir != "." {
+			regoDirs[strings.TrimSuffix(moduleDir, "/")] = struct{}{}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return &newBundle, fmt.Errorf("error walking directory %s: %w", bundleRootDir, err)
+	}
+
+	// Add each directory containing Rego files to the bundle roots if not already included
+	for dir := range regoDirs {
+		// Check if this directory is already covered by an existing root
+		alreadyCovered := false
+		for _, root := range *newBundle.Manifest.Roots {
+			if bundle.RootPathsOverlap(root, dir) {
+				alreadyCovered = true
+				break
+			}
+		}
+
+		if !alreadyCovered {
+			newBundle.Manifest.AddRoot(dir)
+		}
+	}
+
+	return &newBundle, nil
 }

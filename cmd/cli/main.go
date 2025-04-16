@@ -53,12 +53,12 @@ func main() {
 		Use:   "add",
 		Short: "Add policies related to a service",
 		Run: func(cmd *cobra.Command, args []string) {
-			exists, err := bundle.CheckBundleFileExists(config.Config.BundleFileName)
+			bundleExists, err := bundle.CheckBundleFileExists(config.Config.BundleFileName)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error checking if service exists: %v\n", err)
 				os.Exit(1)
 			}
-			if !exists {
+			if !bundleExists {
 				outputDir, _ := filepath.Abs("./output")
 				bundleDir, _ := os.MkdirTemp(outputDir, "bundle*")
 				mainDir := "rego"
@@ -96,7 +96,51 @@ func main() {
 					os.Exit(1)
 				}
 			} else {
-				fmt.Println("Service already exists in the bundle.")
+				tempDir, err := os.MkdirTemp("./output", "bundle-patch-*")
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error creating temp directory: %v\n", err)
+					os.Exit(1)
+				}
+				b, err := bundle.LoadBundleFromMinio(config.Config.BundleFileName)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error loading bundle from Minio: %v\n", err)
+					os.Exit(1)
+				}
+				regoDir := filepath.Join(tempDir, "rego")
+				spec, err := loadBundle(openAPISpec)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error loading bundle: %v\n", err)
+					os.Exit(1)
+				}
+				policies, err := parser.ParseOpenAPIPolicies(spec)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error parsing OpenAPI policies: %v\n", err)
+					os.Exit(1)
+				}
+				IAMprovider, err := parser.ParseOpenAPIIAM(spec)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error parsing OpenAPI IAM: %v\n", err)
+					os.Exit(1)
+				}
+				err = generator.GenerateServiceFolder(serviceName, regoDir, *IAMprovider, policies)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error generating service folder: %v\n", err)
+					os.Exit(1)
+				}
+				newBundle, err := bundle.AddRegoFilesFromDirectory(b, tempDir)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error adding rego files from directory: %v\n", err)
+					os.Exit(1)
+				}
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error verifying bundle: %v\n", err)
+					os.Exit(1)
+				}
+				err = bundle.WriteBundleToMinio(newBundle, config.Config.BundleFileName)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error writing bundle to file: %v\n", err)
+					os.Exit(1)
+				}
 			}
 		},
 	}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/minio/minio-go/v7"
@@ -289,5 +290,116 @@ default allow = false`), 0644); err != nil {
 	}
 	if !slices.Contains(dirs, "main.rego") || !slices.Contains(dirs, "serviceA/example.rego") {
 		t.Errorf("Expected to contain \"main.rego\" and \"serviceA/example.rego\", got %v", dirs)
+	}
+}
+
+func TestAddRegoFilesFromDirectory(t *testing.T) {
+	// Create a temporary directory for the test
+	tempDir := t.TempDir()
+
+	// Create a mock bundle
+	originalBundle := opabundle.Bundle{
+		Modules: []opabundle.ModuleFile{},
+		Manifest: opabundle.Manifest{
+			Metadata: map[string]interface{}{
+				"main": "rego",
+			},
+		},
+	}
+
+	// Create a directory structure with .rego files
+	regoDir := filepath.Join(tempDir, "rego", "serviceA")
+	err := os.MkdirAll(regoDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create rego directory: %v", err)
+	}
+
+	// Create sample .rego files
+	file1 := filepath.Join(regoDir, "policy1.rego")
+	err = os.WriteFile(file1, []byte(`package policy1
+
+	default allow = false`), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create policy1.rego: %v", err)
+	}
+
+	file2 := filepath.Join(regoDir, "policy2.rego")
+	err = os.WriteFile(file2, []byte(`package policy2
+
+	default allow = true`), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create policy2.rego: %v", err)
+	}
+
+	// Call AddRegoFilesFromDirectory
+	newBundle, err := bundle.AddRegoFilesFromDirectory(&originalBundle, tempDir)
+	if err != nil {
+		t.Fatalf("Failed to add Rego files from directory: %v", err)
+	}
+
+	// Verify the new bundle contains the added modules
+	if len(newBundle.Modules) != 2 {
+		t.Fatalf("Expected 2 modules in the bundle, got %d", len(newBundle.Modules))
+	}
+
+	// Verify the paths of the added modules
+	expectedPaths := []string{"serviceA/policy1.rego", "serviceA/policy2.rego"}
+	for _, module := range bundle.ListBundleFiles(newBundle) {
+		if !slices.Contains(expectedPaths, module) {
+			t.Errorf("Unexpected module path: %s", module)
+		}
+	}
+
+	// Verify the content of the added modules
+	if string(newBundle.Modules[0].Raw) != `package policy1
+
+	default allow = false` && string(newBundle.Modules[1].Raw) != `package policy2
+
+	default allow = true` {
+		t.Errorf("Module content does not match expected content")
+	}
+}
+
+func TestAddRegoFilesFromDirectoryWithInvalidFile(t *testing.T) {
+	// Create a temporary directory for the test
+	tempDir := t.TempDir()
+
+	// Create a mock bundle
+	originalBundle := opabundle.Bundle{
+		Modules: []opabundle.ModuleFile{},
+	}
+
+	// Create a directory structure with a valid and an invalid .rego file
+	regoDir := filepath.Join(tempDir, "rego")
+	err := os.Mkdir(regoDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create rego directory: %v", err)
+	}
+
+	// Create a valid .rego file
+	validFile := filepath.Join(regoDir, "valid.rego")
+	err = os.WriteFile(validFile, []byte(`package valid
+
+	default allow = true`), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create valid.rego: %v", err)
+	}
+
+	// Create an invalid .rego file
+	invalidFile := filepath.Join(regoDir, "invalid.rego")
+	err = os.WriteFile(invalidFile, []byte(`package invalid
+
+	default allow =`), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create invalid.rego: %v", err)
+	}
+
+	// Call AddRegoFilesFromDirectory
+	_, err = bundle.AddRegoFilesFromDirectory(&originalBundle, regoDir)
+	if err == nil {
+		t.Fatal("Expected an error due to invalid .rego file, but got none")
+	}
+	if !strings.Contains(err.Error(), "failed to parse module") {
+		t.Fatalf("Expected parse error, got: %v", err)
 	}
 }
