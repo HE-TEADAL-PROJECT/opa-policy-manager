@@ -403,3 +403,80 @@ func TestAddRegoFilesFromDirectoryWithInvalidFile(t *testing.T) {
 		t.Fatalf("Expected parse error, got: %v", err)
 	}
 }
+
+func TestAddRegoFileFromDirectoryWithOverwrite(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Create a mock bundle
+	originalBundle := opabundle.Bundle{
+		Modules: []opabundle.ModuleFile{},
+		Manifest: opabundle.Manifest{
+			Metadata: map[string]interface{}{
+				"main": "rego",
+			},
+		},
+	}
+
+	// Create a directory structure with .rego files
+	regoDir := filepath.Join(tempDir, "rego", "serviceA")
+	err := os.MkdirAll(regoDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create rego directory: %v", err)
+	}
+
+	// Create sample .rego files
+	file1 := filepath.Join(regoDir, "policy1.rego")
+	err = os.WriteFile(file1, []byte(`package policy1
+
+	default allow = false`), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create policy1.rego: %v", err)
+	}
+
+	file2 := filepath.Join(regoDir, "policy2.rego")
+	err = os.WriteFile(file2, []byte(`package policy2
+
+	default allow = true`), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create policy2.rego: %v", err)
+	}
+
+	// Call AddRegoFilesFromDirectory
+	newBundle, err := bundle.AddRegoFilesFromDirectory(&originalBundle, tempDir)
+	if err != nil {
+		t.Fatalf("Failed to add Rego files from directory: %v", err)
+	}
+
+	// Overwrite a file and add again
+	err = os.WriteFile(file1, []byte(`package policy1
+	default allow = true`), 0644)
+	if err != nil {
+		t.Fatalf("Failed to overwrite policy1.rego: %v", err)
+	}
+	newBundle, err = bundle.AddRegoFilesFromDirectory(newBundle, tempDir)
+	if err != nil {
+		t.Fatalf("Failed to add Rego files from directory: %v", err)
+	}
+
+	// Verify the new bundle contains the added modules
+	if len(newBundle.Modules) != 2 {
+		t.Fatalf("Expected 2 modules in the bundle, got %d", len(newBundle.Modules))
+	}
+
+	// Verify the paths of the added modules
+	expectedPaths := []string{"serviceA/policy1.rego", "serviceA/policy2.rego"}
+	for _, module := range bundle.ListBundleFiles(newBundle) {
+		if !slices.Contains(expectedPaths, module) {
+			t.Errorf("Unexpected module path: %s", module)
+		}
+	}
+
+	// Verify the content of the added modules
+	if string(newBundle.Modules[0].Raw) != `package policy1
+
+	default allow = true` && string(newBundle.Modules[1].Raw) != `package policy2
+
+	default allow = true` {
+		t.Errorf("Module content does not match expected content")
+	}
+}

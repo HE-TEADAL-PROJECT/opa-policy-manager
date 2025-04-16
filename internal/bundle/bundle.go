@@ -196,6 +196,17 @@ func AddRegoFilesFromDirectory(originalBundle *bundle.Bundle, bundleRootDir stri
 	// Track the directories we find Rego files in
 	regoDirs := make(map[string]struct{})
 
+	// Create a map to track existing modules by their normalized paths
+	existingModules := make(map[string]int)
+	for i, mod := range newBundle.Modules {
+		// Normalize path by removing leading slash if present
+		normalizedModPath := strings.TrimPrefix(mod.Path, "/")
+		existingModules[normalizedModPath] = i
+	}
+
+	// Create a list to store new modules we're adding
+	var newModules []bundle.ModuleFile
+
 	// Walk through the directory and process each .rego file
 	err := filepath.Walk(bundleRootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -230,15 +241,29 @@ func AddRegoFilesFromDirectory(originalBundle *bundle.Bundle, bundleRootDir stri
 
 		// Create the ModuleFile
 		moduleFile := bundle.ModuleFile{
-			Path:         normalizedPath,
+			Path:         normalizedPath, // Keep the original form for new modules
 			URL:          normalizedPath,
 			RelativePath: normalizedPath,
 			Raw:          content,
 			Parsed:       parsedModule,
 		}
 
-		// Add the module to the bundle
-		newBundle.Modules = append(newBundle.Modules, moduleFile)
+		// Check if this module already exists in the original bundle
+		normalizedCheckPath := normalizedPath // No need to trim prefix as loaded paths don't have leading slash
+		if idx, exists := existingModules[normalizedCheckPath]; exists {
+			// Replace the existing module with the new one
+			// But preserve the original path format (with or without leading slash)
+			originalPath := newBundle.Modules[idx].Path
+			moduleFile.Path = originalPath
+			moduleFile.URL = originalPath
+
+			newBundle.Modules[idx] = moduleFile
+			// Mark as processed so we don't add it again later
+			delete(existingModules, normalizedCheckPath)
+		} else {
+			// This is a new module, add it to our new modules list
+			newModules = append(newModules, moduleFile)
+		}
 
 		// Remember this directory for adding to roots
 		moduleDir := filepath.Dir(normalizedPath)
@@ -251,6 +276,11 @@ func AddRegoFilesFromDirectory(originalBundle *bundle.Bundle, bundleRootDir stri
 
 	if err != nil {
 		return &newBundle, fmt.Errorf("error walking directory %s: %w", bundleRootDir, err)
+	}
+
+	// Add any new modules to the bundle
+	if len(newModules) > 0 {
+		newBundle.Modules = append(newBundle.Modules, newModules...)
 	}
 
 	// Add each directory containing Rego files to the bundle roots if not already included
@@ -268,6 +298,9 @@ func AddRegoFilesFromDirectory(originalBundle *bundle.Bundle, bundleRootDir stri
 			newBundle.Manifest.AddRoot(dir)
 		}
 	}
+
+	// For debugging - print replaced modules
+	fmt.Printf("Bundle now contains %d modules\n", len(newBundle.Modules))
 
 	return &newBundle, nil
 }
