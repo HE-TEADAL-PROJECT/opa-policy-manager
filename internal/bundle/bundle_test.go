@@ -4,6 +4,7 @@ import (
 	"context"
 	"dspn-regogenerator/config"
 	"dspn-regogenerator/internal/bundle"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -479,4 +480,123 @@ func TestAddRegoFileFromDirectoryWithOverwrite(t *testing.T) {
 	default allow = true` {
 		t.Errorf("Module content does not match expected content")
 	}
+}
+func TestRemoveService(t *testing.T) {
+	// Create a mock bundle
+	originalBundle, err := createBundleFromFiles(map[string]string{
+		"serviceA/policy1.rego": `package serviceA.policy1
+default allow = false`,
+		"serviceA/policy2.rego": `package serviceA.policy2
+default allow = true`,
+		"serviceB/policy2.rego": `package serviceB.policy2
+default allow = true`,
+	}, "rego")
+	if err != nil {
+		t.Fatalf("Failed to create bundle: %v", err)
+	}
+
+	// Call RemoveService to remove serviceA
+	newBundle, err := bundle.RemoveService(originalBundle, "serviceA")
+	if err != nil {
+		t.Fatalf("Failed to remove service: %v", err)
+	}
+
+	// Verify the new bundle does not contain modules from serviceA
+	if len(newBundle.Modules) != 1 {
+		t.Fatalf("Expected 1 module in the bundle, got %d", len(newBundle.Modules))
+	}
+	if newBundle.Modules[0].Path != "rego/serviceB/policy2.rego" {
+		t.Fatalf("Expected remaining module to be 'rego/serviceB/policy2.rego', got '%s'", newBundle.Modules[0].Path)
+	}
+
+	// Verify the roots are updated
+	if len(*newBundle.Manifest.Roots) != 1 {
+		t.Fatalf("Expected 1 root in the bundle, got %d", len(*newBundle.Manifest.Roots))
+	}
+}
+
+func TestRemoveServiceNonExistentSubdir(t *testing.T) {
+	// Create a mock bundle
+	originalBundle, err := createBundleFromFiles(map[string]string{
+		"serviceA/policy1.rego": `package serviceA.policy1
+default allow = false`,
+		"serviceB/policy1.rego": `package serviceB.policy1
+default allow = true`,
+	}, "rego")
+	if err != nil {
+		t.Fatalf("Failed to create bundle: %v", err)
+	}
+
+	// Call RemoveService with a non-existent subdir
+	newBundle, err := bundle.RemoveService(originalBundle, "serviceC")
+	if err != nil {
+		t.Fatalf("Failed to remove service: %v", err)
+	}
+
+	// Verify the new bundle is unchanged
+	if len(newBundle.Modules) != 2 {
+		t.Fatalf("Expected 2 modules in the bundle, got %d", len(newBundle.Modules))
+	}
+}
+
+func TestRemoveServiceInvalidMainDir(t *testing.T) {
+	// Create a mock bundle with no "main" metadata
+	originalBundle, err := createBundleFromFiles(map[string]string{
+		"serviceA/policy1.rego": `package serviceA.policy1
+default allow = false`,
+		"serviceB/policy2.rego": `package serviceB.policy2
+default allow = true`,
+	}, "rego")
+	if err != nil {
+		t.Fatalf("Failed to create bundle: %v", err)
+	}
+	// Remove the "main" metadata
+	originalBundle.Manifest.Metadata = map[string]interface{}{}
+
+	// Call RemoveService
+	_, err = bundle.RemoveService(originalBundle, "serviceA")
+	if err == nil {
+		t.Fatal("Expected an error due to missing 'main' metadata, but got none")
+	}
+	if !strings.Contains(err.Error(), "failed to find main directory in bundle manifest") {
+		t.Fatalf("Unexpected error message: %v", err)
+	}
+}
+
+func createBundleFromFiles(regoFiles map[string]string, mainDir string) (*opabundle.Bundle, error) {
+	// Create a temporary directory
+	tempDir, err := os.MkdirTemp("", "rego-bundle")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temporary directory: %w", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Write the rego files to the temporary directory
+	for fileName, content := range regoFiles {
+		filePath := filepath.Join(tempDir, mainDir, fileName)
+		dirPath := filepath.Dir(filePath)
+		err := os.MkdirAll(dirPath, 0755) // Ensure the directory structure exists
+		if err != nil {
+			return nil, fmt.Errorf("failed to create directories for %s: %w", filePath, err)
+		}
+		err = os.WriteFile(filePath, []byte(content), 0644)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write rego file %s: %w", fileName, err)
+		}
+	}
+
+	// Create a bundle using opa compile
+	comp := compile.New().
+		WithAsBundle(true).
+		WithFS(os.DirFS(tempDir)).
+		WithMetadata(&map[string]interface{}{
+			"main": mainDir,
+		}).
+		WithPaths(mainDir)
+	err = comp.Build(context.TODO())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create bundle: %w", err)
+	}
+
+	return comp.Bundle(), nil
 }

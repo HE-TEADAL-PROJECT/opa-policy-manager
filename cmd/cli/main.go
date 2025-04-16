@@ -1,7 +1,6 @@
 package main
 
 import (
-	"dspn-regogenerator/commands"
 	"dspn-regogenerator/config"
 	"dspn-regogenerator/internal/bundle"
 	"dspn-regogenerator/internal/generator"
@@ -186,12 +185,45 @@ func main() {
 		Use:   "delete",
 		Short: "Delete policies related to a service",
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.DeleteServicePolicies(serviceName)
-
+			var b = new(opabundle.Bundle)
+			var err error
+			if localPath != "" {
+				b, err = bundle.LoadBundleFromFile(localPath)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error loading bundle from local path: %v\n", err)
+					os.Exit(1)
+				}
+			} else {
+				b, err = bundle.LoadBundleFromMinio(config.Config.BundleFileName)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error loading bundle from Minio: %v\n", err)
+					os.Exit(1)
+				}
+			}
+			newBundle, err := bundle.RemoveService(b, serviceName)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error removing service: %v\n", err)
+				os.Exit(1)
+			}
+			files := bundle.ListBundleFiles(newBundle)
+			services := map[string]struct{}{}
+			fmt.Println("Remaining services")
+			for _, f := range files {
+				services[filepath.Dir(f)] = struct{}{}
+			}
+			for k := range services {
+				fmt.Println(k)
+			}
+			err = bundle.WriteBundleToMinio(newBundle, config.Config.BundleFileName)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error writing bundle to Minio: %v\n", err)
+				os.Exit(1)
+			}
 		},
 	}
 	DeleteServicePolicyCmd.Flags().StringVar(&serviceName, "service_name", "", "Name of the service (required)")
 	DeleteServicePolicyCmd.MarkFlagRequired("service_name")
+	DeleteServicePolicyCmd.Flags().StringVar(&localPath, "local-path", "", "")
 
 	rootCmd.AddCommand(configCmd, addServicePolicyCmd, ListServicePoliciesCmd, DeleteServicePolicyCmd)
 

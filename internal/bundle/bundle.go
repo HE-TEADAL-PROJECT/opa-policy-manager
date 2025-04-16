@@ -304,3 +304,55 @@ func AddRegoFilesFromDirectory(originalBundle *bundle.Bundle, bundleRootDir stri
 
 	return &newBundle, nil
 }
+
+// RemoveService creates a new bundle without all files that belongs to a service subdir (/<mainDir>/<subdir>)
+func RemoveService(originalBundle *bundle.Bundle, subdir string) (*bundle.Bundle, error) {
+	// Extract the main directory from the original bundle
+	mainDir, ok := originalBundle.Manifest.Metadata["main"].(string)
+	if !ok {
+		return nil, fmt.Errorf("remove service: failed to find main directory in bundle manifest")
+	}
+
+	// Create a copy of the existing bundle
+	newBundle := originalBundle.Copy()
+
+	// Normalize the subdir name by removing any leading/trailing slashes
+	subdir = strings.Trim(subdir, "/")
+
+	// The pattern we're looking for - both with and without leading slash
+	pattern := fmt.Sprintf("%s/%s/", mainDir, subdir)
+	patternWithSlash := fmt.Sprintf("/%s/%s/", mainDir, subdir)
+
+	// Filter out modules that match the pattern
+	var filteredModules []bundle.ModuleFile
+	for _, mod := range newBundle.Modules {
+		// Check both with and without leading slash
+		if !strings.HasPrefix(mod.Path, pattern) && !strings.HasPrefix(mod.Path, patternWithSlash) {
+			filteredModules = append(filteredModules, mod)
+		}
+	}
+
+	// Replace the modules with the filtered list
+	newBundle.Modules = filteredModules
+
+	// Check if the removed modules had a dedicated root that's no longer needed
+	regoRoot := fmt.Sprintf("rego/%s", subdir)
+
+	// Only modify roots if they exist
+	if newBundle.Manifest.Roots != nil {
+		var updatedRoots []string
+		for _, root := range *newBundle.Manifest.Roots {
+			// Keep all roots except the one specific to this subdir
+			trimmedRoot := strings.Trim(root, "/")
+			if trimmedRoot != regoRoot {
+				updatedRoots = append(updatedRoots, root)
+			}
+		}
+		newBundle.Manifest.Roots = &updatedRoots
+	}
+
+	fmt.Printf("Removed modules matching pattern 'rego/%s/' - bundle now contains %d modules\n",
+		subdir, len(newBundle.Modules))
+
+	return &newBundle, nil
+}
