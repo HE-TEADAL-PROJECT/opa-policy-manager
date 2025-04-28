@@ -76,7 +76,7 @@ func (p *GeneralPolicies) buildGeneralRules() []string {
 	for _, policy := range p.Policies {
 		rule := policy.ToRego()
 		if len(excludedPaths) > 0 {
-			rule += "not input.path in " + string(excludedPathsJson) + "\n"
+			rule += "not request.path in " + string(excludedPathsJson) + "\n"
 		}
 		rules = append(rules, rule)
 	}
@@ -126,16 +126,16 @@ func (p *PathPolicies) ToRego() []string {
 	blocks := make([]string, 0, len(p.Policies)+len(p.SpecializedMethods))
 	for _, policy := range p.Policies {
 		// Add general path rules
-		policyCode := "input.path == " + string(pathJson) + "\n"
+		policyCode := "request.path == " + string(pathJson) + "\n"
 		policyCode += policy.ToRego()
 		if len(specializedMethods) > 0 {
-			policyCode += "not input.method in " + string(specializedMethodsJson) + "\n"
+			policyCode += "not request.method in " + string(specializedMethodsJson) + "\n"
 		}
 		blocks = append(blocks, policyCode)
 
 		// Add specialized methods rules
 		for _, method := range p.SpecializedMethods {
-			policyCode := "input.path == " + string(pathJson) + "\n"
+			policyCode := "request.path == " + string(pathJson) + "\n"
 			policyCode += policy.ToRego()
 			for _, methodPolicy := range method.ToRego() {
 				blocks = append(blocks, policyCode+methodPolicy)
@@ -162,7 +162,7 @@ func (p *PathMethodPolicies) ToRego() []string {
 	}
 	blocks := make([]string, 0, len(p.Policies))
 	for _, policy := range p.Policies {
-		policyCode := "input.method == " + string(methodJson) + "\n"
+		policyCode := "request.method == " + string(methodJson) + "\n"
 		policyCode += policy.ToRego()
 		blocks = append(blocks, policyCode)
 	}

@@ -28,14 +28,14 @@ func (p *UserPolicy) ToRego() string {
 	var result string
 	if p.Operator == OperatorAnd {
 		for _, v := range p.Value {
-			result += "input.user == " + v + "\n"
+			result += "user == " + v + "\n"
 		}
 	} else {
 		values, err := json.Marshal(p.Value)
 		if err != nil {
 			panic(err)
 		}
-		result = "input.user in " + string(values) + "\n"
+		result = "user in " + string(values) + "\n"
 	}
 	return result
 }
@@ -47,16 +47,19 @@ type RolePolicy struct {
 
 func (p *RolePolicy) ToRego() string {
 	var result string
+	if len(p.Value) == 0 {
+		return result
+	}
 	if p.Operator == OperatorAnd {
 		for _, v := range p.Value {
-			result += "input.role == " + v + "\n"
+			result += "\"" + v + "\" in roles\n"
 		}
 	} else {
 		values, err := json.Marshal(p.Value)
 		if err != nil {
 			panic(err)
 		}
-		result = "input.role in " + string(values) + "\n"
+		result = "some role in roles\nrole in " + string(values) + "\n"
 	}
 	return result
 }

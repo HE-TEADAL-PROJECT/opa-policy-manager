@@ -30,7 +30,7 @@ func TestPolicyClause(t *testing.T) {
 					},
 				},
 			},
-			want: "input.user in [\"user1\",\"user2\"]\n",
+			want: "user in [\"user1\",\"user2\"]\n",
 		},
 		{
 			name: "role policy",
@@ -42,7 +42,7 @@ func TestPolicyClause(t *testing.T) {
 					},
 				},
 			},
-			want: "input.role == role1\ninput.role == role2\n",
+			want: "\"role1\" in roles\n\"role2\" in roles\n",
 		},
 		{
 			name: "user and role policy",
@@ -60,7 +60,7 @@ func TestPolicyClause(t *testing.T) {
 					},
 				},
 			},
-			want: "input.user in [\"user1\",\"user2\"]\ninput.role == role1\ninput.role == role2\n",
+			want: "user in [\"user1\",\"user2\"]\n\"role1\" in roles\n\"role2\" in roles\n",
 		},
 	}
 
@@ -101,7 +101,7 @@ func TestGeneralPolicies(t *testing.T) {
 					},
 				},
 			},
-			want: "allow if {\ninput.user in [\"user1\",\"user2\"]\ninput.role == role1\ninput.role == role2\n}\n",
+			want: "allow if {\nuser in [\"user1\",\"user2\"]\n\"role1\" in roles\n\"role2\" in roles\n}\n",
 		},
 		{
 			name: "two clauses",
@@ -132,7 +132,7 @@ func TestGeneralPolicies(t *testing.T) {
 				},
 			},
 			// Two clauses should generate separate allow statements (OR condition)
-			want: "allow if {\ninput.user in [\"user1\",\"user2\"]\ninput.role == role1\ninput.role == role2\n}\n\nallow if {\ninput.user in [\"user3\",\"user4\"]\n}\n",
+			want: "allow if {\nuser in [\"user1\",\"user2\"]\n\"role1\" in roles\n\"role2\" in roles\n}\n\nallow if {\nuser in [\"user3\",\"user4\"]\n}\n",
 		},
 		{
 			name: "with excluded paths",
@@ -169,7 +169,7 @@ func TestGeneralPolicies(t *testing.T) {
 					},
 				},
 			},
-			want: "allow if {\ninput.user in [\"user1\",\"user2\"]\ninput.role == role1\ninput.role == role2\nnot input.path in [\"/path1\"]\n}\n\nallow if {\ninput.user in [\"user1\",\"user2\"]\ninput.role == role1\ninput.role == role2\ninput.path == \"/path1\"\ninput.user in [\"user3\",\"user4\"]\n}\n",
+			want: "allow if {\nuser in [\"user1\",\"user2\"]\n\"role1\" in roles\n\"role2\" in roles\nnot request.path in [\"/path1\"]\n}\n\nallow if {\nuser in [\"user1\",\"user2\"]\n\"role1\" in roles\n\"role2\" in roles\nrequest.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\n}\n",
 		},
 		{
 			name: "only specialized paths",
@@ -190,7 +190,7 @@ func TestGeneralPolicies(t *testing.T) {
 					},
 				},
 			},
-			want: "allow if {\ninput.path == \"/path1\"\ninput.user in [\"user3\",\"user4\"]\n}\n",
+			want: "allow if {\nrequest.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\n}\n",
 		},
 	}
 
@@ -227,7 +227,7 @@ func TestPathPolicies(t *testing.T) {
 				Path: "/path1",
 			},
 			// This should generate the policies with a path condition
-			want: []string{"input.path == \"/path1\"\ninput.user in [\"user1\",\"user2\"]\n"},
+			want: []string{"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\n"},
 		},
 		{
 			name: "two clauses",
@@ -253,8 +253,8 @@ func TestPathPolicies(t *testing.T) {
 
 				Path: "/path1",
 			},
-			want: []string{"input.path == \"/path1\"\ninput.user in [\"user1\",\"user2\"]\n",
-				"input.path == \"/path1\"\ninput.user in [\"user3\",\"user4\"]\n"},
+			want: []string{"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\n",
+				"request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\n"},
 		},
 		{
 			name: "with specialized methods",
@@ -288,8 +288,8 @@ func TestPathPolicies(t *testing.T) {
 					},
 				},
 			},
-			want: []string{"input.path == \"/path1\"\ninput.user in [\"user1\",\"user2\"]\nnot input.method in [\"GET\"]\n",
-				"input.path == \"/path1\"\ninput.user in [\"user1\",\"user2\"]\ninput.method == \"GET\"\ninput.user in [\"user5\",\"user6\"]\n"},
+			want: []string{"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nnot request.method in [\"GET\"]\n",
+				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nrequest.method == \"GET\"\nuser in [\"user5\",\"user6\"]\n"},
 		},
 		{
 			name: "only specialized methods",
@@ -324,8 +324,8 @@ func TestPathPolicies(t *testing.T) {
 				},
 				Path: "/path1",
 			},
-			want: []string{"input.path == \"/path1\"\ninput.method == \"GET\"\ninput.user in [\"user5\",\"user6\"]\n",
-				"input.path == \"/path1\"\ninput.method == \"POST\"\ninput.user in [\"user7\",\"user8\"]\n"},
+			want: []string{"request.path == \"/path1\"\nrequest.method == \"GET\"\nuser in [\"user5\",\"user6\"]\n",
+				"request.path == \"/path1\"\nrequest.method == \"POST\"\nuser in [\"user7\",\"user8\"]\n"},
 		},
 		{
 			name: "two clauses with two specialized methods",
@@ -378,12 +378,12 @@ func TestPathPolicies(t *testing.T) {
 				},
 				Path: "/path1",
 			},
-			want: []string{"input.path == \"/path1\"\ninput.user in [\"user1\",\"user2\"]\nnot input.method in [\"GET\",\"POST\"]\n",
-				"input.path == \"/path1\"\ninput.user in [\"user1\",\"user2\"]\ninput.method == \"GET\"\ninput.role in [\"role1\",\"role2\"]\n",
-				"input.path == \"/path1\"\ninput.user in [\"user1\",\"user2\"]\ninput.method == \"POST\"\ninput.role in [\"role3\",\"role4\"]\n",
-				"input.path == \"/path1\"\ninput.user in [\"user3\",\"user4\"]\nnot input.method in [\"GET\",\"POST\"]\n",
-				"input.path == \"/path1\"\ninput.user in [\"user3\",\"user4\"]\ninput.method == \"GET\"\ninput.role in [\"role1\",\"role2\"]\n",
-				"input.path == \"/path1\"\ninput.user in [\"user3\",\"user4\"]\ninput.method == \"POST\"\ninput.role in [\"role3\",\"role4\"]\n",
+			want: []string{"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nnot request.method in [\"GET\",\"POST\"]\n",
+				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nrequest.method == \"GET\"\nsome role in roles\nrole in [\"role1\",\"role2\"]\n",
+				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nrequest.method == \"POST\"\nsome role in roles\nrole in [\"role3\",\"role4\"]\n",
+				"request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\nnot request.method in [\"GET\",\"POST\"]\n",
+				"request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\nrequest.method == \"GET\"\nsome role in roles\nrole in [\"role1\",\"role2\"]\n",
+				"request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\nrequest.method == \"POST\"\nsome role in roles\nrole in [\"role3\",\"role4\"]\n",
 			},
 		},
 	}
@@ -423,7 +423,7 @@ func TestPathMethodPolicies(t *testing.T) {
 				Method: "GET",
 				Path:   "/path1",
 			},
-			want: []string{"input.method == \"GET\"\ninput.user in [\"user1\",\"user2\"]\n"},
+			want: []string{"request.method == \"GET\"\nuser in [\"user1\",\"user2\"]\n"},
 		},
 		{
 			name: "two clauses",
@@ -449,8 +449,8 @@ func TestPathMethodPolicies(t *testing.T) {
 				Method: "POST",
 				Path:   "/path1",
 			},
-			want: []string{"input.method == \"POST\"\ninput.user in [\"user1\",\"user2\"]\n",
-				"input.method == \"POST\"\ninput.user in [\"user3\",\"user4\"]\n"},
+			want: []string{"request.method == \"POST\"\nuser in [\"user1\",\"user2\"]\n",
+				"request.method == \"POST\"\nuser in [\"user3\",\"user4\"]\n"},
 		},
 	}
 

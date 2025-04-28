@@ -21,7 +21,7 @@ func TestUserPolicy(t *testing.T) {
 					Operator: policy.OperatorAnd,
 				},
 			},
-			want: "input.user == user1\ninput.user == user2\n",
+			want: "user == user1\nuser == user2\n",
 		},
 		{
 			name: "Test with OR",
@@ -31,7 +31,7 @@ func TestUserPolicy(t *testing.T) {
 					Operator: policy.OperatorOr,
 				},
 			},
-			want: "input.user in [\"user1\",\"user2\"]\n",
+			want: "user in [\"user1\",\"user2\"]\n",
 		},
 		{
 			name: "Test with AND and empty user list",
@@ -51,7 +51,7 @@ func TestUserPolicy(t *testing.T) {
 					Operator: policy.OperatorOr,
 				},
 			},
-			want: "input.user in []\n",
+			want: "user in []\n",
 		},
 	}
 
@@ -75,7 +75,7 @@ func TestRolePolicy(t *testing.T) {
 					Operator: policy.OperatorAnd,
 				},
 			},
-			want: "input.role == role1\ninput.role == role2\n",
+			want: "\"role1\" in roles\n\"role2\" in roles\n",
 		},
 		{
 			name: "Test with OR",
@@ -85,7 +85,7 @@ func TestRolePolicy(t *testing.T) {
 					Operator: policy.OperatorOr,
 				},
 			},
-			want: "input.role in [\"role1\",\"role2\"]\n",
+			want: "some role in roles\nrole in [\"role1\",\"role2\"]\n",
 		},
 		{
 			name: "Test with AND and empty user list",
@@ -105,7 +105,7 @@ func TestRolePolicy(t *testing.T) {
 					Operator: policy.OperatorOr,
 				},
 			},
-			want: "input.role in []\n",
+			want: "",
 		},
 	}
 
