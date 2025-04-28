@@ -1,15 +1,12 @@
 package main
 
 import (
+	"dspn-regogenerator/cmd/cli/commands"
 	"dspn-regogenerator/config"
 	"dspn-regogenerator/internal/bundle"
-	appConfig "dspn-regogenerator/internal/config"
-	"dspn-regogenerator/internal/generator"
-	"dspn-regogenerator/internal/policy/parser"
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	opabundle "github.com/open-policy-agent/opa/v1/bundle"
 
@@ -17,7 +14,7 @@ import (
 )
 
 func main() {
-	var serviceName, openAPISpec, bucketName, minioServer, minioSecretKey, minioAccessKey string
+	var serviceName, bucketName, minioServer, minioSecretKey, minioAccessKey string
 
 	var rootCmd = &cobra.Command{Use: "dspn-regogenerator"}
 
@@ -49,117 +46,6 @@ func main() {
 	configCmd.MarkFlagRequired("minio_server")
 	configCmd.MarkFlagRequired("minio_access_key")
 	configCmd.MarkFlagRequired("minio_secret_key")
-
-	var addServicePolicyCmd = &cobra.Command{
-		Use:   "add",
-		Short: "Add policies related to a service",
-		Run: func(cmd *cobra.Command, args []string) {
-			bundleExists, err := bundle.CheckBundleFileExists(appConfig.LatestBundleName)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error checking if service exists: %v\n", err)
-				os.Exit(1)
-			}
-			if !bundleExists {
-				fmt.Printf("Bundle does not exist, creating a new one...\n")
-				outputDir, _ := filepath.Abs("./output")
-				os.MkdirAll(outputDir, os.ModePerm)
-				bundleDir, _ := os.MkdirTemp(outputDir, "bundle*")
-				mainDir := "rego"
-				regoOutput := filepath.Join(bundleDir, mainDir)
-				spec, err := loadBundle(openAPISpec)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error loading bundle: %v\n", err)
-					os.Exit(1)
-				}
-				policies, err := parser.ParseOpenAPIPolicies(spec)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error parsing OpenAPI policies: %v\n", err)
-					os.Exit(1)
-				}
-				IAMprovider, err := parser.ParseOpenAPIIAM(spec)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error parsing OpenAPI IAM: %v\n", err)
-					os.Exit(1)
-				}
-				err = generator.GenerateServiceFolder(serviceName, regoOutput, *IAMprovider, policies)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error generating service folder: %v\n", err)
-					os.Exit(1)
-				}
-				// generator.GenerateStaticFolders(regoOutput)
-				// fmt.Printf("Service folder generated successfully at %s\n", outputDir)
-				b, err := bundle.BuildBundle(bundleDir, mainDir)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error building bundle: %v\n", err)
-					os.Exit(1)
-				}
-				err = bundle.WriteBundleToMinio(b, appConfig.LatestBundleName)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error writing bundle to minio: %v\n", err)
-					os.Exit(1)
-				}
-				fmt.Printf("Bundle created and uploaded successfully, a copy is available at %s\n", bundleDir)
-			} else {
-				tempDir, err := os.MkdirTemp("./output", "bundle-patch-*")
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error creating temp directory: %v\n", err)
-					os.Exit(1)
-				}
-				b, err := bundle.LoadBundleFromMinio(appConfig.LatestBundleName)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error loading bundle from Minio: %v\n", err)
-					os.Exit(1)
-				}
-				regoDir := filepath.Join(tempDir, "rego")
-				spec, err := loadBundle(openAPISpec)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error loading bundle: %v\n", err)
-					os.Exit(1)
-				}
-				policies, err := parser.ParseOpenAPIPolicies(spec)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error parsing OpenAPI policies: %v\n", err)
-					os.Exit(1)
-				}
-				IAMprovider, err := parser.ParseOpenAPIIAM(spec)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error parsing OpenAPI IAM: %v\n", err)
-					os.Exit(1)
-				}
-				err = generator.GenerateServiceFolder(serviceName, regoDir, *IAMprovider, policies)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error generating service folder: %v\n", err)
-					os.Exit(1)
-				}
-				newBundle, err := bundle.AddRegoFilesFromDirectory(b, tempDir)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error adding rego files from directory: %v\n", err)
-					os.Exit(1)
-				}
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error verifying bundle: %v\n", err)
-					os.Exit(1)
-				}
-
-				err = bundle.RenameBundleFileName(appConfig.LatestBundleName, appConfig.MinioBundlePrefix+time.Now().Format("2006-01-02_15-04-05"))
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error renaming bundle file: %v\n", err)
-					os.Exit(1)
-				}
-
-				err = bundle.WriteBundleToMinio(newBundle, appConfig.LatestBundleName)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error writing bundle to file: %v\n", err)
-					os.Exit(1)
-				}
-				fmt.Printf("Bundle updated and uploaded successfully, a copy is available at %s\n", tempDir)
-			}
-		},
-	}
-	addServicePolicyCmd.Flags().StringVar(&serviceName, "service_name", "", "Name of the service (required)")
-	addServicePolicyCmd.Flags().StringVar(&openAPISpec, "openAPIspec", "", "OpenAPI spec filename (required)")
-	addServicePolicyCmd.MarkFlagRequired("service_name")
-	addServicePolicyCmd.MarkFlagRequired("openAPIspec")
 
 	var localPath = ""
 	var ListServicePoliciesCmd = &cobra.Command{
@@ -238,7 +124,9 @@ func main() {
 	DeleteServicePolicyCmd.MarkFlagRequired("service_name")
 	DeleteServicePolicyCmd.Flags().StringVar(&localPath, "local-path", "", "")
 
-	rootCmd.AddCommand(configCmd, addServicePolicyCmd, ListServicePoliciesCmd, DeleteServicePolicyCmd)
+	rootCmd.AddCommand(configCmd, ListServicePoliciesCmd, DeleteServicePolicyCmd)
+
+	rootCmd.AddCommand(commands.AddCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
