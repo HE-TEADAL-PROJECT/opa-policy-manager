@@ -45,9 +45,9 @@ func ReloadConfig() {
 	MinioSecretKey = GetEnvOrDefault("MINIO_SECRET_KEY", "adminadmin")
 	MinioBucket = GetEnvOrDefault("MINIO_BUCKET", "opa-policy-bundles")
 	MinioBundlePrefix = GetEnvOrDefault("MINIO_BUNDLE_PREFIX", "teadal-policy-bundle")
-	LatestBundleName = MinioBundlePrefix + "-LATEST"
+	LatestBundleName = MinioBundlePrefix + "-LATEST.tar.gz"
 	TagBundleName = func(tag string) string {
-		return MinioBundlePrefix + "-" + tag
+		return MinioBundlePrefix + "-" + tag + ".tar.gz"
 	}
 }
 
