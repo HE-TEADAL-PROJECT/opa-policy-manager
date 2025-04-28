@@ -3,6 +3,7 @@ package main
 import (
 	"dspn-regogenerator/config"
 	"dspn-regogenerator/internal/bundle"
+	appConfig "dspn-regogenerator/internal/config"
 	"dspn-regogenerator/internal/generator"
 	"dspn-regogenerator/internal/policy/parser"
 	"fmt"
@@ -52,7 +53,7 @@ func main() {
 		Use:   "add",
 		Short: "Add policies related to a service",
 		Run: func(cmd *cobra.Command, args []string) {
-			bundleExists, err := bundle.CheckBundleFileExists(config.Config.BundleFileName)
+			bundleExists, err := bundle.CheckBundleFileExists(appConfig.LatestBundleName)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error checking if service exists: %v\n", err)
 				os.Exit(1)
@@ -89,7 +90,7 @@ func main() {
 					fmt.Fprintf(os.Stderr, "Error building bundle: %v\n", err)
 					os.Exit(1)
 				}
-				err = bundle.WriteBundleToMinio(b, config.Config.BundleFileName)
+				err = bundle.WriteBundleToMinio(b, appConfig.LatestBundleName)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error writing bundle to minio: %v\n", err)
 					os.Exit(1)
@@ -100,7 +101,7 @@ func main() {
 					fmt.Fprintf(os.Stderr, "Error creating temp directory: %v\n", err)
 					os.Exit(1)
 				}
-				b, err := bundle.LoadBundleFromMinio(config.Config.BundleFileName)
+				b, err := bundle.LoadBundleFromMinio(appConfig.LatestBundleName)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error loading bundle from Minio: %v\n", err)
 					os.Exit(1)
@@ -135,7 +136,7 @@ func main() {
 					fmt.Fprintf(os.Stderr, "Error verifying bundle: %v\n", err)
 					os.Exit(1)
 				}
-				err = bundle.WriteBundleToMinio(newBundle, config.Config.BundleFileName)
+				err = bundle.WriteBundleToMinio(newBundle, appConfig.LatestBundleName)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error writing bundle to file: %v\n", err)
 					os.Exit(1)

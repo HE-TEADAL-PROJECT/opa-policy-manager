@@ -1,0 +1,56 @@
+package config
+
+import "os"
+
+func GetEnvOrDefault(key, defaultValue string) string {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+	return value
+}
+
+var (
+	// Address of the MinIO server, without the protocol (http:// or https://).
+	// The default value is "localhost:9000", load from environment variable MINIO_ENDPOINT.
+	MinioEndpoint string
+
+	// The access key for MinIO.
+	// The default value is "admin", load from environment variable MINIO_ACCESS_KEY.
+	MinioAccessKey string
+
+	// The secret key for MinIO.
+	// The default value is "adminadmin", load from environment variable MINIO_SECRET_KEY.
+	MinioSecretKey string
+
+	// The bucket name where to store the bundles.
+	// The default value is "opa-policy-bundles", load from environment variable MINIO_BUCKET.
+	MinioBucket string
+
+	// The bundle name prefix, used to create the bundle name adding a -version tag suffix.
+	// The default value is "teadal-policy-bundle", load from environment variable MINIO_BUNDLE_PREFIX.
+	MinioBundlePrefix string
+
+	// The name of the latest bundle.
+	LatestBundleName string
+
+	// A function to generate a bundle name with a specific tag.
+	TagBundleName func(tag string) string
+)
+
+// ReloadConfig initializes or reloads the global variables based on the current environment variables. There is no need to call this function manually, as it is automatically called when the package is loaded.
+func ReloadConfig() {
+	MinioEndpoint = GetEnvOrDefault("MINIO_ENDPOINT", "localhost:9000")
+	MinioAccessKey = GetEnvOrDefault("MINIO_ACCESS_KEY", "admin")
+	MinioSecretKey = GetEnvOrDefault("MINIO_SECRET_KEY", "adminadmin")
+	MinioBucket = GetEnvOrDefault("MINIO_BUCKET", "opa-policy-bundles")
+	MinioBundlePrefix = GetEnvOrDefault("MINIO_BUNDLE_PREFIX", "teadal-policy-bundle")
+	LatestBundleName = MinioBundlePrefix + "-LATEST"
+	TagBundleName = func(tag string) string {
+		return MinioBundlePrefix + "-" + tag
+	}
+}
+
+func init() {
+	ReloadConfig()
+}

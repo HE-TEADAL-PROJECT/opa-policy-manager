@@ -2,7 +2,7 @@ package bundle
 
 import (
 	"context"
-	"dspn-regogenerator/config"
+	"dspn-regogenerator/internal/config"
 	"fmt"
 	"io"
 	"io/fs"
@@ -69,15 +69,15 @@ func LoadBundleFromFile(filePath string) (*bundle.Bundle, error) {
 // It creates a new bucket if it doesn't exist and uploads the bundle to the specified bucket.
 // The configuration for the MinIO server, access key, secret key, and bucket name is taken from the config package.
 func WriteBundleToMinio(b *bundle.Bundle, bundleFileName string) error {
-	client, err := minio.New(config.Config.Minio_Server, &minio.Options{
-		Creds: credentials.NewStaticV4(config.Config.Minio_Access_Key, config.Config.Minio_Secret_Key, "")})
+	client, err := minio.New(config.MinioEndpoint, &minio.Options{
+		Creds: credentials.NewStaticV4(config.MinioAccessKey, config.MinioSecretKey, "")})
 	if err != nil {
 		return fmt.Errorf("write bundle: failed to create minio client %w", err)
 	}
 	// Create a new bucket if it doesn't exist
-	err = client.MakeBucket(context.Background(), config.Config.Bucket_Name, minio.MakeBucketOptions{})
+	err = client.MakeBucket(context.Background(), config.MinioBucket, minio.MakeBucketOptions{})
 	if err != nil {
-		exists, errBucketExists := client.BucketExists(context.Background(), config.Config.Bucket_Name)
+		exists, errBucketExists := client.BucketExists(context.Background(), config.MinioBucket)
 		if errBucketExists != nil {
 			return fmt.Errorf("write bundle: failed to check if bucket exists %w", errBucketExists)
 		}
@@ -98,7 +98,7 @@ func WriteBundleToMinio(b *bundle.Bundle, bundleFileName string) error {
 		}
 	}()
 
-	if _, err := client.PutObject(context.Background(), config.Config.Bucket_Name, bundleFileName, reader, -1, minio.PutObjectOptions{}); err != nil {
+	if _, err := client.PutObject(context.Background(), config.MinioBucket, bundleFileName, reader, -1, minio.PutObjectOptions{}); err != nil {
 		return fmt.Errorf("write bundle: failed to upload to MinIO %w", err)
 	}
 
@@ -108,14 +108,14 @@ func WriteBundleToMinio(b *bundle.Bundle, bundleFileName string) error {
 // LoadBundleFromMinio loads the bundle from MinIO using the MinIO client.
 // It retrieves the bundle file from the specified bucket and returns it as a bundle object.
 func LoadBundleFromMinio(bundleFileName string) (*bundle.Bundle, error) {
-	client, err := minio.New(config.Config.Minio_Server, &minio.Options{
-		Creds: credentials.NewStaticV4(config.Config.Minio_Access_Key, config.Config.Minio_Secret_Key, "")})
+	client, err := minio.New(config.MinioEndpoint, &minio.Options{
+		Creds: credentials.NewStaticV4(config.MinioAccessKey, config.MinioSecretKey, "")})
 	if err != nil {
 		return nil, fmt.Errorf("load bundle: failed to create minio client %w", err)
 	}
 
 	// Get the object from MinIO
-	object, err := client.GetObject(context.Background(), config.Config.Bucket_Name, bundleFileName, minio.GetObjectOptions{})
+	object, err := client.GetObject(context.Background(), config.MinioBucket, bundleFileName, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("load bundle: failed to get object from MinIO %w", err)
 	}
@@ -133,22 +133,22 @@ func LoadBundleFromMinio(bundleFileName string) (*bundle.Bundle, error) {
 
 func CheckBundleFileExists(bundleFileName string) (bool, error) {
 	// Check if the file exists
-	client, err := minio.New(config.Config.Minio_Server, &minio.Options{
-		Creds: credentials.NewStaticV4(config.Config.Minio_Access_Key, config.Config.Minio_Secret_Key, "")})
+	client, err := minio.New(config.MinioEndpoint, &minio.Options{
+		Creds: credentials.NewStaticV4(config.MinioAccessKey, config.MinioSecretKey, "")})
 	if err != nil {
 		return false, fmt.Errorf("load bundle: failed to create minio client %w", err)
 	}
 
 	// Check if the object exists in the bucket
-	exists, err := client.BucketExists(context.Background(), config.Config.Bucket_Name)
+	exists, err := client.BucketExists(context.Background(), config.MinioBucket)
 	if err != nil {
 		return false, fmt.Errorf("load bundle: failed to check if bucket exists %w", err)
 	}
 	if !exists {
-		return false, fmt.Errorf("load bundle: bucket %s does not exist", config.Config.Bucket_Name)
+		return false, fmt.Errorf("load bundle: bucket %s does not exist", config.MinioBucket)
 	}
 	// Check if the object exists in the bucket
-	objectInfo, err := client.StatObject(context.Background(), config.Config.Bucket_Name, bundleFileName, minio.StatObjectOptions{})
+	objectInfo, err := client.StatObject(context.Background(), config.MinioBucket, bundleFileName, minio.StatObjectOptions{})
 	if err != nil {
 		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
 			return false, nil // Object does not exist
