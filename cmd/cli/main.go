@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	opabundle "github.com/open-policy-agent/opa/v1/bundle"
 
@@ -59,7 +60,9 @@ func main() {
 				os.Exit(1)
 			}
 			if !bundleExists {
+				fmt.Printf("Bundle does not exist, creating a new one...\n")
 				outputDir, _ := filepath.Abs("./output")
+				os.MkdirAll(outputDir, os.ModePerm)
 				bundleDir, _ := os.MkdirTemp(outputDir, "bundle*")
 				mainDir := "rego"
 				regoOutput := filepath.Join(bundleDir, mainDir)
@@ -83,8 +86,8 @@ func main() {
 					fmt.Fprintf(os.Stderr, "Error generating service folder: %v\n", err)
 					os.Exit(1)
 				}
-				generator.GenerateStaticFolders(regoOutput)
-				fmt.Printf("Service folder generated successfully at %s\n", outputDir)
+				// generator.GenerateStaticFolders(regoOutput)
+				// fmt.Printf("Service folder generated successfully at %s\n", outputDir)
 				b, err := bundle.BuildBundle(bundleDir, mainDir)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error building bundle: %v\n", err)
@@ -95,6 +98,7 @@ func main() {
 					fmt.Fprintf(os.Stderr, "Error writing bundle to minio: %v\n", err)
 					os.Exit(1)
 				}
+				fmt.Printf("Bundle created and uploaded successfully, a copy is available at %s\n", bundleDir)
 			} else {
 				tempDir, err := os.MkdirTemp("./output", "bundle-patch-*")
 				if err != nil {
@@ -136,11 +140,19 @@ func main() {
 					fmt.Fprintf(os.Stderr, "Error verifying bundle: %v\n", err)
 					os.Exit(1)
 				}
+
+				err = bundle.RenameBundleFileName(appConfig.LatestBundleName, appConfig.MinioBundlePrefix+time.Now().Format("2006-01-02_15-04-05"))
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error renaming bundle file: %v\n", err)
+					os.Exit(1)
+				}
+
 				err = bundle.WriteBundleToMinio(newBundle, appConfig.LatestBundleName)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error writing bundle to file: %v\n", err)
 					os.Exit(1)
 				}
+				fmt.Printf("Bundle updated and uploaded successfully, a copy is available at %s\n", tempDir)
 			}
 		},
 	}

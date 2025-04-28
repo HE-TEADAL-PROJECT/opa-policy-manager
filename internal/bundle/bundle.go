@@ -300,7 +300,7 @@ func AddRegoFilesFromDirectory(originalBundle *bundle.Bundle, bundleRootDir stri
 	}
 
 	// For debugging - print replaced modules
-	fmt.Printf("Bundle now contains %d modules\n", len(newBundle.Modules))
+	// TODO: fix wrong counting of modules
 
 	return &newBundle, nil
 }
@@ -355,4 +355,25 @@ func RemoveService(originalBundle *bundle.Bundle, subdir string) (*bundle.Bundle
 		subdir, len(newBundle.Modules))
 
 	return &newBundle, nil
+}
+
+func RenameBundleFileName(oldFileName, newFileName string) error {
+	// Create a copy of the existing bundle
+	client, err := minio.New(config.MinioEndpoint, &minio.Options{
+		Creds: credentials.NewStaticV4(config.MinioAccessKey, config.MinioSecretKey, "")})
+	if err != nil {
+		return fmt.Errorf("load bundle: failed to create minio client %w", err)
+	}
+
+	if _, err = client.CopyObject(context.TODO(), minio.CopyDestOptions{
+		Bucket: config.MinioBucket,
+		Object: newFileName,
+	}, minio.CopySrcOptions{
+		Bucket: config.MinioBucket,
+		Object: oldFileName,
+	}); err != nil {
+		return fmt.Errorf("load bundle: failed to copy object %w", err)
+	}
+
+	return nil
 }

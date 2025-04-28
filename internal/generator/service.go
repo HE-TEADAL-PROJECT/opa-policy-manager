@@ -26,34 +26,62 @@ func GenerateServiceFolder(serviceName string, outputDir string, IAMprovider str
 const oidcTemplate = `package %s.oidc
 
 import rego.v1
+import data.input.attributes.request.http as request
 
-internal_keycloak_jwks_url := "http://keycloak:8080/keycloak/realms/teadal/protocol/openid-connect/certs"
+# OIDC configuration discover url
+metadata_url := "%s"
 
-jwks_preferred_urls := {
-	"http://%s": internal_keycloak_jwks_url,
-	"https://%s": internal_keycloak_jwks_url,
+# Generate code 
+
+metadata := http.send({
+    "url": metadata_url,
+    "method": "GET",
+    "headers": {
+        "accept": "application/json"
+    },
+    "force_cache": true,
+    "force_cache_duration_seconds": 86400 # Cache response for 24 hours
+}).body
+
+jwks_uri := metadata.jwks_uri
+
+jwks := http.send({
+    "url": jwks_uri,
+    "method": "GET",
+    "headers": {
+        "accept": "application/json"
+    },
+    "force_cache": true,
+    "force_cache_duration_seconds": 3600 # Cache response for 1 hour
+}).body
+
+encoded := split(request.headers.authorization, " ")[1]
+
+token := {"valid": valid, "payload": payload} if {
+    [_, encoded] := split(request.headers.authorization, " ")
+    [valid, _, payload] := io.jwt.decode_verify(encoded,{ "cert": json.marshal(jwks) })
 }
-
-jwt_user_field_name := "email"
-
-jwt_realm_access_field_name := "realm_access"
-
-jwt_roles_field_name := "roles"
 `
 
 func generateOIDCfile(serviceName string, outputDir string, url string) error {
-	data := fmt.Sprintf(oidcTemplate, serviceName, url, url)
+	data := fmt.Sprintf(oidcTemplate, serviceName, url)
 	return os.WriteFile(outputDir+"/oidc.rego", []byte(data), 0644)
 }
 
 const serviceTemplate = `package %s
 
 import rego.v1
+import data.input.attributes.request.http as request
+import data.%s.oidc.token
 
+user := token.payload.preferred_username
+roles := token.payload.realm_access.roles
+
+# Generated access control policies
 `
 
 func generateServiceFile(serviceName string, outputDir string, policies *policy.GeneralPolicies) error {
-	data := fmt.Sprintf(serviceTemplate, serviceName)
+	data := fmt.Sprintf(serviceTemplate, serviceName, serviceName)
 	data += policies.ToRego()
 	return os.WriteFile(outputDir+"/service.rego", []byte(data), 0644)
 }

@@ -20,7 +20,7 @@ func TestGenerateServiceFolder(t *testing.T) {
 	outputDir := tempDir
 
 	// Call the function
-	err = GenerateServiceFolder(serviceName, outputDir, "test", &policy.GeneralPolicies{
+	err = GenerateServiceFolder(serviceName, outputDir, "http://localhost:8000/keykloack/realms/test", &policy.GeneralPolicies{
 		Policies: []policy.PolicyClause{
 			{
 				UserPolicy: &policy.UserPolicy{
@@ -62,19 +62,41 @@ func TestGenerateServiceFolder(t *testing.T) {
 	expectedContent := `package testService.oidc
 
 import rego.v1
+import data.input.attributes.request.http as request
 
-internal_keycloak_jwks_url := "http://keycloak:8080/keycloak/realms/teadal/protocol/openid-connect/certs"
+# OIDC configuration discover url
+metadata_url := "http://localhost:8000/keykloack/realms/test"
 
-jwks_preferred_urls := {
-	"http://test": internal_keycloak_jwks_url,
-	"https://test": internal_keycloak_jwks_url,
+# Generate code 
+
+metadata := http.send({
+    "url": metadata_url,
+    "method": "GET",
+    "headers": {
+        "accept": "application/json"
+    },
+    "force_cache": true,
+    "force_cache_duration_seconds": 86400 # Cache response for 24 hours
+}).body
+
+jwks_uri := metadata.jwks_uri
+
+jwks := http.send({
+    "url": jwks_uri,
+    "method": "GET",
+    "headers": {
+        "accept": "application/json"
+    },
+    "force_cache": true,
+    "force_cache_duration_seconds": 3600 # Cache response for 1 hour
+}).body
+
+encoded := split(request.headers.authorization, " ")[1]
+
+token := {"valid": valid, "payload": payload} if {
+    [_, encoded] := split(request.headers.authorization, " ")
+    [valid, _, payload] := io.jwt.decode_verify(encoded,{ "cert": json.marshal(jwks) })
 }
-
-jwt_user_field_name := "email"
-
-jwt_realm_access_field_name := "realm_access"
-
-jwt_roles_field_name := "roles"
 `
 	content, err := os.ReadFile(oidcFile)
 	if err != nil {
