@@ -48,37 +48,6 @@ func main() {
 	configCmd.MarkFlagRequired("minio_secret_key")
 
 	var localPath = ""
-	var ListServicePoliciesCmd = &cobra.Command{
-		Use:   "list",
-		Short: "Add policies related to a service",
-		Run: func(cmd *cobra.Command, args []string) {
-			var b = new(opabundle.Bundle)
-			var err error
-			if localPath != "" {
-				b, err = bundle.LoadBundleFromFile(localPath)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error loading bundle from local path: %v\n", err)
-					os.Exit(1)
-				}
-			} else {
-				b, err = bundle.LoadBundleFromMinio(config.Config.BundleFileName)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error loading bundle from Minio: %v\n", err)
-					os.Exit(1)
-				}
-			}
-			files := bundle.ListBundleFiles(b)
-			services := map[string]struct{}{}
-			fmt.Println("services available")
-			for _, f := range files {
-				services[filepath.Dir(f)] = struct{}{}
-			}
-			for k := range services {
-				fmt.Println(k)
-			}
-		},
-	}
-	ListServicePoliciesCmd.Flags().StringVar(&localPath, "local-path", "", "")
 
 	var DeleteServicePolicyCmd = &cobra.Command{
 		Use:   "delete",
@@ -124,9 +93,9 @@ func main() {
 	DeleteServicePolicyCmd.MarkFlagRequired("service_name")
 	DeleteServicePolicyCmd.Flags().StringVar(&localPath, "local-path", "", "")
 
-	rootCmd.AddCommand(configCmd, ListServicePoliciesCmd, DeleteServicePolicyCmd)
+	rootCmd.AddCommand(configCmd, DeleteServicePolicyCmd)
 
-	rootCmd.AddCommand(commands.AddCmd)
+	rootCmd.AddCommand(commands.AddCmd, commands.ListCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
