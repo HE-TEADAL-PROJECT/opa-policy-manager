@@ -10,7 +10,7 @@ import (
 func TestParseOpenAPIPathsConditions(t *testing.T) {
 	// Define a sample OpenAPI document
 	cwd, _ := os.Getwd()
-	cwd = strings.Split(cwd, "/policy")[0]
+	cwd = strings.Split(cwd, "/internal")[0]
 	os.Chdir(cwd)
 	file, err := os.ReadFile("./testdata/schemas/httpbin-api.json")
 	if err != nil {
@@ -40,7 +40,7 @@ func TestParseOpenAPIPathsConditions(t *testing.T) {
 func TestParseOpenAPISpecializedPathConditions(t *testing.T) {
 	// Define a sample OpenAPI document
 	cwd, _ := os.Getwd()
-	cwd = strings.Split(cwd, "/policy")[0]
+	cwd = strings.Split(cwd, "/internal")[0]
 	os.Chdir(cwd)
 	file, err := os.ReadFile("./testdata/schemas/httpbin-api.json")
 	if err != nil {
@@ -64,7 +64,7 @@ func TestParseOpenAPISpecializedPathConditions(t *testing.T) {
 
 func TestParseOpenAPISpecializedPathMethodConditions(t *testing.T) {
 	cwd, _ := os.Getwd()
-	cwd = strings.Split(cwd, "/policy")[0]
+	cwd = strings.Split(cwd, "/internal")[0]
 	os.Chdir(cwd)
 	file, err := os.ReadFile("./testdata/schemas/httpbin-api.json")
 	if err != nil {
@@ -88,7 +88,7 @@ func TestParseOpenAPISpecializedPathMethodConditions(t *testing.T) {
 
 func TestParsing(t *testing.T) {
 	cwd, _ := os.Getwd()
-	cwd = strings.Split(cwd, "/policy")[0]
+	cwd = strings.Split(cwd, "/internal")[0]
 	os.Chdir(cwd)
 	file, err := os.ReadFile("./testdata/schemas/httpbin-api.json")
 	if err != nil {
