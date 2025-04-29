@@ -15,13 +15,13 @@ const (
 )
 
 type PolicyDetail struct {
-	Value    []string
-	Operator Operator
+	Value    []string `yaml:"value"`
+	Operator Operator `yaml:"operator"`
 }
 
 // UserPolicy represents a policy that checks if a user is in a list of allowed users (OR) or if the user is equal to a specific list of values (AND).
 type UserPolicy struct {
-	PolicyDetail
+	PolicyDetail `yaml:",inline"`
 }
 
 func (p *UserPolicy) ToRego() string {
@@ -42,7 +42,7 @@ func (p *UserPolicy) ToRego() string {
 
 // RolePolicy represents a policy that checks if a user has a specific role (AND) or if the user has any of the roles in a list (OR).
 type RolePolicy struct {
-	PolicyDetail
+	PolicyDetail `yaml:",inline"`
 }
 
 func (p *RolePolicy) ToRego() string {
