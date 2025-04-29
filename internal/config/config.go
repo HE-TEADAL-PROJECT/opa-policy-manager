@@ -1,6 +1,10 @@
 package config
 
-import "os"
+import (
+	"fmt"
+	"os"
+	"strconv"
+)
 
 func GetEnvOrDefault(key, defaultValue string) string {
 	value, exists := os.LookupEnv(key)
@@ -36,6 +40,10 @@ var (
 
 	// A function to generate a bundle name with a specific tag.
 	TagBundleName func(tag string) string
+
+	// The timeout for MinIO operations in seconds.
+	// The default value is 5 seconds, load from environment variable MINIO_TIMEOUT.
+	MinioTimeout int
 )
 
 // ReloadConfig initializes or reloads the global variables based on the current environment variables. There is no need to call this function manually, as it is automatically called when the package is loaded.
@@ -48,6 +56,12 @@ func ReloadConfig() {
 	LatestBundleName = MinioBundlePrefix + "-LATEST.tar.gz"
 	TagBundleName = func(tag string) string {
 		return MinioBundlePrefix + "-" + tag + ".tar.gz"
+	}
+	var err error
+	MinioTimeout, err = strconv.Atoi(GetEnvOrDefault("MINIO_TIMEOUT", "5"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing MINIO_TIMEOUT: %v\n", err)
+		MinioTimeout = 5
 	}
 }
 

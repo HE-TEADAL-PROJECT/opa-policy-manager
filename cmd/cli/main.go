@@ -10,7 +10,7 @@ import (
 
 func main() {
 	var rootCmd = &cobra.Command{Use: "dspn-regogenerator"}
-	rootCmd.AddCommand(commands.AddCmd, commands.ListCmd, commands.DeleteCmd)
+	rootCmd.AddCommand(commands.AddCmd, commands.ListCmd, commands.DeleteCmd, commands.TestCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
