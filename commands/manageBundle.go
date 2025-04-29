@@ -95,7 +95,7 @@ func getServiceList() ([]string, error) {
 
 	//download existing bundle
 	fmt.Println("Downloading existing bundle..." + "http://" + config.Config.Minio_Server + "/" + config.Config.Bucket_Name + "/" + config.Config.BundleFileName)
-	if err := utils.DownloadFile("http://"+config.Config.Minio_Server+"/"+config.Config.Bucket_Name+"/"+config.Config.BundleFileName, config.Root_bundle_dir+"/"+config.Config.BundleFileName); err != nil {
+	if err := utils.DownloadFile("http://"+config.Config.Minio_Server+"/"+config.Config.Bucket_Name+"/"+config.Config.BundleFileName, config.Root_bundle_dir+config.Config.BundleFileName); err != nil {
 		fmt.Println("Error:", err)
 		return nil, err
 	}
