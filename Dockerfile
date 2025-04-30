@@ -7,7 +7,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o main .
+RUN go build -o main ./cmd/cli/main.go
 
 # Define environment variables
 # ENV MINIO_SERVER="" \
@@ -17,4 +17,4 @@ RUN go build -o main .
 #     BUNDLE_NAME=""
 
 # EXPOSE 8080
-CMD ["./main test"]
+ENTRYPOINT ["./main", "test"]
