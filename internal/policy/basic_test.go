@@ -75,7 +75,7 @@ func TestRolePolicy(t *testing.T) {
 					Operator: policy.OperatorAnd,
 				},
 			},
-			want: "\"role1\" in roles\n\"role2\" in roles\n",
+			want: `count({"role1","role2"}-roles) == 0` + "\n",
 		},
 		{
 			name: "Test with OR",
@@ -85,7 +85,7 @@ func TestRolePolicy(t *testing.T) {
 					Operator: policy.OperatorOr,
 				},
 			},
-			want: "some role in roles\nrole in [\"role1\",\"role2\"]\n",
+			want: `count({"role1","role2"}&roles) != 0` + "\n",
 		},
 		{
 			name: "Test with AND and empty user list",

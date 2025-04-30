@@ -10,7 +10,7 @@ import (
 // Represent a policy clauses, which can contains at most one of each type of policy
 type PolicyClause struct {
 	UserPolicy            *UserPolicy            `yaml:"user"`
-	RolePolicy            *RolePolicy            `yaml:"role"`
+	RolePolicy            *RolePolicy            `yaml:"roles"`
 	StorageLocationPolicy *StorageLocationPolicy `yaml:"storage_location"`
 	CallPolicy            *CallPolicy            `yaml:"call"`
 	TimelinessPolicy      *TimelinessPolicy      `yaml:"timeliness"`

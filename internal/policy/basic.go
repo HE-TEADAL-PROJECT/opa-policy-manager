@@ -1,6 +1,9 @@
 package policy
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 type Operator string
 
@@ -24,6 +27,11 @@ type UserPolicy struct {
 	PolicyDetail `yaml:",inline"`
 }
 
+// ToRego converts the UserPolicy to a Rego expression.
+// It generates a Rego rule that checks if the user is in the allowed list or matches the specified values.
+// If the operator is AND, it checks for equality with each value.
+// If the operator is OR, it checks if the user is in the list of values.
+// The generated Rego rule is returned as a string.
 func (p *UserPolicy) ToRego() string {
 	var result string
 	if p.Operator == OperatorAnd {
@@ -45,21 +53,28 @@ type RolePolicy struct {
 	PolicyDetail `yaml:",inline"`
 }
 
+// ToRego converts the RolePolicy to a Rego expression.
+// It generates a Rego rule that checks if the user has the specified role or matches any of the roles in the list.
+// If the operator is AND, it checks that all roles required are present.
+// If the operator is OR, it checks if the user has any of the roles in the list.
 func (p *RolePolicy) ToRego() string {
 	var result string
 	if len(p.Value) == 0 {
 		return result
 	}
+
+	roleJson, err := json.Marshal(p.Value)
+	if err != nil {
+		panic(err)
+	}
+	roleJsonSet := string(roleJson)
+	roleJsonSet = strings.Replace(roleJsonSet, "[", "{", 1)
+	roleJsonSet = strings.Replace(roleJsonSet, "]", "}", 1)
+
 	if p.Operator == OperatorAnd {
-		for _, v := range p.Value {
-			result += "\"" + v + "\" in roles\n"
-		}
+		result = "count(" + roleJsonSet + "-roles) == 0\n"
 	} else {
-		values, err := json.Marshal(p.Value)
-		if err != nil {
-			panic(err)
-		}
-		result = "some role in roles\nrole in " + string(values) + "\n"
+		result = "count(" + roleJsonSet + "&roles) != 0\n"
 	}
 	return result
 }

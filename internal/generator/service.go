@@ -75,7 +75,7 @@ import data.input.attributes.request.http as request
 import data.%s.oidc.token
 
 user := token.payload.preferred_username
-roles := token.payload.realm_access.roles
+roles contains role if some role in token.payload.realm_access.roles
 
 # Generated access control policies
 `

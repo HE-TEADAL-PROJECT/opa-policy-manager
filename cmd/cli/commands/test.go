@@ -20,12 +20,26 @@ import (
 
 var testFile string = `package testBundle_test
 
+import data.testBundle.oidc
+import data.testBundle
+
 test_expected_metadata if {
-    true
+    oidc.metadata_url != null
 }
 
 test_allow_get_bearer if {
-    true
+    testBundle.allow with oidc.token as {
+        "valid": true,
+        "payload": {
+            "preferred_username": "jeejee@teadal.eu",
+            "realm_access": {
+                "roles": ["role1", "role2"]
+            }
+        }
+    } with data.input.attributes.request.http as {
+        "path": "/bearer",
+        "method": "get",
+    }
 }`
 
 func testMinioConnection(ctx context.Context) error {
@@ -137,7 +151,6 @@ var TestCmd = &cobra.Command{
 				cmd.PrintErrf("Error building bundle: %v\n", err)
 				return
 			}
-			cmd.Println(b)
 			if err != nil {
 				cmd.PrintErrf("Error building bundle: %v\n", err)
 				return
