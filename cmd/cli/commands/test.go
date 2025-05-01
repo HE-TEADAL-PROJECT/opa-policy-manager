@@ -6,6 +6,7 @@ import (
 	"dspn-regogenerator/internal/config"
 	"dspn-regogenerator/internal/generator"
 	"dspn-regogenerator/internal/policy/parser"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -42,6 +43,41 @@ test_allow_get_bearer if {
     }
 }`
 
+var anonymousPolicy string = `{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "*"
+                ]
+            },
+            "Action": [
+                "s3:GetBucketLocation",
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::%s"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "*"
+                ]
+            },
+            "Action": [
+                "s3:GetObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::%s/*"
+            ]
+        }
+    ]
+}`
+
 func testMinioConnection(ctx context.Context) error {
 	client, err := minio.New(config.MinioEndpoint, &minio.Options{
 		Creds: credentials.NewStaticV4(config.MinioAccessKey, config.MinioSecretKey, "")})
@@ -54,7 +90,14 @@ func testMinioConnection(ctx context.Context) error {
 	if bucketExists, err := client.BucketExists(ctx, config.MinioBucket); err != nil {
 		return err
 	} else if !bucketExists {
-		client.MakeBucket(ctx, config.MinioBucket, minio.MakeBucketOptions{})
+		err := client.MakeBucket(ctx, config.MinioBucket, minio.MakeBucketOptions{})
+		if err != nil {
+			return err
+		}
+		err = client.SetBucketPolicy(ctx, config.MinioBucket, fmt.Sprintf(anonymousPolicy, config.MinioBucket, config.MinioBucket))
+		if err != nil {
+			return err
+		}
 	}
 
 	return err
