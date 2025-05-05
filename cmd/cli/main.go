@@ -3,6 +3,7 @@ package main
 import (
 	"dspn-regogenerator/cmd/cli/commands"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -11,6 +12,8 @@ import (
 func main() {
 	var rootCmd = &cobra.Command{Use: "dspn-regogenerator"}
 	rootCmd.AddCommand(commands.AddCmd, commands.ListCmd, commands.DeleteCmd, commands.TestCmd)
+
+	slog.SetDefault(slog.New(NewCliHandler(os.Stderr)))
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
