@@ -5,20 +5,338 @@ import (
 	"dspn-regogenerator/internal/bundle"
 	appconfig "dspn-regogenerator/internal/config"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 
+	"github.com/hashicorp/go-set/v3"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/open-policy-agent/opa/v1/ast"
 	opabundle "github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/compile"
 	"github.com/testcontainers/testcontainers-go"
 
 	miniotest "github.com/testcontainers/testcontainers-go/modules/minio"
 )
+
+func TestCompileBundle(t *testing.T) {
+	tests := []struct {
+		name     string
+		files    map[string]string
+		paths    []string
+		validate func(t *testing.T, b *opabundle.Bundle, err error)
+	}{
+		{
+			name: "OneFile",
+			files: map[string]string{
+				"example.rego": `package example
+default allow = false`,
+			},
+			validate: func(t *testing.T, b *opabundle.Bundle, err error) {
+				if err != nil {
+					t.Fatalf("Failed to compile bundle: %v", err)
+				}
+				if b == nil {
+					t.Fatal("Expected a non-nil bundle")
+				}
+				if len(b.Modules) != 1 {
+					t.Errorf("Expected bundle to contain 1 module, got %d", len(b.Modules))
+				}
+				if b.Modules[0].Path != "example.rego" {
+					t.Errorf("Expected module path to be 'example.rego', got '%s'", b.Modules[0].Path)
+				}
+				if conv, ok := (b.Manifest.Metadata["services"]).(set.Set[string]); !ok {
+					t.Fatalf("Expected services to be a set.Set[string], got %T", b.Manifest.Metadata["services"])
+				} else {
+					if conv.Size() != 1 || !conv.Contains("example") {
+						t.Fatalf("Expected services to contains 'example', got %v", conv)
+					}
+				}
+			},
+		},
+		{
+			name: "MultipleFiles",
+			files: map[string]string{
+				"example1.rego": `package example1
+default allow = false`,
+				"example2.rego": `package example2
+default allow = true`,
+			},
+			validate: func(t *testing.T, b *opabundle.Bundle, err error) {
+				if err != nil {
+					t.Fatalf("Failed to compile bundle: %v", err)
+				}
+				if b == nil {
+					t.Fatal("Expected a non-nil bundle")
+				}
+				if len(b.Modules) != 2 {
+					t.Fatalf("Expected bundle to contain 2 modules, got %d", len(b.Modules))
+				}
+				if b.Modules[0].Path != "example1.rego" {
+					t.Fatalf("Expected module path to be 'example1.rego', got '%s'", b.Modules[0].Path)
+				}
+				if b.Modules[1].Path != "example2.rego" {
+					t.Fatalf("Expected module path to be 'example2.rego', got '%s'", b.Modules[1].Path)
+				}
+			},
+		},
+		{
+			name: "InvalidFile",
+			files: map[string]string{
+				"invalid.rego": `package invalid
+default allow =`,
+			},
+			validate: func(t *testing.T, b *opabundle.Bundle, err error) {
+				if err == nil {
+					t.Fatal("Expected an error due to invalid rego file, but got none")
+				}
+			},
+		},
+		{
+			name:  "EmptyDirectory",
+			files: map[string]string{},
+			validate: func(t *testing.T, b *opabundle.Bundle, err error) {
+				if err != nil {
+					t.Fatalf("Failed to compile bundle: %v", err)
+				}
+				if b == nil {
+					t.Fatal("Expected a non-nil bundle")
+				}
+				if len(b.Modules) != 0 {
+					t.Fatalf("Expected bundle to contain 0 modules, got %d", len(b.Modules))
+				}
+			},
+		},
+		{
+			name: "ServiceFolder",
+			files: map[string]string{
+				"serviceA/example1.rego": `package serviceA.example1
+default allow = false`,
+				"serviceA/example2.rego": `package serviceA.example2
+default allow = true`,
+			},
+			validate: func(t *testing.T, b *opabundle.Bundle, err error) {
+				if err != nil {
+					t.Fatalf("Failed to compile bundle: %v", err)
+				}
+				if b == nil {
+					t.Fatal("Expected a non-nil bundle")
+				}
+				if len(b.Modules) != 2 {
+					t.Fatalf("Expected bundle to contain 2 modules, got %d", len(b.Modules))
+				}
+				if b.Modules[0].Path != "serviceA/example1.rego" {
+					t.Fatalf("Expected module path to be 'serviceA/example1.rego', got '%s'", b.Modules[0].Path)
+				}
+				if b.Modules[1].Path != "serviceA/example2.rego" {
+					t.Fatalf("Expected module path to be 'serviceA/example2.rego', got '%s'", b.Modules[1].Path)
+				}
+				if conv, ok := (b.Manifest.Metadata["services"]).(set.Set[string]); !ok {
+					t.Fatalf("Expected services to be a set.Set[string], got %T", b.Manifest.Metadata["services"])
+				} else {
+					if conv.Size() != 1 || !conv.Contains("serviceA") {
+						t.Fatalf("Expected services to be empty, got %v", conv)
+					}
+				}
+			},
+			paths: []string{"serviceA"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create a temporary directory for the test
+			tempDir := t.TempDir()
+
+			// Write the files to the temporary directory
+			for path, content := range tc.files {
+				fullPath := filepath.Join(tempDir, path)
+				err := os.MkdirAll(filepath.Dir(fullPath), 0755)
+				if err != nil {
+					t.Fatalf("Failed to create directories for %s: %v", fullPath, err)
+				}
+				err = os.WriteFile(fullPath, []byte(content), 0644)
+				if err != nil {
+					t.Fatalf("Failed to write file %s: %v", path, err)
+				}
+			}
+
+			var paths []string
+			if len(tc.paths) == 0 {
+				paths = slices.Collect(maps.Keys(tc.files))
+			} else {
+				paths = tc.paths
+			}
+
+			// Call CompileBundle
+			b, err := bundle.CompileBundle(context.TODO(), tempDir, paths...)
+
+			// Validate the result
+			tc.validate(t, b, err)
+		})
+	}
+}
+
+func TestAddServiceFolder(t *testing.T) {
+	fileContent := "package serviceA\ndefault allow = false"
+	fileName := "serviceA/example.rego"
+
+	// Create a test bundle
+	testBundle := &opabundle.Bundle{
+		Modules: []opabundle.ModuleFile{
+			{
+				URL:    fileName,
+				Path:   fileName,
+				Raw:    []byte(fileContent),
+				Parsed: ast.MustParseModule(fileContent),
+			},
+		},
+		Manifest: opabundle.Manifest{
+			Metadata: map[string]interface{}{
+				"services": *set.From([]string{"serviceA"}),
+			},
+		},
+	}
+
+	tc := []struct {
+		name     string
+		files    map[string]string
+		validate func(t *testing.T, b *opabundle.Bundle, err error)
+		paths    []string
+	}{
+		{
+			name: "SingleFileService",
+			files: map[string]string{
+				"serviceB/example.rego": "package serviceB\ndefault allow = true",
+			},
+			validate: func(t *testing.T, b *opabundle.Bundle, err error) {
+				if err != nil {
+					t.Fatalf("Failed to add service folder: %v", err)
+				}
+				if b == nil {
+					t.Fatal("Expected a non-nil bundle")
+				}
+				if len(b.Modules) != 2 {
+					t.Fatalf("Expected bundle to contain 2 modules, got %d", len(b.Modules))
+				}
+				if b.Modules[1].Path != "serviceB/example.rego" {
+					t.Fatalf("Expected module path to be 'serviceB/example.rego', got '%s'", b.Modules[1].Path)
+				}
+				if conv, ok := (b.Manifest.Metadata["services"]).(set.Set[string]); !ok {
+					t.Fatalf("Expected services to be a set, got %T", b.Manifest.Metadata["services"])
+				} else {
+					if conv.Size() != 2 || !conv.Contains("serviceA") || !conv.Contains("serviceB") {
+						t.Fatalf("Expected services to contain 'serviceA' and 'serviceB', got %v", conv)
+					}
+				}
+			},
+		},
+		{
+			name: "MultipleFilesService",
+			files: map[string]string{
+				"serviceB/example1.rego": "package serviceB.example1\ndefault allow = false",
+				"serviceB/example2.rego": "package serviceB.example2\ndefault allow = true",
+			},
+			validate: func(t *testing.T, b *opabundle.Bundle, err error) {
+				if err != nil {
+					t.Fatalf("Failed to add service folder: %v", err)
+				}
+				if b == nil {
+					t.Fatal("Expected a non-nil bundle")
+				}
+				if len(b.Modules) != 3 {
+					t.Fatalf("Expected bundle to contain 3 modules, got %d", len(b.Modules))
+				}
+				if !slices.ContainsFunc(b.Modules, func(m opabundle.ModuleFile) bool {
+					return m.Path == "serviceB/example1.rego"
+				}) {
+					t.Fatalf("Expected module path 'serviceB/example1.rego' not found")
+				}
+
+				if !slices.ContainsFunc(b.Modules, func(m opabundle.ModuleFile) bool {
+					return m.Path == "serviceB/example2.rego"
+				}) {
+					t.Fatalf("Expected module path 'serviceB/example2.rego' not found")
+				}
+			},
+		},
+		{
+			name: "OverwriteServiceFolder",
+			files: map[string]string{
+				"serviceA/example.rego": "package serviceA\ndefault allow = true",
+			},
+			validate: func(t *testing.T, b *opabundle.Bundle, err error) {
+				if err != nil {
+					t.Fatalf("Failed to add service folder: %v", err)
+				}
+				if b == nil {
+					t.Fatal("Expected a non-nil bundle")
+				}
+				if len(b.Modules) != 1 {
+					t.Fatalf("Expected bundle to contain 1 module, got %d", len(b.Modules))
+				}
+				if string(b.Modules[0].Raw) != "package serviceA\ndefault allow = true" {
+					t.Fatalf("Expected module content to be 'package serviceA\ndefault allow = true', got '%s'", string(b.Modules[0].Raw))
+				}
+			},
+		},
+		{
+			name: "OverwriteDifferentFile",
+			files: map[string]string{
+				"serviceA/test.rego": "package testA\ndefault allow = true",
+			},
+			validate: func(t *testing.T, b *opabundle.Bundle, err error) {
+				if err != nil {
+					t.Fatalf("Failed to add service folder: %v", err)
+				}
+				if b == nil {
+					t.Fatal("Expected a non-nil bundle")
+				}
+				if len(b.Modules) != 1 {
+					t.Fatalf("Expected bundle to contain 1 module, got %d", len(b.Modules))
+				}
+				if string(b.Modules[0].Raw) != "package testA\ndefault allow = true" {
+					t.Fatalf("Expected module content to be 'package testA\ndefault allow = true', got '%s'", string(b.Modules[0].Raw))
+				}
+			},
+			paths: []string{"serviceA"},
+		},
+	}
+
+	for _, test := range tc {
+		t.Run(test.name, func(t *testing.T) {
+			// Create a temporary directory for the test
+			tempDir := t.TempDir()
+
+			for path, content := range test.files {
+				fullPath := filepath.Join(tempDir, path)
+				err := os.MkdirAll(filepath.Dir(fullPath), 0755)
+				if err != nil {
+					t.Fatalf("Failed to create directories for %s: %v", fullPath, err)
+				}
+				err = os.WriteFile(fullPath, []byte(content), 0644)
+				if err != nil {
+					t.Fatalf("Failed to write file %s: %v", path, err)
+				}
+			}
+
+			var paths []string
+			if len(test.paths) == 0 {
+				paths = slices.Collect(maps.Keys(test.files))
+			} else {
+				paths = test.paths
+			}
+
+			b, err := bundle.AddServiceFolder(testBundle, tempDir, paths...)
+
+			test.validate(t, b, err)
+		})
+	}
+}
 
 func TestBuildBundle(t *testing.T) {
 	// Create a temporary directory for the test

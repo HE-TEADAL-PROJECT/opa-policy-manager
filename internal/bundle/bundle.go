@@ -8,13 +8,16 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
+	"github.com/hashicorp/go-set/v3"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/compile"
+	"github.com/open-policy-agent/opa/v1/loader"
 )
 
 // BuildBundle compiles the bundle from the given directory and returns it as a bundle object.
@@ -32,6 +35,112 @@ func BuildBundle(bundleDir string, mainDir string) (*bundle.Bundle, error) {
 
 	// Access the compiled bundle
 	return compiler.Bundle(), nil
+}
+
+func getServiceSet(rootDir string, bundlePaths []string) *set.Set[string] {
+	serviceSet := set.New[string](len(bundlePaths))
+	for _, bundlePath := range bundlePaths {
+		// Check if the bundlePath is a directory
+		if info, err := os.Stat(filepath.Join(rootDir, bundlePath)); err == nil && info.IsDir() {
+			serviceSet.Insert(info.Name())
+		} else if err == nil && !info.IsDir() {
+			// If it's not a directory, the service name is either:
+			// - the directory name (if the file is in a subdir)
+			// - the file name without extension (if the file is in the root dir)
+			serviceName := strings.Split(filepath.Base(bundlePath), ".")[0]
+			if strings.Contains(bundlePath, "/") {
+				serviceName = filepath.Dir(bundlePath)
+			}
+			serviceSet.Insert(serviceName)
+		} else {
+			fmt.Printf("getServiceSet: failed to stat %s: %v\n", bundlePath, err)
+		}
+	}
+	return serviceSet
+}
+
+// CompileBundle compiles the bundle from the given directory and returns it as a bundle object.
+// The provided list of bundle paths is used to specify which are the services roots: if it is a folder, all recursive files will be included, otherwise, the single file will be included as a standalone service module.
+// All provided bundles should be relative to the rootDir.
+// If no bundle paths are provided, it defaults to the current directory (".").
+func CompileBundle(ctx context.Context, rootDir string, bundlePaths ...string) (*bundle.Bundle, error) {
+	// Load service list
+	serviceSet := getServiceSet(rootDir, bundlePaths)
+
+	if len(bundlePaths) == 0 {
+		bundlePaths = []string{"."}
+	}
+	fs := os.DirFS(rootDir)
+	compiler := compile.New().WithFS(fs).WithPaths(bundlePaths...)
+
+	if err := compiler.Build(ctx); err != nil {
+		return nil, fmt.Errorf("compile bundle: failed to compile %s: %w", strings.Join(bundlePaths, ","), err)
+	}
+	b := compiler.Bundle()
+	b.Manifest.Metadata = map[string]interface{}{
+		"services": *serviceSet,
+	}
+
+	return b, nil
+}
+
+func AddServiceFolder(originalBundle *bundle.Bundle, rootFolder string, serviceFolders ...string) (*bundle.Bundle, error) {
+	newBundle := originalBundle.Copy()
+
+	if len(serviceFolders) == 0 {
+		serviceFolders = []string{"."}
+	}
+
+	result, err := loader.NewFileLoader().WithFS(os.DirFS(rootFolder)).All(serviceFolders)
+	if err != nil {
+		return nil, fmt.Errorf("add service folder: failed to load files %s: %w", strings.Join(serviceFolders, ","), err)
+	}
+
+	// Delete all existing modules whose path start with a service folder
+	for _, serviceFolder := range serviceFolders {
+		newBundle.Modules = slices.DeleteFunc(newBundle.Modules, func(m bundle.ModuleFile) bool {
+			return strings.HasPrefix(m.Path, serviceFolder)
+		})
+	}
+
+	modulesPositionsMap := make(map[string]int)
+	for i, mod := range newBundle.Modules {
+		modulesPositionsMap[mod.Path] = i
+	}
+
+	for _, file := range result.Modules {
+		if _, ok := modulesPositionsMap[file.Name]; ok {
+			panic("Module should be deleted before")
+		} else {
+			// If the module doesn't exist, add it
+			newBundle.Modules = append(newBundle.Modules, bundle.ModuleFile{
+				URL:    file.Name,
+				Path:   file.Name,
+				Raw:    file.Raw,
+				Parsed: file.Parsed,
+			})
+		}
+	}
+
+	var currentServices set.Set[string]
+	if services, ok := newBundle.Manifest.Metadata["services"]; ok {
+		if s, ok := services.(set.Set[string]); ok {
+			currentServices = s
+		} else if s, ok := services.([]string); ok {
+			currentServices = *set.From(s)
+		} else {
+			return nil, fmt.Errorf("add service folder: failed to parse services metadata")
+		}
+	} else {
+		newBundle.Manifest.Metadata = map[string]interface{}{}
+		currentServices = *set.New[string](len(serviceFolders))
+	}
+	// Add the new service folders to the bundle metadata
+	newServiceSet := getServiceSet(rootFolder, serviceFolders)
+	// Set the updated services metadata
+	newBundle.Manifest.Metadata["services"] = *currentServices.Union(newServiceSet).(*set.Set[string])
+
+	return &newBundle, nil
 }
 
 // WriteBundleToFile writes the bundle to a file in the specified output file path.
