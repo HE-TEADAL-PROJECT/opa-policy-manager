@@ -7,7 +7,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o main ./cmd/cli/main.go
+RUN go build -o main ./cmd/web/main.go
 
 # Define environment variables
 # ENV MINIO_SERVER="" \
