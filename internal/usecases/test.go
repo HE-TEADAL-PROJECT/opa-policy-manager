@@ -102,6 +102,9 @@ func InitialTest(ctx context.Context) error {
 			return fmt.Errorf("error creating rego directory: %w", err)
 		}
 
+		// Generate the static folder
+		generator.GenerateStaticFolders(regoDir)
+
 		// Generate the service folder
 		err = generator.GenerateServiceFolder(serviceName, regoDir, *provider, policies)
 		if err != nil {
