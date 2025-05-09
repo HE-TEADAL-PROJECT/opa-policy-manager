@@ -48,6 +48,12 @@ func AddService(serviceName string, specData []byte) error {
 			return fmt.Errorf("error generating service folder: %v", err)
 		}
 
+		// Generate the main.rego file
+		err = generator.GenerateNewMain(tempDir, []string{serviceName})
+		if err != nil {
+			return fmt.Errorf("error generating main.rego: %v", err)
+		}
+
 		// Build the bundle
 		b, err := bundle.BuildBundle(tempDir, "rego")
 		if err != nil {
@@ -90,6 +96,9 @@ func AddService(serviceName string, specData []byte) error {
 		if err != nil {
 			return fmt.Errorf("error generating service folder: %v", err)
 		}
+
+		// Update the main.rego file
+		err = generator.UpdateMainFile(tempDir, []string{serviceName})
 
 		// Update the bundle with the new service
 		newBundle, err := bundle.AddRegoFilesFromDirectory(b, tempDir)
