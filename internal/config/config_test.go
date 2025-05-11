@@ -27,10 +27,10 @@ func TestLoadDefaultConfig(t *testing.T) {
 }
 
 func TestLoadEnvConfig(t *testing.T) {
-	t.Setenv("MINIO_ENDPOINT", "test-endpoint")
+	t.Setenv("MINIO_SERVER", "test-endpoint")
 	t.Setenv("MINIO_ACCESS_KEY", "test-access-key")
 	t.Setenv("MINIO_SECRET_KEY", "test-secret-key")
-	t.Setenv("MINIO_BUCKET", "test-bucket")
+	t.Setenv("BUCKET_NAME", "test-bucket")
 	t.Setenv("MINIO_BUNDLE_PREFIX", "test-bundle-prefix")
 	ReloadConfig()
 	if MinioEndpoint != "test-endpoint" {
