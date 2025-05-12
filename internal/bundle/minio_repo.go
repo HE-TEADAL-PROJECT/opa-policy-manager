@@ -165,3 +165,18 @@ func (m *MinioRepository) BundleExists(ctx context.Context, bundleName string) (
 	}
 	return false, nil
 }
+
+func (m *MinioRepository) CopyBundle(ctx context.Context, srcBundleName, destBundleName string) error {
+	src := minio.CopySrcOptions{
+		Bucket: m.bucket,
+		Object: srcBundleName,
+	}
+	dest := minio.CopyDestOptions{
+		Bucket: m.bucket,
+		Object: destBundleName,
+	}
+	if _, err := m.client.CopyObject(ctx, dest, src); err != nil {
+		return fmt.Errorf("error copying bundle %s to %s: %v", srcBundleName, destBundleName, err)
+	}
+	return nil
+}
