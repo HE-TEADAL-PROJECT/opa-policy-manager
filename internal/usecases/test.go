@@ -36,7 +36,7 @@ test_allow_get_bearer if {
                 "roles": ["role1", "role2"]
             }
         }
-    } with data.input.attributes.request.http as {
+    } with input.attributes.request.http as {
         "path": "/bearer",
         "method": "get",
     }

@@ -26,7 +26,8 @@ func GenerateServiceFolder(serviceName string, outputDir string, IAMprovider str
 const oidcTemplate = `package %s.oidc
 
 import rego.v1
-import data.input.attributes.request.http as request
+
+request := input.attributes.request.http
 
 # OIDC configuration discover url
 metadata_url := "%s"
@@ -71,11 +72,14 @@ func generateOIDCfile(serviceName string, outputDir string, url string) error {
 const serviceTemplate = `package %s
 
 import rego.v1
-import data.input.attributes.request.http as request
 import data.%s.oidc.token
+
+request := input.attributes.request.http
 
 user := token.payload.preferred_username
 roles contains role if some role in token.payload.realm_access.roles
+
+default allow := false
 
 # Generated access control policies
 `
