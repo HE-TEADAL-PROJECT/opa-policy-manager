@@ -88,11 +88,18 @@ var _ Repository = &MinioRepository{}
 // Create the associated bucket if it does not exist (idempotent).
 // The bucket is created with a policy that allows anonymous access to the bundle.
 func (m *MinioRepository) CreateBucket(ctx context.Context) error {
-	err := m.client.MakeBucket(ctx, m.bucket, minio.MakeBucketOptions{})
+	// Check if the bucket exists
+	exists, err := m.client.BucketExists(ctx, m.bucket)
 	if err != nil {
-		if exists, errBucketExists := m.client.BucketExists(context.Background(), m.bucket); errBucketExists == nil && exists {
-			return nil
-		}
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	// Create the bucket
+	err = m.client.MakeBucket(ctx, m.bucket, minio.MakeBucketOptions{})
+	if err != nil {
 		return err
 	}
 	err = m.client.SetBucketPolicy(ctx, config.MinioBucket, fmt.Sprintf(anonymousPolicy, config.MinioBucket, config.MinioBucket))

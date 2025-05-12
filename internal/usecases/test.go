@@ -7,16 +7,15 @@ import (
 	"dspn-regogenerator/internal/generator"
 	"dspn-regogenerator/internal/policy/parser"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"time"
 
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/open-policy-agent/opa/storage"
-	"github.com/open-policy-agent/opa/storage/inmem"
-	"github.com/open-policy-agent/opa/tester"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/storage"
+	"github.com/open-policy-agent/opa/v1/storage/inmem"
+	"github.com/open-policy-agent/opa/v1/tester"
 )
 
 var testFile string = `package testBundle_test
@@ -43,66 +42,6 @@ test_allow_get_bearer if {
     }
 }`
 
-var anonymousPolicy string = `{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": [
-                    "*"
-                ]
-            },
-            "Action": [
-                "s3:GetBucketLocation",
-                "s3:ListBucket"
-            ],
-            "Resource": [
-                "arn:aws:s3:::%s"
-            ]
-        },
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": [
-                    "*"
-                ]
-            },
-            "Action": [
-                "s3:GetObject"
-            ],
-            "Resource": [
-                "arn:aws:s3:::%s/*"
-            ]
-        }
-    ]
-}`
-
-func testMinioConnection(ctx context.Context) error {
-	client, err := minio.New(config.MinioEndpoint, &minio.Options{
-		Creds: credentials.NewStaticV4(config.MinioAccessKey, config.MinioSecretKey, "")})
-	if err != nil {
-		return err
-	}
-
-	_, err = client.HealthCheck(time.Duration(config.MinioTimeout) * time.Second)
-
-	if bucketExists, err := client.BucketExists(ctx, config.MinioBucket); err != nil {
-		return err
-	} else if !bucketExists {
-		err := client.MakeBucket(ctx, config.MinioBucket, minio.MakeBucketOptions{})
-		if err != nil {
-			return err
-		}
-		err = client.SetBucketPolicy(ctx, config.MinioBucket, fmt.Sprintf(anonymousPolicy, config.MinioBucket, config.MinioBucket))
-		if err != nil {
-			return err
-		}
-	}
-
-	return err
-}
-
 func loadSpecFile(specFile string) ([]byte, error) {
 	// Load the OpenAPI spec file
 	specData, err := os.ReadFile(specFile)
@@ -116,18 +55,24 @@ func InitialTest(ctx context.Context) error {
 	// Test parameters
 	serviceName := "testBundle"
 	testSchemaPath := "./testdata/schemas/httpbin-api.json"
-
-	// Test the MinIO connection
-	if err := testMinioConnection(ctx); err != nil {
-		return fmt.Errorf("error connecting to MinIO: %w", err)
+	minioRepo, err := bundle.NewMinioRepositoryFromConfig()
+	if err != nil {
+		return fmt.Errorf("error creating minio repository: %w", err)
 	}
+	// Create the bucket if it does not exist
+	if err := minioRepo.CreateBucket(ctx); err != nil {
+		return fmt.Errorf("error creating bucket: %w", err)
+	}
+	minioRepo.CreateBucket(ctx)
 	slog.Info("Connected to MinIO successfully")
 
 	// Verify if the bundle exists on minio
-	bundleExists, err := bundle.CheckBundleFileExists(config.LatestBundleName)
+	bundleExists, err := minioRepo.BundleExists(ctx, config.LatestBundleName)
 	if err != nil {
 		return fmt.Errorf("error checking if service exists: %w", err)
 	}
+
+	// If the bundle does not exist, create it
 	if !bundleExists {
 
 		// Load the OpenAPI spec file
@@ -171,31 +116,33 @@ func InitialTest(ctx context.Context) error {
 		}
 
 		// Build the bundle
-		b, err := bundle.BuildBundle(tempDir, "rego")
+		b, err := bundle.NewFromFS(ctx, os.DirFS(tempDir), serviceName)
 		if err != nil {
 			return fmt.Errorf("error building bundle: %w", err)
 		}
-		if err := bundle.WriteBundleToMinio(b, config.LatestBundleName); err != nil {
+		if err := minioRepo.Write(config.LatestBundleName, *b); err != nil {
 			return fmt.Errorf("error writing bundle to Minio: %w", err)
 		}
 		slog.Info("Bundle written to MinIO successfully")
 	}
 
 	// Download the bundle from MinIO
-	bundlePath, err := bundle.LoadBundleFromMinio(config.LatestBundleName)
+	bundlePath, err := minioRepo.Read(config.LatestBundleName)
 	if err != nil {
 		return fmt.Errorf("error downloading bundle from MinIO: %w", err)
 	}
 	testBundlePath := filepath.Join(os.TempDir(), config.LatestBundleName)
-	err = bundle.WriteBundleToFile(bundlePath, testBundlePath)
-	if err != nil {
+	fsRepo := bundle.NewFileSystemRepository(filepath.Dir(testBundlePath))
+	if err := fsRepo.Write(config.LatestBundleName, *bundlePath); err != nil {
 		return fmt.Errorf("error writing bundle to file: %w", err)
 	}
 
 	// Load the bundle and execute the tests
-	bundles, err := tester.LoadBundles([]string{testBundlePath}, nil)
+	bundles, err := tester.LoadBundlesWithRegoVersion([]string{testBundlePath}, func(abspath string, info fs.FileInfo, depth int) bool {
+		return true
+	}, ast.DefaultRegoVersion)
 	if err != nil {
-		return fmt.Errorf("error loading bundle: %w", err)
+		return err
 	}
 	store := inmem.New()
 

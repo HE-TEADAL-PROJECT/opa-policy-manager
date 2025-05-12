@@ -1,12 +1,10 @@
 package usecases
 
 import (
+	"context"
 	"dspn-regogenerator/internal/bundle"
 	"dspn-regogenerator/internal/config"
 	"fmt"
-	"maps"
-	"path/filepath"
-	"slices"
 )
 
 // Describes the structure of the bundle, in terms of which files and services are available
@@ -17,7 +15,12 @@ type BundleStructure struct {
 
 // Implement the usecase to get the bundle structure from minio, inspecting it and returning the structure
 func GetBundleStructure() (*BundleStructure, error) {
-	bundleExists, err := bundle.CheckBundleFileExists(config.LatestBundleName)
+	minioRepo, err := bundle.NewMinioRepositoryFromConfig()
+	if err != nil {
+		return nil, fmt.Errorf("error creating minio repository: %v", err)
+	}
+	ctx := context.Background()
+	bundleExists, err := minioRepo.BundleExists(ctx, config.LatestBundleName)
 	if err != nil {
 		return nil, err
 	}
@@ -25,20 +28,20 @@ func GetBundleStructure() (*BundleStructure, error) {
 		return nil, fmt.Errorf("bundle %s not found", config.LatestBundleName)
 	}
 
-	loadedBundle, err := bundle.LoadBundleFromMinio(config.LatestBundleName)
+	loadedBundle, err := minioRepo.Read(config.LatestBundleName)
 	if err != nil {
 		return nil, err
 	}
 
-	files := bundle.ListBundleFiles(loadedBundle)
-	dirs := map[string][]string{}
-	for _, dir := range files {
-		dirs[filepath.Dir(dir)] = append(dirs[filepath.Dir(dir)], filepath.Base(dir))
+	services, err := loadedBundle.Services()
+	if err != nil {
+		return nil, fmt.Errorf("error getting services from bundle: %v", err)
 	}
 
 	bundleStructure := &BundleStructure{
-		Files:    files,
-		Services: slices.Collect(maps.Keys(dirs)),
+		// TODO: fix this, we need to get the files from the bundle
+		Files:    []string{},
+		Services: services,
 	}
 
 	return bundleStructure, nil
