@@ -9,9 +9,9 @@ import (
 const ImportMarker = "# generator:import"
 const RuleMarker = "# generator:rule"
 
-var mainTemplate = `package tedal
+var mainTemplate = `package teadal
 %s
-default allow = false
+default allow := false
 
 %s`
 
