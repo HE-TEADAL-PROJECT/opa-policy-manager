@@ -9,11 +9,11 @@ import (
 	opabundle "github.com/open-policy-agent/opa/v1/bundle"
 )
 
-func TestFileSystemBundleRepository(t *testing.T) {
+func TestFileSystemRepository(t *testing.T) {
 	t.Run("WriteBundle", func(t *testing.T) {
 		tempDir := t.TempDir()
 		bundleFileName := "test-bundle.tar.gz"
-		repo := NewFileSystemBundleRepository(tempDir)
+		repo := NewFileSystemRepository(tempDir)
 
 		// Create a dummy bundle
 		os.Mkdir(tempDir+"/service1", 0755)
@@ -52,7 +52,7 @@ func TestFileSystemBundleRepository(t *testing.T) {
 	})
 
 	t.Run("WriteToInvalidPath", func(t *testing.T) {
-		repo := NewFileSystemBundleRepository("/invalid-path")
+		repo := NewFileSystemRepository("/invalid-path")
 		mockBundle := &Bundle{
 			bundle: &opabundle.Bundle{},
 		}
@@ -62,13 +62,11 @@ func TestFileSystemBundleRepository(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 	})
-}
 
-func TestFileSystemBundleRepository_Read(t *testing.T) {
 	t.Run("ReadBundle", func(t *testing.T) {
 		tempDir := t.TempDir()
 		bundleFileName := "test-bundle.tar.gz"
-		repo := NewFileSystemBundleRepository(tempDir)
+		repo := NewFileSystemRepository(tempDir)
 
 		// Create a dummy bundle
 		os.Mkdir(tempDir+"/service1", 0755)
@@ -105,7 +103,7 @@ func TestFileSystemBundleRepository_Read(t *testing.T) {
 
 	t.Run("ReadNonExistentFile", func(t *testing.T) {
 		tempDir := t.TempDir()
-		repo := NewFileSystemBundleRepository(tempDir)
+		repo := NewFileSystemRepository(tempDir)
 
 		_, err := repo.Read("non-existent-bundle.tar.gz")
 		if err == nil {

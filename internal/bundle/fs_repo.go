@@ -8,13 +8,13 @@ import (
 	opabundle "github.com/open-policy-agent/opa/v1/bundle"
 )
 
-type FileSystemBundleRepository struct {
+type FileSystemRepository struct {
 	// Path to base directory
 	basePath string
 }
 
-// Read implements BundleRepository.
-func (f *FileSystemBundleRepository) Read(path string) (*Bundle, error) {
+// Read implements [Repository.Read].
+func (f *FileSystemRepository) Read(path string) (*Bundle, error) {
 	fullPath := filepath.Join(f.basePath, path)
 	file, err := os.Open(fullPath)
 	if err != nil {
@@ -28,8 +28,8 @@ func (f *FileSystemBundleRepository) Read(path string) (*Bundle, error) {
 	return bundle, nil
 }
 
-// Write implements BundleRepository.
-func (f *FileSystemBundleRepository) Write(path string, bundle Bundle) error {
+// Write implements [Repository.Write].
+func (f *FileSystemRepository) Write(path string, bundle Bundle) error {
 	fullPath := filepath.Join(f.basePath, path)
 	fullDir := filepath.Dir(fullPath)
 	if err := os.MkdirAll(fullDir, 0755); err != nil {
@@ -47,10 +47,10 @@ func (f *FileSystemBundleRepository) Write(path string, bundle Bundle) error {
 	return nil
 }
 
-func NewFileSystemBundleRepository(baseDir string) *FileSystemBundleRepository {
-	return &FileSystemBundleRepository{
+func NewFileSystemRepository(baseDir string) *FileSystemRepository {
+	return &FileSystemRepository{
 		basePath: baseDir,
 	}
 }
 
-var _ BundleRepository = (*FileSystemBundleRepository)(nil)
+var _ Repository = (*FileSystemRepository)(nil)

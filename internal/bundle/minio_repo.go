@@ -11,13 +11,14 @@ import (
 	opabundle "github.com/open-policy-agent/opa/v1/bundle"
 )
 
-type MinioBundleRepository struct {
+// MinioRepository implements the [Repository] interface using Minio as the backend. It provides additional feataures like creating the associated bucket if it does not exist, setting the bucket policy, and checking if a bundle exists in the bucket.
+type MinioRepository struct {
 	client *minio.Client
 	bucket string
 }
 
-// Read implements BundleRepository.
-func (m *MinioBundleRepository) Read(path string) (*Bundle, error) {
+// Read implements [Repository].
+func (m *MinioRepository) Read(path string) (*Bundle, error) {
 	reader, err := m.client.GetObject(context.Background(), m.bucket, path, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, err
@@ -31,8 +32,8 @@ func (m *MinioBundleRepository) Read(path string) (*Bundle, error) {
 	}
 }
 
-// Write implements BundleRepository.
-func (m *MinioBundleRepository) Write(path string, bundle Bundle) error {
+// Write implements [Repository].
+func (m *MinioRepository) Write(path string, bundle Bundle) error {
 	reader, writer := io.Pipe()
 
 	go func() {
@@ -51,7 +52,7 @@ func (m *MinioBundleRepository) Write(path string, bundle Bundle) error {
 
 // Create a bundle repository that uses Minio as the backend.
 // The Minio client is created using the provided endpoint, access key, secret key, and secure flag.
-func NewMinioBundleRepository(endpoint, accessKey, secretKey string, secure bool, bucketName string) (*MinioBundleRepository, error) {
+func NewMinioRepository(endpoint, accessKey, secretKey string, secure bool, bucketName string) (*MinioRepository, error) {
 	client, err := minio.New(endpoint, &minio.Options{
 		Creds: credentials.NewStaticV4(
 			accessKey,
@@ -64,7 +65,7 @@ func NewMinioBundleRepository(endpoint, accessKey, secretKey string, secure bool
 		return nil, err
 	}
 
-	return &MinioBundleRepository{
+	return &MinioRepository{
 		client: client,
 		bucket: bucketName,
 	}, nil
@@ -72,8 +73,8 @@ func NewMinioBundleRepository(endpoint, accessKey, secretKey string, secure bool
 
 // Create a bundle repository that uses Minio as the backend.
 // The Minio client is created using the package configuration.
-func NewMinioBundleRepositoryFromConfig() (*MinioBundleRepository, error) {
-	return NewMinioBundleRepository(
+func NewMinioRepositoryFromConfig() (*MinioRepository, error) {
+	return NewMinioRepository(
 		config.MinioEndpoint,
 		config.MinioAccessKey,
 		config.MinioSecretKey,
@@ -82,11 +83,11 @@ func NewMinioBundleRepositoryFromConfig() (*MinioBundleRepository, error) {
 	)
 }
 
-var _ BundleRepository = &MinioBundleRepository{}
+var _ Repository = &MinioRepository{}
 
 // Create the associated bucket if it does not exist (idempotent).
 // The bucket is created with a policy that allows anonymous access to the bundle.
-func (m *MinioBundleRepository) CreateBucket(ctx context.Context) error {
+func (m *MinioRepository) CreateBucket(ctx context.Context) error {
 	err := m.client.MakeBucket(ctx, m.bucket, minio.MakeBucketOptions{})
 	if err != nil {
 		if exists, errBucketExists := m.client.BucketExists(context.Background(), m.bucket); errBucketExists == nil && exists {
@@ -140,7 +141,7 @@ const anonymousPolicy string = `{
 // Returns true if the bundle exists, false otherwise.
 // If the bucket does not exist or any unexpected error occurs, it returns an error.
 // If the bucket exists but the bundle does not, it returns false and no error.
-func (m *MinioBundleRepository) BundleExists(ctx context.Context, bundleName string) (bool, error) {
+func (m *MinioRepository) BundleExists(ctx context.Context, bundleName string) (bool, error) {
 	exists, err := m.client.BucketExists(ctx, m.bucket)
 	if err != nil {
 		return false, err

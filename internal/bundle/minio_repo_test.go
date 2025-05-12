@@ -30,7 +30,7 @@ func createMinioContainer(ctx context.Context, t *testing.T) *minio.MinioContain
 	return minioContainer
 }
 
-func TestNewMinioBundleRepository(t *testing.T) {
+func TestNewMinioRepository(t *testing.T) {
 	ctx := context.Background()
 	minioContainer := createMinioContainer(ctx, t)
 	connectionString, err := minioContainer.ConnectionString(ctx)
@@ -38,7 +38,7 @@ func TestNewMinioBundleRepository(t *testing.T) {
 		t.Fatalf("Failed to get connection string: %v", err)
 	}
 
-	repo, err := NewMinioBundleRepository(
+	repo, err := NewMinioRepository(
 		connectionString,
 		adminKey,
 		adminSecret,
@@ -46,7 +46,7 @@ func TestNewMinioBundleRepository(t *testing.T) {
 		"test-bucket",
 	)
 	if err != nil {
-		t.Fatalf("Failed to create MinioBundleRepository: %v", err)
+		t.Fatalf("Failed to create MinioRepository: %v", err)
 	}
 
 	if repo == nil {
@@ -90,7 +90,7 @@ func createBundleFromFiles(t *testing.T, files map[string]string, servicesName [
 	return nil
 }
 
-func TestMinioBundleRepository(t *testing.T) {
+func TestMinioRepository(t *testing.T) {
 	ctx := context.Background()
 	minioContainer := createMinioContainer(ctx, t)
 	connectionString, err := minioContainer.ConnectionString(ctx)
@@ -106,7 +106,7 @@ func TestMinioBundleRepository(t *testing.T) {
 	}
 	client.MakeBucket(ctx, "test-bucket", miniosdk.MakeBucketOptions{})
 
-	repo, err := NewMinioBundleRepository(
+	repo, err := NewMinioRepository(
 		connectionString,
 		adminKey,
 		adminSecret,
@@ -114,7 +114,7 @@ func TestMinioBundleRepository(t *testing.T) {
 		"test-bucket",
 	)
 	if err != nil {
-		t.Fatalf("Failed to create MinioBundleRepository: %v", err)
+		t.Fatalf("Failed to create MinioRepository: %v", err)
 	}
 
 	bundle := createBundleFromFiles(t, map[string]string{"service1/service.rego": "package service1\ndefault allow = false"}, []string{"service1"})
