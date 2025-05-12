@@ -11,7 +11,7 @@ import (
 
 func main() {
 	var rootCmd = &cobra.Command{Use: "dspn-regogenerator"}
-	rootCmd.AddCommand(commands.AddCmd, commands.ListCmd, commands.DeleteCmd, commands.TestCmd)
+	rootCmd.AddCommand(commands.AddCmd, commands.ListCmd, commands.DeleteCmd, commands.TestCmd, commands.GetCmd)
 
 	slog.SetDefault(slog.New(NewCliHandler(os.Stderr)))
 
