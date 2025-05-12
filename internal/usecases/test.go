@@ -111,6 +111,11 @@ func InitialTest(ctx context.Context) error {
 			return fmt.Errorf("error generating service folder: %w", err)
 		}
 
+		err = generator.GenerateNewMain(regoDir, []string{serviceName, "minio"})
+		if err != nil {
+			return fmt.Errorf("error generating main.rego: %w", err)
+		}
+
 		// Write the test file
 		testFilePath := filepath.Join(regoDir, serviceName, "test_test.rego")
 		err = os.WriteFile(testFilePath, []byte(testFile), 0644)

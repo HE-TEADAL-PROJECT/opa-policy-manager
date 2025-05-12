@@ -20,7 +20,7 @@ type Bundle struct {
 	bundle *opabundle.Bundle
 }
 
-const mainFilePath = "/main.rego"
+const mainFilePath = "/rego/main.rego"
 
 // NewFromFS creates a new Bundle from a file system. The file system should contain the OPA bundle files.
 func NewFromFS(ctx context.Context, fs fs.FS, serviceNames ...string) (*Bundle, error) {
@@ -172,6 +172,44 @@ func (b *Bundle) GetMain() ([]byte, error) {
 	return nil, errors.New("main.rego not found in the bundle")
 }
 
+func (b *Bundle) LoadNewMain(mainFilePath string) error {
+	// Load the main.rego file
+	mainData, err := os.ReadFile(mainFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read main.rego: %w", err)
+	}
+
+	// Add the main.rego file to the bundle
+	cleanPath := filepath.Clean(mainFilePath)
+	if cleanPath[0] != os.PathSeparator && cleanPath[0] != '.' {
+		cleanPath = string(os.PathSeparator) + cleanPath
+	}
+
+	parsedData, err := ast.ParseModule(cleanPath, string(mainData))
+	if err != nil {
+		return fmt.Errorf("failed to parse module %s: %w", cleanPath, err)
+	}
+
+	moduleFound := false
+	for index, module := range b.bundle.Modules {
+		if module.Path == cleanPath {
+			module.Raw = mainData
+			module.Parsed = parsedData
+			b.bundle.Modules[index] = module
+			moduleFound = true
+		}
+	}
+	if !moduleFound {
+		b.bundle.Modules = append(b.bundle.Modules, opabundle.ModuleFile{
+			URL:    cleanPath,
+			Path:   cleanPath,
+			Raw:    mainData,
+			Parsed: parsedData,
+		})
+	}
+	return nil
+}
+
 func (b *Bundle) RemoveService(serviceName string) error {
 	// Remove the service from the bundle metadata
 	if b.bundle.Manifest.Metadata == nil {
@@ -194,7 +232,7 @@ func (b *Bundle) RemoveService(serviceName string) error {
 
 	// Remove all modules related to the service
 	b.bundle.Modules = slices.DeleteFunc(b.bundle.Modules, func(module opabundle.ModuleFile) bool {
-		return strings.HasPrefix(module.Path, string(os.PathSeparator)+serviceName)
+		return strings.HasPrefix(module.Path, "/rego"+string(os.PathSeparator)+serviceName)
 	})
 
 	return nil

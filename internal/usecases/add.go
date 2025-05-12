@@ -8,8 +8,10 @@ import (
 	"dspn-regogenerator/internal/policy/parser"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 )
 
@@ -62,14 +64,42 @@ func AddService(serviceName string, specData []byte) error {
 		return fmt.Errorf("error generating service folder: %v", err)
 	}
 
-	// Update the bundle with the new service
-	// newBundle, err := bundle.AddRegoFilesFromDirectory(b, tempDir)
-	// if err != nil {
-	// 	return fmt.Errorf("error adding rego files to bundle: %v", err)
-	// }
-	b.AddService(serviceName, map[string][]byte{
-		filepath.Join("rego", serviceName, "main.rego"): specData,
+	// Load the regoDir folder and compose a map[string][]byte
+	regoFiles := make(map[string][]byte)
+	err = filepath.Walk(regoDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			relativePath, err := filepath.Rel(tempDir, path)
+			if err != nil {
+				return err
+			}
+			content, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			regoFiles[string(os.PathSeparator)+filepath.ToSlash(relativePath)] = content
+		}
+		return nil
 	})
+	if err != nil {
+		return fmt.Errorf("error reading rego files: %v", err)
+	}
+	fmt.Print("regoFiles: ", slices.Collect(maps.Keys(regoFiles)), "\n")
+
+	err = b.AddService(serviceName, regoFiles)
+	if err != nil {
+		return fmt.Errorf("error adding service to bundle: %v", err)
+	}
+
+	services, err := b.Services()
+	if err != nil {
+		return fmt.Errorf("error getting services from bundle: %v", err)
+	}
+	if err := generator.GenerateNewMain(regoDir, services); err != nil {
+		return fmt.Errorf("error generating main.rego: %v", err)
+	}
 
 	// Copy the current bundle to a backup timestamped object
 	newBundleName := config.TagBundleName(time.Now().Format("2006-01-02_15-04-05"))
