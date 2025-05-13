@@ -100,6 +100,9 @@ func AddService(serviceName string, specData []byte) error {
 	if err := generator.GenerateNewMain(regoDir, services); err != nil {
 		return fmt.Errorf("error generating main.rego: %v", err)
 	}
+	if err := b.LoadNewMain(filepath.Join(regoDir, "main.rego")); err != nil {
+		return fmt.Errorf("error loading new main.rego: %v", err)
+	}
 
 	// Copy the current bundle to a backup timestamped object
 	newBundleName := config.TagBundleName(time.Now().Format("2006-01-02_15-04-05"))

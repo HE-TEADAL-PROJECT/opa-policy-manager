@@ -4,8 +4,11 @@ import (
 	"context"
 	"dspn-regogenerator/internal/bundle"
 	"dspn-regogenerator/internal/config"
+	"dspn-regogenerator/internal/generator"
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -35,6 +38,29 @@ func DeleteService(serviceName string) error {
 	// Delete the service from the bundle
 	if err := b.RemoveService(serviceName); err != nil {
 		return fmt.Errorf("error deleting policies for service %s: %v", serviceName, err)
+	}
+
+	tempDir, err := os.MkdirTemp("", "bundle-patch-*")
+	if err != nil {
+		return fmt.Errorf("error creating temp directory: %v", err)
+	}
+	regoDir := filepath.Join(tempDir, "rego")
+	err = os.MkdirAll(regoDir, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error creating rego directory: %v", err)
+	}
+
+	// Generate the new main.rego file
+	serviceList, err := b.Services()
+	if err != nil {
+		return fmt.Errorf("error getting services from bundle: %v", err)
+	}
+	if err := generator.GenerateNewMain(regoDir, serviceList); err != nil {
+		return fmt.Errorf("error generating main.rego: %v", err)
+	}
+	// Load the new main.rego file into the bundle
+	if err := b.LoadNewMain(filepath.Join(regoDir, "main.rego")); err != nil {
+		return fmt.Errorf("error loading new main.rego into bundle: %v", err)
 	}
 
 	// Copy the current bundle to a backup timestamped object

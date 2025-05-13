@@ -172,18 +172,15 @@ func (b *Bundle) GetMain() ([]byte, error) {
 	return nil, errors.New("main.rego not found in the bundle")
 }
 
-func (b *Bundle) LoadNewMain(mainFilePath string) error {
+func (b *Bundle) LoadNewMain(newMainFilePath string) error {
 	// Load the main.rego file
-	mainData, err := os.ReadFile(mainFilePath)
+	mainData, err := os.ReadFile(newMainFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to read main.rego: %w", err)
 	}
 
 	// Add the main.rego file to the bundle
-	cleanPath := filepath.Clean(mainFilePath)
-	if cleanPath[0] != os.PathSeparator && cleanPath[0] != '.' {
-		cleanPath = string(os.PathSeparator) + cleanPath
-	}
+	cleanPath := mainFilePath
 
 	parsedData, err := ast.ParseModule(cleanPath, string(mainData))
 	if err != nil {
