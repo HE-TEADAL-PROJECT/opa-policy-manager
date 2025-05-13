@@ -111,7 +111,9 @@ func InitialTest(ctx context.Context) error {
 			return fmt.Errorf("error generating service folder: %w", err)
 		}
 
-		err = generator.GenerateNewMain(regoDir, []string{serviceName, "minio"})
+		serviceList := append(generator.StaticServiceNames, serviceName)
+
+		err = generator.GenerateNewMain(regoDir, serviceList)
 		if err != nil {
 			return fmt.Errorf("error generating main.rego: %w", err)
 		}
@@ -124,7 +126,7 @@ func InitialTest(ctx context.Context) error {
 		}
 
 		// Build the bundle
-		b, err := bundle.NewFromFS(ctx, os.DirFS(tempDir), serviceName)
+		b, err := bundle.NewFromFS(ctx, os.DirFS(tempDir), serviceList...)
 		if err != nil {
 			return fmt.Errorf("error building bundle: %w", err)
 		}
