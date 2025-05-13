@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 )
 
+var StaticServiceNames = []string{"minio"}
+
 // GenerateStaticFolders copy static folders from the PROJECT_ROOT/static to the outputDir path
 func GenerateStaticFolders(outputDir string) {
 	sourceDir := "./static"

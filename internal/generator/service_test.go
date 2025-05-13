@@ -62,7 +62,8 @@ func TestGenerateServiceFolder(t *testing.T) {
 	expectedContent := `package testService.oidc
 
 import rego.v1
-import data.input.attributes.request.http as request
+
+request := input.attributes.request.http
 
 # OIDC configuration discover url
 metadata_url := "http://localhost:8000/keykloack/realms/test"
