@@ -17,4 +17,4 @@ RUN go build -o main ./cmd/web/main.go
 #     BUNDLE_NAME=""
 
 # EXPOSE 8080
-ENTRYPOINT ["./main", "test"]
+ENTRYPOINT ["./main"]
