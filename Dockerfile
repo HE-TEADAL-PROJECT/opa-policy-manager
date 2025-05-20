@@ -6,8 +6,11 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY . .
-RUN go build -o main ./cmd/web/main.go
+COPY /testdata/ ./testdata/
+COPY /static/ ./static/
+COPY /cmd/web/ ./cmd/web/
+COPY /internal/ ./internal/
+RUN go build -o main ./cmd/web
 
 # Define environment variables
 # ENV MINIO_SERVER="" \

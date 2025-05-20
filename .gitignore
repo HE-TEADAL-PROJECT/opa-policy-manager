@@ -1,5 +1,6 @@
 output/
 bundles/
+deployment/
 opa
 
 .DS_Store
