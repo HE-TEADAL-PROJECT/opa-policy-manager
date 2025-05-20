@@ -1,1 +1,0 @@
-This folder contains the OpenAPI files of the pilot cases along with their extended versions with the policy claims
