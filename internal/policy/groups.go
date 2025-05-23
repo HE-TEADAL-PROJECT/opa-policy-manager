@@ -162,7 +162,7 @@ func (p *PathMethodPolicies) ToRego() []string {
 	}
 	blocks := make([]string, 0, len(p.Policies))
 	for _, policy := range p.Policies {
-		policyCode := "request.method == " + string(methodJson) + "\n"
+		policyCode := "request.method == " + strings.ToUpper(string(methodJson)) + "\n"
 		policyCode += policy.ToRego()
 		blocks = append(blocks, policyCode)
 	}
