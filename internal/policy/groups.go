@@ -129,7 +129,7 @@ func (p *PathPolicies) ToRego() []string {
 		policyCode := "request.path == " + string(pathJson) + "\n"
 		policyCode += policy.ToRego()
 		if len(specializedMethods) > 0 {
-			policyCode += "not request.method in " + string(specializedMethodsJson) + "\n"
+			policyCode += "not request.method in " + strings.ToUpper(string(specializedMethodsJson)) + "\n"
 		}
 		blocks = append(blocks, policyCode)
 
