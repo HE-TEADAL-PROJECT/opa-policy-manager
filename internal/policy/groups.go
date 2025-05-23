@@ -69,6 +69,9 @@ func (p *GeneralPolicies) ToRego() string {
 func (p *GeneralPolicies) buildGeneralRules() []string {
 	rules := make([]string, 0, len(p.Policies))
 	excludedPaths := slices.Collect(maps.Keys(p.SpecializedPaths))
+	for index, path := range excludedPaths {
+		excludedPaths[index] = "/httpbin" + path
+	}
 	excludedPathsJson, err := json.Marshal(excludedPaths)
 	if err != nil {
 		panic(err)
@@ -126,7 +129,7 @@ func (p *PathPolicies) ToRego() []string {
 	blocks := make([]string, 0, len(p.Policies)+len(p.SpecializedMethods))
 	for _, policy := range p.Policies {
 		// Add general path rules
-		policyCode := "request.path == " + string(pathJson) + "\n"
+		policyCode := `regex.match("^/httpbin` + string(pathJson) + `/.*", request.path)` + "\n"
 		policyCode += policy.ToRego()
 		if len(specializedMethods) > 0 {
 			policyCode += "not request.method in " + strings.ToUpper(string(specializedMethodsJson)) + "\n"
@@ -135,7 +138,7 @@ func (p *PathPolicies) ToRego() []string {
 
 		// Add specialized methods rules
 		for _, method := range p.SpecializedMethods {
-			policyCode := "request.path == " + string(pathJson) + "\n"
+			policyCode := `regex.match("^/httpbin` + string(pathJson) + `/.*", request.path)` + "\n"
 			policyCode += policy.ToRego()
 			for _, methodPolicy := range method.ToRego() {
 				blocks = append(blocks, policyCode+methodPolicy)
