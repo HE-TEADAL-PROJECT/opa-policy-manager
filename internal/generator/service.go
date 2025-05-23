@@ -79,6 +79,9 @@ request := input.attributes.request.http
 user := token.payload.preferred_username
 roles contains role if some role in token.payload.realm_access.roles
 
+path := request.path
+method := lower(request.method)
+
 default allow := false
 
 # Generated access control policies
