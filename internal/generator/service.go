@@ -90,8 +90,19 @@ method := lower(request.method)
 
 default allow := false
 allow if {
+	print("Params: ", {
+		"request": request,
+		"user": user,
+		"roles": roles,
+		"path": path,
+		"method": method,
+		"valid_token": token.valid,
+		"allow_request": allow_request
+	})
+
 	# Check if the user is authenticated
 	token.valid
+
 	# Check if request is valid
 	allow_request
 }

@@ -131,6 +131,12 @@
                     "unit_of_measure": "days"
                   }
                 ]
+              },
+              "roles": {
+                "value": [
+                  "researchers"
+                ],
+                "operator": "OR"
               }
             }
           ]
@@ -146,28 +152,6 @@
         ]
       },
       "get": {
-        "x-teadal-policies": {
-          "description": "placeholder (TODO fixme)",
-          "policies": [
-            {
-              "roles": {
-                "value": [
-                  "researchers",
-                  "role4"
-                ],
-                "operator": "OR"
-              },
-              "call": {
-                "value": [
-                  {
-                    "max": 1000,
-                    "unit_of_measure": "call_per_month"
-                  }
-                ]
-              }
-            }
-          ]
-        },
         "responses": {
           "200": {
             "description": "Anything passed in request"
@@ -185,8 +169,7 @@
             {
               "roles": {
                 "value": [
-                  "role5",
-                  "role4"
+                  "doctors"
                 ],
                 "operator": "OR"
               },
@@ -2293,7 +2276,7 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "x-teadal-IAM-provider": "http://localhost/keycloak/realms/teadal/.well-known/openid-configuration"
+        "x-teadal-IAM-provider": "http://keycloak.default.svc.cluster.local:8080/keycloak/realms/teadal/.well-known/openid-configuration"
       }
     },
     "x-lifecycle": {
