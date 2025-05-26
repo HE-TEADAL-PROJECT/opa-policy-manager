@@ -1,22 +1,24 @@
 package generator
 
 import (
+	"bytes"
 	"dspn-regogenerator/internal/policy"
 	"fmt"
 	"os"
+	"text/template"
 )
 
-func GenerateServiceFolder(serviceName string, outputDir string, IAMprovider string, policies *policy.GeneralPolicies) error {
+func GenerateServiceFolder(options ServiceOptions, outputDir string, IAMprovider string, policies *policy.GeneralPolicies) error {
 	// Create the service directory
-	serviceDir := outputDir + "/" + serviceName
+	serviceDir := outputDir + "/" + options.ServiceName
 	if err := os.MkdirAll(serviceDir, 0755); err != nil {
 		return err
 	}
 	// create service specific files
-	if err := generateOIDCfile(serviceName, serviceDir, IAMprovider); err != nil {
+	if err := generateOIDCfile(options.ServiceName, serviceDir, IAMprovider); err != nil {
 		return fmt.Errorf("failed to generate OIDC file: %v", err)
 	}
-	if err := generateServiceFile(serviceName, serviceDir, policies); err != nil {
+	if err := generateServiceFile(options, serviceDir, policies); err != nil {
 		return fmt.Errorf("failed to generate service file: %v", err)
 	}
 
@@ -69,17 +71,21 @@ func generateOIDCfile(serviceName string, outputDir string, url string) error {
 	return os.WriteFile(outputDir+"/oidc.rego", []byte(data), 0644)
 }
 
-const serviceTemplate = `package %s
+const serviceTemplate = `package {{.ServiceName}}
 
 import rego.v1
-import data.%s.oidc.token
+import data.{{.ServiceName}}.oidc.token
 
 request := input.attributes.request.http
 
 user := token.payload.preferred_username
 roles contains role if some role in token.payload.realm_access.roles
 
+{{ if .PathPrefix -}}
+path := trim_prefix(request.path, "{{.PathPrefix}}")
+{{- else -}}
 path := request.path
+{{- end }}
 method := lower(request.method)
 
 default allow := false
@@ -87,8 +93,18 @@ default allow := false
 # Generated access control policies
 `
 
-func generateServiceFile(serviceName string, outputDir string, policies *policy.GeneralPolicies) error {
-	data := fmt.Sprintf(serviceTemplate, serviceName, serviceName)
-	data += policies.ToRego()
+type ServiceOptions struct {
+	ServiceName string
+	PathPrefix  string
+}
+
+func generateServiceFile(serviceOptions ServiceOptions, outputDir string, policies *policy.GeneralPolicies) error {
+	t := template.Must(template.New("service").Parse(serviceTemplate))
+	buffer := &bytes.Buffer{}
+	err := t.Execute(buffer, serviceOptions)
+	if err != nil {
+		return fmt.Errorf("failed to execute template: %v", err)
+	}
+	data := buffer.String() + policies.ToRego()
 	return os.WriteFile(outputDir+"/service.rego", []byte(data), 0644)
 }

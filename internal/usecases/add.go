@@ -59,7 +59,11 @@ func AddService(serviceName string, specData []byte) error {
 	}
 
 	// Generate the service folder
-	err = generator.GenerateServiceFolder(serviceName, regoDir, *provider, policies)
+	options := generator.ServiceOptions{
+		ServiceName: serviceName,
+		PathPrefix:  "/" + serviceName,
+	}
+	err = generator.GenerateServiceFolder(options, regoDir, *provider, policies)
 	if err != nil {
 		return fmt.Errorf("error generating service folder: %v", err)
 	}

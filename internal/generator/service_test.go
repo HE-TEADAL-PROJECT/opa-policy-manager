@@ -18,9 +18,12 @@ func TestGenerateServiceFolder(t *testing.T) {
 
 	serviceName := "testService"
 	outputDir := tempDir
+	options := ServiceOptions{
+		ServiceName: serviceName,
+	}
 
 	// Call the function
-	err = GenerateServiceFolder(serviceName, outputDir, "http://localhost:8000/keykloack/realms/test", &policy.GeneralPolicies{
+	err = GenerateServiceFolder(options, outputDir, "http://localhost:8000/keykloack/realms/test", &policy.GeneralPolicies{
 		Policies: []policy.PolicyClause{
 			{
 				UserPolicy: &policy.UserPolicy{
@@ -59,7 +62,7 @@ func TestGenerateServiceFolder(t *testing.T) {
 	}
 
 	// Verify the contents of the OIDC file
-	expectedContent := `package testService.oidc
+	expectedOIDCFileContent := `package testService.oidc
 
 import rego.v1
 
@@ -103,16 +106,82 @@ token := {"valid": valid, "payload": payload} if {
 	if err != nil {
 		t.Fatalf("Failed to read OIDC file: %v", err)
 	}
-	if string(content) != expectedContent {
-		t.Errorf("OIDC file content does not match expected content.\nGot:\n%s\nExpected:\n%s", string(content), expectedContent)
+	if string(content) != expectedOIDCFileContent {
+		t.Errorf("OIDC file content does not match expected content.\nGot:\n%s\nExpected:\n%s", string(content), expectedOIDCFileContent)
 	}
+
+	expectedServiceFileContent := `package testService
+
+import rego.v1
+import data.testService.oidc.token
+
+request := input.attributes.request.http
+
+user := token.payload.preferred_username
+roles contains role if some role in token.payload.realm_access.roles
+
+path := request.path
+method := lower(request.method)
+
+default allow := false
+
+# Generated access control policies
+`
 
 	// Verify the contents of the service file
 	content, err = os.ReadFile(serviceFile)
 	if err != nil {
 		t.Fatalf("Failed to read service file: %v", err)
 	}
-	if !strings.Contains(string(content), "package testService") || !strings.Contains(string(content), "allow if") {
+	if !strings.Contains(string(content), expectedServiceFileContent) || !strings.Contains(string(content), "allow if") {
+		t.Logf("Wanted content:\n%s\n", expectedServiceFileContent)
+		t.Logf("Got content:\n%s\n", string(content))
 		t.Error("Service file content does not match expected content.")
+	}
+}
+
+func TestGenerateServiceFolderWithPatPrefix(t *testing.T) {
+	// Setup temporary directory for testing
+	tempDir, err := os.MkdirTemp("", "test-service-folder")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir) // Clean up after test
+
+	serviceName := "testService"
+	outputDir := tempDir
+	options := ServiceOptions{
+		ServiceName: serviceName,
+		PathPrefix:  "/api/v1",
+	}
+
+	// Call the function
+	err = GenerateServiceFolder(options, outputDir, "http://localhost:8000/keykloack/realms/test", &policy.GeneralPolicies{
+		Policies: []policy.PolicyClause{
+			{
+				UserPolicy: &policy.UserPolicy{
+					PolicyDetail: policy.PolicyDetail{
+						Value:    []string{"test"},
+						Operator: "OR",
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("GenerateServiceFolder returned an error: %v", err)
+	}
+
+	serviceDir := filepath.Join(outputDir, serviceName)
+	serviceFile := filepath.Join(serviceDir, "service.rego")
+
+	content, err := os.ReadFile(serviceFile)
+	if err != nil {
+		t.Fatalf("Failed to read service file: %v", err)
+	}
+
+	expectedContent := `path := trim_left(request.path, "/api/v1")`
+	if !strings.Contains(string(content), expectedContent) {
+		t.Errorf("Service file content does not contain expected path prefix.\nGot:\n%s\nExpected:\n%s", string(content), expectedContent)
 	}
 }

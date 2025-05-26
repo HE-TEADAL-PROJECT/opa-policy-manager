@@ -106,7 +106,11 @@ func InitialTest(ctx context.Context) error {
 		generator.GenerateStaticFolders(regoDir)
 
 		// Generate the service folder
-		err = generator.GenerateServiceFolder(serviceName, regoDir, *provider, policies)
+		options := generator.ServiceOptions{
+			ServiceName: serviceName,
+			PathPrefix:  "/httpbin",
+		}
+		err = generator.GenerateServiceFolder(options, regoDir, *provider, policies)
 		if err != nil {
 			return fmt.Errorf("error generating service folder: %w", err)
 		}

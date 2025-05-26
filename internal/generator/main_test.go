@@ -20,12 +20,12 @@ func TestGenerateNewMain(t *testing.T) {
 		t.Fatalf("failed to read generated main.rego: %v", err)
 	}
 
-	expectedContent := `package tedal
+	expectedContent := `package teadal
 import data.service1.allow as service1_allow
 import data.service2.allow as service2_allow
 ` + ImportMarker + `
 
-default allow = false
+default allow := false
 
 allow if service1_allow
 allow if service2_allow
@@ -41,12 +41,12 @@ func TestUpdateMainFile(t *testing.T) {
 	outputDir := t.TempDir()
 
 	// Create an initial main.rego file
-	initialContent := `package tedal
+	initialContent := `package teadal
 import data.service1.allow as service1_allow
 import data.service2.allow as service2_allow
 ` + ImportMarker + `
 
-default allow = false
+default allow := false
 
 allow if service1_allow
 allow if service2_allow
@@ -66,14 +66,14 @@ allow if service2_allow
 	if err != nil {
 		t.Fatalf("failed to read updated main.rego: %v", err)
 	}
-	expectedContent := `package tedal
+	expectedContent := `package teadal
 import data.service1.allow as service1_allow
 import data.service2.allow as service2_allow
 import data.service3.allow as service3_allow
 import data.service4.allow as service4_allow
 ` + ImportMarker + `
 
-default allow = false
+default allow := false
 
 allow if service1_allow
 allow if service2_allow
