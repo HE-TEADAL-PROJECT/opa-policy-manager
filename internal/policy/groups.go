@@ -60,7 +60,7 @@ func (p *GeneralPolicies) ToRego() string {
 		rules = append(rules, p.buildPathsRules()...)
 	}
 	for i, rule := range rules {
-		rules[i] = "allow if {\n" + rule + "}\n"
+		rules[i] = "allow_request if {\n" + rule + "}\n"
 	}
 	// Return
 	return strings.Join(rules, "\n")

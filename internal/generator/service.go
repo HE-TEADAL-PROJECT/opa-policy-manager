@@ -89,6 +89,14 @@ path := request.path
 method := lower(request.method)
 
 default allow := false
+allow if {
+	# Check if the user is authenticated
+	token.valid
+	# Check if request is valid
+	allow_request
+}
+
+default allow_request := false
 
 # Generated access control policies
 `
