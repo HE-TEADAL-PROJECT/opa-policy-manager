@@ -69,9 +69,6 @@ func (p *GeneralPolicies) ToRego() string {
 func (p *GeneralPolicies) buildGeneralRules() []string {
 	rules := make([]string, 0, len(p.Policies))
 	excludedPaths := slices.Collect(maps.Keys(p.SpecializedPaths))
-	for index, path := range excludedPaths {
-		excludedPaths[index] = "/httpbin" + path
-	}
 	excludedPathsJson, err := json.Marshal(excludedPaths)
 	if err != nil {
 		panic(err)
