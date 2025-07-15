@@ -9,30 +9,30 @@ import (
 
 // Represent a policy clauses, which can contains at most one of each type of policy
 type PolicyClause struct {
-	UserPolicy            *UserPolicy            `yaml:"user"`
-	RolePolicy            *RolePolicy            `yaml:"roles"`
-	StorageLocationPolicy *StorageLocationPolicy `yaml:"storage_location"`
-	CallPolicy            *CallPolicy            `yaml:"call"`
-	TimelinessPolicy      *TimelinessPolicy      `yaml:"timeliness"`
+	UserPolicy            *UserPolicy       `yaml:"user"`
+	RolePolicy            *RolePolicy       `yaml:"roles"`
+	StorageLocationPolicy *StoragePolicy    `yaml:"storage_location"`
+	CallPolicy            *CallPolicy       `yaml:"call"`
+	TimelinessPolicy      *TimelinessPolicy `yaml:"timeliness"`
 }
 
 func (p *PolicyClause) ToRego() string {
 	var result string
-	if p.UserPolicy != nil {
-		result += p.UserPolicy.ToRego()
-	}
-	if p.RolePolicy != nil {
-		result += p.RolePolicy.ToRego()
-	}
-	if p.StorageLocationPolicy != nil {
-		result += p.StorageLocationPolicy.ToRego()
-	}
-	if p.CallPolicy != nil {
-		result += p.CallPolicy.ToRego()
-	}
-	if p.TimelinessPolicy != nil {
-		result += p.TimelinessPolicy.ToRego()
-	}
+	// if p.UserPolicy != nil {
+	// 	result += p.UserPolicy.ToRego()
+	// }
+	// if p.RolePolicy != nil {
+	// 	result += p.RolePolicy.ToRego()
+	// }
+	// if p.StorageLocationPolicy != nil {
+	// 	result += p.StorageLocationPolicy.ToRego()
+	// }
+	// if p.CallPolicy != nil {
+	// 	result += p.CallPolicy.ToRego()
+	// }
+	// if p.TimelinessPolicy != nil {
+	// 	result += p.TimelinessPolicy.ToRego()
+	// }
 	return result
 }
 
