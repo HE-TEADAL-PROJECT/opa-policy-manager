@@ -5,7 +5,7 @@ type Operator string
 type Interval struct {
 	Min           int    `yaml:"min"`
 	Max           int    `yaml:"max"`
-	UnitOfMeasure string `yaml:"unit_of_measure,omitempty"`
+	UnitOfMeasure string `yaml:"unit_of_measure" json:"unit_of_measure"`
 }
 
 type IntervalValue struct {
@@ -13,7 +13,7 @@ type IntervalValue struct {
 }
 
 type EnumeratedValue struct {
-	Value []string `yaml:"value"`
+	Value []string `yaml:"value" json:"value"`
 }
 
 const (
