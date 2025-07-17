@@ -1,170 +1,406 @@
-package parser_test
+package parser
 
 import (
-	"dspn-regogenerator/internal/policy/parser"
+	"dspn-regogenerator/internal/policy"
+	"encoding/json"
+	"fmt"
 	"os"
+	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/pb33f/libopenapi"
+	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/pb33f/libopenapi/orderedmap"
+	"gopkg.in/yaml.v3"
 )
 
-func TestParseOpenAPIPathsConditions(t *testing.T) {
-	// Define a sample OpenAPI document
-	cwd, _ := os.Getwd()
-	cwd = strings.Split(cwd, "/internal")[0]
-	os.Chdir(cwd)
-	file, err := os.ReadFile("./testdata/schemas/httpbin-api.json")
-	if err != nil {
-		t.Fatalf("Failed to read OpenAPI file: %v", err)
+const testDataDir = "./../../../testdata/schemas"
+
+func TestParseOpenAPISpec(t *testing.T) {
+	tt := []struct {
+		name     string
+		fileName string
+		expected func(*testing.T, *libopenapi.DocumentModel[v3.Document])
+	}{
+		{
+			name:     "Valid OpenAPI Spec",
+			fileName: filepath.Join(testDataDir, "httpbin-api.json"),
+			expected: func(t *testing.T, documentModel *libopenapi.DocumentModel[v3.Document]) {
+				if documentModel == nil {
+					t.Fatal("Expected non-nil document model, got nil")
+				}
+				if documentModel.Model.Info.Title != "httpbin.org" {
+					t.Errorf("Expected title 'httpbin.org', got '%s'", documentModel.Model.Info.Title)
+				}
+			},
+		},
 	}
-	// Parse the OpenAPI document
-	r, err := parser.ParseOpenAPIPolicies(file)
-	if err != nil {
-		t.Fatalf("Failed to parse OpenAPI file: %v", err)
-	}
-	if r == nil {
-		t.Fatalf("Expected non-nil result, got nil")
-	}
-	if len(r.Policies) != 1 {
-		t.Errorf("Expected 1 policy, got %d", len(r.Policies))
-	}
-	if r.Policies[0].RolePolicy != nil || r.Policies[0].UserPolicy != nil {
-		t.Errorf("Expected nil RolePolicy and UserPolicy, got %v and %v", r.Policies[0].RolePolicy, r.Policies[0].UserPolicy)
-	}
-	if r.Policies[0].StorageLocationPolicy == nil ||
-		r.Policies[0].StorageLocationPolicy.Operator != "OR" ||
-		r.Policies[0].StorageLocationPolicy.Value[0] != "Europe" || r.Policies[0].StorageLocationPolicy.Value[1] != "USA" {
-		t.Errorf("Expected non-nil StorageLocationPolicy, got nil")
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			file, err := os.ReadFile(tc.fileName)
+			if err != nil {
+				t.Fatalf("Failed to read OpenAPI file: %v", err)
+			}
+			doc, err := ParseOpenAPISpec(strings.NewReader(string(file)))
+			if err != nil {
+				t.Fatalf("Failed to parse OpenAPI spec: %v", err)
+			}
+			tc.expected(t, doc)
+		})
 	}
 }
 
-func TestParseOpenAPISpecializedPathConditions(t *testing.T) {
-	// Define a sample OpenAPI document
-	cwd, _ := os.Getwd()
-	cwd = strings.Split(cwd, "/internal")[0]
-	os.Chdir(cwd)
-	file, err := os.ReadFile("./testdata/schemas/httpbin-api.json")
+func TestGetIdentityProvider(t *testing.T) {
+	const testKeuycloakURL = "http://localhost/keycloak/realms/master/.well-known/openid-configuration"
+
+	node := &yaml.Node{}
+	node.SetString(testKeuycloakURL)
+
+	securitySchemeExtension := orderedmap.New[string, *yaml.Node]()
+	securitySchemeExtension.Set(IamExtensionTag, node)
+	securitySchemes := orderedmap.New[string, *v3.SecurityScheme]()
+	securitySchemes.Set("bearerAuth", &v3.SecurityScheme{
+		Type:       "http",
+		Scheme:     "bearer",
+		Extensions: securitySchemeExtension,
+	})
+	docModel := &libopenapi.DocumentModel[v3.Document]{
+		Model: v3.Document{
+			Components: &v3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		},
+	}
+
+	url, err := GetIdentityProviderTag(docModel)
 	if err != nil {
-		t.Fatalf("Failed to read OpenAPI file: %v", err)
+		t.Fatalf("Failed to get identity provider tag: %v", err)
 	}
-	// Parse the OpenAPI document
-	r, err := parser.ParseOpenAPIPolicies(file)
-	if err != nil {
-		t.Fatalf("Failed to parse OpenAPI file: %v", err)
-	}
-	if r == nil {
-		t.Fatalf("Expected non-nil result, got nil")
-	}
-	if len(r.SpecializedPaths) == 0 {
-		t.Errorf("Expected specialized paths, got none")
-	}
-	if el, ok := r.SpecializedPaths["/anything"]; !ok || el.Path != "/anything" || el.Policies[0].RolePolicy != nil || el.Policies[0].UserPolicy != nil || el.Policies[0].StorageLocationPolicy != nil || el.Policies[0].CallPolicy.Value[0].Max != "10000" || el.Policies[0].CallPolicy.Value[0].UnitOfMeasure != "call_per_year" {
-		t.Errorf("Expected specialized path /anything, got %v", el)
+	if url != testKeuycloakURL {
+		t.Errorf("Expected URL %s, got %s", testKeuycloakURL, url)
 	}
 }
 
-func TestParseOpenAPISpecializedPathMethodConditions(t *testing.T) {
-	cwd, _ := os.Getwd()
-	cwd = strings.Split(cwd, "/internal")[0]
-	os.Chdir(cwd)
-	file, err := os.ReadFile("./testdata/schemas/httpbin-api.json")
-	if err != nil {
-		t.Fatalf("Failed to read OpenAPI file: %v", err)
+func TestGetPolicies(t *testing.T) {
+	tt := []struct {
+		name            string
+		generalPolicies []policy.PolicyClause
+	}{
+		{
+			name: "OnlyUserGeneralPolicy",
+			generalPolicies: []policy.PolicyClause{
+				{
+					UserPolicy: &policy.UserPolicy{
+						Operator: policy.OperatorAnd,
+						EnumeratedValue: policy.EnumeratedValue{
+							Value: []string{"user1", "user2"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "OnlyRoleGeneralPolicy",
+			generalPolicies: []policy.PolicyClause{
+				{
+					RolePolicy: &policy.RolePolicy{
+						Operator: policy.OperatorOr,
+						EnumeratedValue: policy.EnumeratedValue{
+							Value: []string{"role1", "role2"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "OnlyStorageLocationGeneralPolicy",
+			generalPolicies: []policy.PolicyClause{
+				{
+					StorageLocationPolicy: &policy.StoragePolicy{
+						Operator: policy.OperatorAnd,
+						EnumeratedValue: policy.EnumeratedValue{
+							Value: []string{"Europe", "USA"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "OnlyCallGeneralPolicy",
+			generalPolicies: []policy.PolicyClause{
+				{
+					CallPolicy: &policy.CallPolicy{
+						Operator: policy.OperatorAnd,
+						IntervalValue: policy.IntervalValue{
+							Value: []policy.Interval{
+								{
+									Max:           1000,
+									UnitOfMeasure: "call_per_year",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "OnlyTimelinessGeneralPolicy",
+			generalPolicies: []policy.PolicyClause{
+				{
+					TimelinessPolicy: &policy.TimelinessPolicy{
+						Operator: policy.OperatorAnd,
+						IntervalValue: policy.IntervalValue{
+							Value: []policy.Interval{
+								{
+									Max:           30,
+									UnitOfMeasure: "days",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "UserAndRoleGeneralPolicy",
+			generalPolicies: []policy.PolicyClause{
+				{
+					UserPolicy: &policy.UserPolicy{
+						Operator: policy.OperatorAnd,
+						EnumeratedValue: policy.EnumeratedValue{
+							Value: []string{"user1", "user2"},
+						},
+					},
+					RolePolicy: &policy.RolePolicy{
+						Operator: policy.OperatorOr,
+						EnumeratedValue: policy.EnumeratedValue{
+							Value: []string{"role1", "role2"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "TwoClauseGeneralPolicy",
+			generalPolicies: []policy.PolicyClause{
+				{
+					UserPolicy: &policy.UserPolicy{
+						Operator: policy.OperatorAnd,
+						EnumeratedValue: policy.EnumeratedValue{
+							Value: []string{"user1", "user2"},
+						},
+					},
+				},
+				{
+					UserPolicy: &policy.UserPolicy{
+						Operator: policy.OperatorAnd,
+						EnumeratedValue: policy.EnumeratedValue{
+							Value: []string{"user3", "user4"},
+						},
+					},
+				},
+			},
+		},
 	}
-	// Parse the OpenAPI document
-	r, err := parser.ParseOpenAPIPolicies(file)
-	if err != nil {
-		t.Fatalf("Failed to parse OpenAPI file: %v", err)
-	}
-	if r == nil {
-		t.Fatalf("Expected non-nil result, got nil")
-	}
-	if len(r.SpecializedPaths) == 0 {
-		t.Errorf("Expected specialized paths, got none")
-	}
-	if el, ok := r.SpecializedPaths["/absolute-redirect/{n}"]; !ok {
-		t.Errorf("Expected specialized path /anything, got %v", el)
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create a sample OpenAPI document with the provided policies
+			policies := &policy.GeneralPolicies{
+				Policies: tc.generalPolicies,
+			}
+			tagContent := XTeadalPolicies{
+				Policies:    policies.Policies,
+				Description: "todo placeholder",
+			}
+			generalPolicyNode := &yaml.Node{}
+			generalPolicyNode.Encode(tagContent)
+
+			extensions := orderedmap.New[string, *yaml.Node]()
+			extensions.Set(PolicyExtensionTag, generalPolicyNode)
+
+			docModel := &libopenapi.DocumentModel[v3.Document]{
+				Model: v3.Document{
+					Paths: &v3.Paths{
+						Extensions: extensions,
+					},
+				},
+			}
+
+			// Get the policies
+			actualPolicies, err := GetPolicies(docModel)
+			if err != nil {
+				t.Fatalf("Failed to get general policies: %v", err)
+			}
+
+			if !reflect.DeepEqual(actualPolicies.Policies, tc.generalPolicies) {
+				t.Errorf("Expected policies %v, got %v", tc.generalPolicies, actualPolicies.Policies)
+			}
+			if len(actualPolicies.Policies) != len(tc.generalPolicies) {
+				t.Errorf("Expected %d policies, got %d", len(tc.generalPolicies), len(actualPolicies.Policies))
+			}
+		})
 	}
 }
 
-func TestParsing(t *testing.T) {
-	cwd, _ := os.Getwd()
-	cwd = strings.Split(cwd, "/internal")[0]
-	os.Chdir(cwd)
-	file, err := os.ReadFile("./testdata/schemas/httpbin-api.json")
+// GoldenData represents the structure to be saved in the golden file
+type GoldenData struct {
+	URL      string                  `json:"url"`
+	Policies *policy.GeneralPolicies `json:"policies"`
+}
+
+func TestParseHTTPBinAPI(t *testing.T) {
+	// Use the TestUpgrade variable defined at the package level
+
+	httpbinSpecFile := filepath.Join(testDataDir, "httpbin-api.json")
+	file, err := os.Open(httpbinSpecFile)
 	if err != nil {
 		t.Fatalf("Failed to read OpenAPI file: %v", err)
 	}
-	url, err := parser.ParseOpenAPIIAM(file)
+	defer file.Close()
+
+	// Parse the OpenAPI document
+	docModel, err := ParseOpenAPISpec(file)
 	if err != nil {
 		t.Fatalf("Failed to parse OpenAPI file: %v", err)
 	}
-	if url == nil {
+	if docModel == nil {
 		t.Fatalf("Expected non-nil result, got nil")
 	}
-	if *url != "http://localhost/keycloak/realms/master/.well-known/openid-configuration" {
-		t.Errorf("Expected URL http://localhost/keycloak/realms/master/.well-known/openid-configuration, got %s", *url)
+
+	// Get the identity provider URL
+	url, err := GetIdentityProviderTag(docModel)
+	if err != nil && url == "" {
+		t.Fatalf("Failed to get identity provider tag: %v", err)
+	}
+
+	// Get the policies
+	structuredPolicies, err := GetPolicies(docModel)
+	if err != nil {
+		t.Fatalf("Failed to get general policies: %v", err)
+	}
+
+	// Prepare the golden data
+	goldenData := GoldenData{
+		URL:      url,
+		Policies: structuredPolicies,
+	}
+
+	// Path for the golden file
+	goldenFilePath := filepath.Join(testDataDir, "golden", "httpbin-api.golden")
+
+	if *updateGolden {
+		// Generate the golden file
+		t.Logf("Updating golden file %s", goldenFilePath)
+		goldenJSON, err := json.MarshalIndent(goldenData, "", "  ")
+		if err != nil {
+			t.Fatalf("Failed to marshal golden data: %v", err)
+		}
+		err = os.MkdirAll(filepath.Dir(goldenFilePath), 0755)
+		if err != nil {
+			t.Fatalf("Failed to create directory for golden file: %v", err)
+		}
+
+		err = os.WriteFile(goldenFilePath, goldenJSON, 0644)
+		if err != nil {
+			t.Fatalf("Failed to write golden file: %v", err)
+		}
+		t.Logf("Golden file updated successfully. Please review %s", goldenFilePath)
+	} else {
+		// Read the golden file and compare with current results
+		goldenFile, err := os.ReadFile(goldenFilePath)
+		if err != nil {
+			t.Fatalf("Failed to read golden file: %v, run with -upgrade flag to generate it", err)
+		}
+
+		var expectedGoldenData GoldenData
+		err = json.Unmarshal(goldenFile, &expectedGoldenData)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal golden data: %v", err)
+		}
+
+		// Verify correct reading of x-teadal-IAM-provider tag
+		if url != expectedGoldenData.URL {
+			t.Errorf("Expected URL %s, got %s", expectedGoldenData.URL, url)
+		}
+
+		// Verify correct reading of x-teadal-policies tags
+		comparePoliciesArray(t, expectedGoldenData.Policies.Policies, structuredPolicies.Policies, "general policies")
+
+		// Compare specialized paths
+		if len(expectedGoldenData.Policies.SpecializedPaths) != len(structuredPolicies.SpecializedPaths) {
+			t.Errorf("Expected %d specialized paths, got %d",
+				len(expectedGoldenData.Policies.SpecializedPaths),
+				len(structuredPolicies.SpecializedPaths))
+		} else {
+			for path, expectedPathPolicies := range expectedGoldenData.Policies.SpecializedPaths {
+				actualPathPolicies, exists := structuredPolicies.SpecializedPaths[path]
+				if !exists {
+					t.Errorf("Expected path %s not found in actual policies", path)
+					continue
+				}
+
+				comparePoliciesArray(t, expectedPathPolicies.Policies, actualPathPolicies.Policies,
+					fmt.Sprintf("path policies for %s", path))
+
+				// Compare specialized methods
+				if len(expectedPathPolicies.SpecializedMethods) != len(actualPathPolicies.SpecializedMethods) {
+					t.Errorf("For path %s: expected %d specialized methods, got %d",
+						path, len(expectedPathPolicies.SpecializedMethods), len(actualPathPolicies.SpecializedMethods))
+				} else {
+					for method, expectedMethodPolicies := range expectedPathPolicies.SpecializedMethods {
+						actualMethodPolicies, exists := actualPathPolicies.SpecializedMethods[method]
+						if !exists {
+							t.Errorf("Expected method %s for path %s not found in actual policies", method, path)
+							continue
+						}
+
+						comparePoliciesArray(t, expectedMethodPolicies.Policies, actualMethodPolicies.Policies,
+							fmt.Sprintf("method policies for %s %s", method, path))
+					}
+				}
+			}
+		}
 	}
 }
 
-func TestParseBearerPathRules(t *testing.T) {
-	cwd, _ := os.Getwd()
-	cwd = strings.Split(cwd, "/internal")[0]
-	os.Chdir(cwd)
-	file, err := os.ReadFile("./testdata/schemas/httpbin-api.json")
-	if err != nil {
-		t.Fatalf("Failed to read OpenAPI file: %v", err)
+// comparePolicy is a generic helper function that compares two policy objects
+// and logs an error if they're not equal
+func comparePolicy(t *testing.T, expected, actual interface{}, policyType string) {
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected %s %v, got %v", policyType, expected, actual)
 	}
-	// Parse the OpenAPI document
-	r, err := parser.ParseOpenAPIPolicies(file)
-	if err != nil {
-		t.Fatalf("Failed to parse OpenAPI file: %v", err)
-	}
-	if _, ok := r.SpecializedPaths["/bearer"]; !ok {
-		t.Errorf("Expected specialized path /bearer in parsed policies")
-	}
-	specPath := r.SpecializedPaths["/bearer"]
-	if _, ok := specPath.SpecializedMethods["get"]; !ok {
-		t.Errorf("Expected specialized method get in path /bearer")
-	}
-	if len(specPath.Policies) != 2 {
-		t.Errorf("Expected 2 policies in path /bearer, got %d", len(specPath.Policies))
-	}
-	if specPath.Policies[0].RolePolicy == nil {
-		t.Errorf("Expected non-nil RolePolicy in path /bearer")
-	}
-	if specPath.Policies[0].RolePolicy.Operator != "OR" {
-		t.Errorf("Expected RolePolicy operator OR, got %s", specPath.Policies[0].RolePolicy.Operator)
-	}
-	if specPath.Policies[0].RolePolicy.Value[0] != "role3" {
-		t.Errorf("Expected RolePolicy value role3, got %s", specPath.Policies[0].RolePolicy.Value[0])
-	}
-	if specPath.Policies[0].RolePolicy.Value[1] != "role2" {
-		t.Errorf("Expected RolePolicy value role2, got %s", specPath.Policies[0].RolePolicy.Value[1])
+}
+
+// comparePoliciesArray compares two arrays of policy clauses and reports detailed differences
+func comparePoliciesArray(t *testing.T, expected, actual []policy.PolicyClause, arrayName string) {
+	if reflect.DeepEqual(expected, actual) {
+		return
 	}
 
-	if specPath.Policies[1].UserPolicy == nil {
-		t.Errorf("Expected non-nil UserPolicy in path /bearer")
-	}
-	if specPath.Policies[1].UserPolicy.Operator != "OR" {
-		t.Errorf("Expected UserPolicy operator OR, got %s", specPath.Policies[1].UserPolicy.Operator)
-	}
-	if specPath.Policies[1].UserPolicy.Value[0] != "user1@teadal.eu" {
-		t.Errorf("Expected UserPolicy value user1@teadal.eu, got %s", specPath.Policies[1].UserPolicy.Value[0])
-	}
-	if specPath.Policies[1].UserPolicy.Value[1] != "user2@teadal.eu" {
-		t.Errorf("Expected UserPolicy value user2@teadal.eu, got %s", specPath.Policies[1].UserPolicy.Value[1])
+	if len(expected) != len(actual) {
+		t.Errorf("Expected %d %s, got %d", len(expected), arrayName, len(actual))
+		return
 	}
 
-	if specPath.Policies[1].StorageLocationPolicy == nil {
-		t.Errorf("Expected non-nil StorageLocationPolicy in path /bearer")
-	}
-	if specPath.Policies[1].StorageLocationPolicy.Operator != "OR" {
-		t.Errorf("Expected StorageLocationPolicy operator OR, got %s", specPath.Policies[1].StorageLocationPolicy.Operator)
-	}
-	if specPath.Policies[1].StorageLocationPolicy.Value[0] != "Italy" {
-		t.Errorf("Expected StorageLocationPolicy value Europe, got %s", specPath.Policies[1].StorageLocationPolicy.Value[0])
-	}
-	if specPath.Policies[1].StorageLocationPolicy.Value[1] != "Spain" {
-		t.Errorf("Expected StorageLocationPolicy value USA, got %s", specPath.Policies[1].StorageLocationPolicy.Value[1])
+	for i, expectedPolicy := range expected {
+		if i >= len(actual) {
+			t.Errorf("Missing policy at index %d in %s", i, arrayName)
+			continue
+		}
+
+		actualPolicy := actual[i]
+		if !reflect.DeepEqual(expectedPolicy, actualPolicy) {
+			t.Errorf("Policy mismatch at index %d in %s", i, arrayName)
+
+			// Compare each policy field individually for more detailed error messages
+			comparePolicy(t, expectedPolicy.CallPolicy, actualPolicy.CallPolicy, "CallPolicy")
+			comparePolicy(t, expectedPolicy.StorageLocationPolicy, actualPolicy.StorageLocationPolicy, "StorageLocationPolicy")
+			comparePolicy(t, expectedPolicy.UserPolicy, actualPolicy.UserPolicy, "UserPolicy")
+			comparePolicy(t, expectedPolicy.RolePolicy, actualPolicy.RolePolicy, "RolePolicy")
+			comparePolicy(t, expectedPolicy.TimelinessPolicy, actualPolicy.TimelinessPolicy, "TimelinessPolicy")
+		}
 	}
 }

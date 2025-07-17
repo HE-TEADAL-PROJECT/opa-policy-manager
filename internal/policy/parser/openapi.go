@@ -3,6 +3,7 @@ package parser
 import (
 	"dspn-regogenerator/internal/policy"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/pb33f/libopenapi"
@@ -10,8 +11,8 @@ import (
 )
 
 const (
-	XTeadalPoliciesKey = "x-teadal-policies"
-	XTeadalIAMKey      = "x-teadal-IAM-provider"
+	PolicyExtensionTag = "x-teadal-policies"
+	IamExtensionTag    = "x-teadal-IAM-provider"
 )
 
 type XTeadalPolicies struct {
@@ -21,13 +22,47 @@ type XTeadalPolicies struct {
 
 type StructuredPolicies = policy.GeneralPolicies
 
-func ParseOpenAPIPolicies(specByteArray []byte) (*StructuredPolicies, error) {
-	docModel, err := getDocumentFromData(specByteArray)
+type BuildingModelError struct {
+	errors []error
+}
+
+func (e *BuildingModelError) Error() string {
+	if len(e.errors) == 0 {
+		return "no errors"
+	}
+	result := "errors occurred while building model:\n"
+	for _, err := range e.errors {
+		result += fmt.Sprintf("- %v\n", err)
+	}
+	return result
+}
+
+func ParseOpenAPISpec(spec io.Reader) (*libopenapi.DocumentModel[v3.Document], error) {
+	specByteArray, err := io.ReadAll(spec)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse OpenAPI spec: %v", err)
+		return &libopenapi.DocumentModel[v3.Document]{}, fmt.Errorf("failed to read OpenAPI spec: %v", err)
 	}
 
+	document, err := libopenapi.NewDocument(specByteArray)
+	if err != nil {
+		return &libopenapi.DocumentModel[v3.Document]{}, fmt.Errorf("failed to parse OpenAPI spec: %v", err)
+	}
+
+	docModel, errors := document.BuildV3Model()
+	if len(errors) > 0 {
+		errorList := make([]error, len(errors))
+		for i, err := range errors {
+			errorList[i] = fmt.Errorf("error %d: %w", i+1, err)
+		}
+		return &libopenapi.DocumentModel[v3.Document]{}, &BuildingModelError{errors: errorList}
+	}
+
+	return docModel, nil
+}
+
+func GetPolicies(docModel *libopenapi.DocumentModel[v3.Document]) (*StructuredPolicies, error) {
 	result := policy.NewGeneralPolicies()
+	var err error
 
 	// Processing general policies
 	if docModel.Model.Paths.Extensions.Len() > 1 {
@@ -113,39 +148,36 @@ func ParseOpenAPIPolicies(specByteArray []byte) (*StructuredPolicies, error) {
 	return result, nil
 }
 
-func ParseOpenAPIIAM(specByteArray []byte) (*string, error) {
-	docModel, err := getDocumentFromData(specByteArray)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse OpenAPI spec: %v", err)
-	}
+func GetIdentityProviderTag(docModel *libopenapi.DocumentModel[v3.Document]) (string, error) {
 	// Check if the document has any security requirements
 	if docModel.Model.Components.SecuritySchemes.Len() == 0 {
-		return nil, fmt.Errorf("no security requirements found in OpenAPI spec")
+		return "", fmt.Errorf("no security requirements found in OpenAPI spec")
 	}
+	var err error
 	if docModel.Model.Components.SecuritySchemes.Len() > 1 {
-		fmt.Fprintf(os.Stderr, "Warning: multiple security requirements found in OpenAPI spec\n")
+		err = fmt.Errorf("multiple security requirements found in OpenAPI spec, expected only one")
 	}
 	securityTag := docModel.Model.Components.SecuritySchemes.First()
 	for securityTag != nil && securityTag.Key() != "bearerAuth" {
 		securityTag = securityTag.Next()
 	}
 	if securityTag == nil {
-		return nil, fmt.Errorf("bearerAuth security requirement not found in OpenAPI spec")
+		return "", fmt.Errorf("bearerAuth security requirement not found in OpenAPI spec")
 	}
 	// Decode the security requirement value
 	exts := securityTag.Value().Extensions.First()
-	for exts != nil && exts.Key() != XTeadalIAMKey {
+	for exts != nil && exts.Key() != IamExtensionTag {
 		exts = exts.Next()
 	}
 	if exts == nil {
-		return nil, fmt.Errorf(XTeadalIAMKey + "extension not found in bearerAuth security requirement")
+		return "", fmt.Errorf(IamExtensionTag + "extension not found in bearerAuth security requirement")
 	}
 	url := ""
 	err = exts.Value().Decode(&url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode value for bearerAuth security requirement: %v", err)
+		return "", fmt.Errorf("failed to decode value for bearerAuth security requirement: %v", err)
 	}
-	return &url, nil
+	return url, err
 }
 
 func getDocumentFromData(specByteArray []byte) (*libopenapi.DocumentModel[v3.Document], error) {

@@ -1,0 +1,547 @@
+{
+  "url": "http://keycloak.default.svc.cluster.local:8080/keycloak/realms/teadal/.well-known/openid-configuration",
+  "policies": {
+    "Policies": [
+      {
+        "storage_location": {
+          "operator": "OR",
+          "value": [
+            "Europe",
+            "USA"
+          ]
+        },
+        "call": {
+          "value": [
+            {
+              "max": 50000,
+              "unit_of_measure": "call_per_year"
+            }
+          ]
+        }
+      }
+    ],
+    "SpecializedPaths": {
+      "/absolute-redirect/{n}": {
+        "Policies": [],
+        "Path": "/absolute-redirect/{n}",
+        "SpecializedMethods": {
+          "get": {
+            "Policies": [
+              {
+                "storage_location": {
+                  "operator": "OR",
+                  "value": [
+                    "Italy",
+                    "NYC"
+                  ]
+                },
+                "call": {
+                  "value": [
+                    {
+                      "max": 15000,
+                      "unit_of_measure": "call_per_month"
+                    }
+                  ]
+                }
+              },
+              {
+                "roles": {
+                  "operator": "AND",
+                  "value": [
+                    "role1",
+                    "role2"
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "get"
+          }
+        }
+      },
+      "/anything": {
+        "Policies": [
+          {
+            "call": {
+              "value": [
+                {
+                  "max": 10000,
+                  "unit_of_measure": "call_per_year"
+                }
+              ]
+            }
+          }
+        ],
+        "Path": "/anything",
+        "SpecializedMethods": {
+          "delete": {
+            "Policies": [
+              {
+                "roles": {
+                  "operator": "OR",
+                  "value": [
+                    "researchers"
+                  ]
+                },
+                "timeliness": {
+                  "value": [
+                    {
+                      "max": 7,
+                      "unit_of_measure": "days"
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "delete"
+          },
+          "patch": {
+            "Policies": [
+              {
+                "roles": {
+                  "operator": "OR",
+                  "value": [
+                    "doctors"
+                  ]
+                },
+                "call": {
+                  "value": [
+                    {
+                      "max": 1000,
+                      "unit_of_measure": "call_per_month"
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "patch"
+          },
+          "post": {
+            "Policies": [
+              {
+                "roles": {
+                  "value": [
+                    "role3"
+                  ]
+                },
+                "call": {
+                  "value": [
+                    {
+                      "max": 1000,
+                      "unit_of_measure": "call_per_month"
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "post"
+          },
+          "put": {
+            "Policies": [
+              {
+                "roles": {
+                  "value": [
+                    "role3"
+                  ]
+                },
+                "storage_location": {
+                  "value": [
+                    "Milan"
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "put"
+          },
+          "trace": {
+            "Policies": [
+              {
+                "roles": {
+                  "value": [
+                    "role3"
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "trace"
+          }
+        }
+      },
+      "/anything/{anything}": {
+        "Policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            },
+            "call": {
+              "value": [
+                {
+                  "max": 1200,
+                  "unit_of_measure": "call_per_month"
+                }
+              ]
+            }
+          },
+          {}
+        ],
+        "Path": "/anything/{anything}",
+        "SpecializedMethods": {
+          "delete": {
+            "Policies": [
+              {
+                "call": {
+                  "value": [
+                    {
+                      "max": 7,
+                      "unit_of_measure": "call_per_day"
+                    }
+                  ]
+                }
+              },
+              {
+                "roles": {
+                  "value": [
+                    "role1",
+                    "role2"
+                  ]
+                },
+                "timeliness": {
+                  "value": [
+                    {
+                      "min": 7,
+                      "unit_of_measure": "days"
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "delete"
+          },
+          "get": {
+            "Policies": [
+              {
+                "roles": {
+                  "value": [
+                    "role3"
+                  ]
+                },
+                "call": {
+                  "value": [
+                    {
+                      "max": 100,
+                      "unit_of_measure": "call_per_month"
+                    }
+                  ]
+                }
+              },
+              {
+                "roles": {
+                  "operator": "OR",
+                  "value": [
+                    "researchers",
+                    "role4"
+                  ]
+                },
+                "call": {
+                  "value": [
+                    {
+                      "max": 1250,
+                      "unit_of_measure": "call_per_month"
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "get"
+          },
+          "patch": {
+            "Policies": [
+              {
+                "roles": {
+                  "value": [
+                    "role1"
+                  ]
+                },
+                "storage_location": {
+                  "value": [
+                    "Milan"
+                  ]
+                }
+              },
+              {
+                "roles": {
+                  "value": [
+                    "role5"
+                  ]
+                },
+                "call": {
+                  "value": [
+                    {
+                      "min": 5,
+                      "unit_of_measure": "call_per_day"
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "patch"
+          },
+          "post": {
+            "Policies": [
+              {
+                "roles": {
+                  "value": [
+                    "role2, role3"
+                  ]
+                }
+              },
+              {
+                "roles": {
+                  "value": [
+                    "role4"
+                  ]
+                },
+                "call": {
+                  "value": [
+                    {
+                      "min": 5,
+                      "max": 1000,
+                      "unit_of_measure": "call_per_day"
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "post"
+          },
+          "put": {
+            "Policies": [
+              {
+                "storage_location": {
+                  "value": [
+                    "NYC"
+                  ]
+                },
+                "call": {
+                  "value": [
+                    {
+                      "max": 500,
+                      "unit_of_measure": "call_per_day"
+                    }
+                  ]
+                }
+              },
+              {
+                "roles": {
+                  "value": [
+                    "role1"
+                  ]
+                },
+                "call": {
+                  "value": [
+                    {
+                      "min": 1,
+                      "unit_of_measure": "call_per_week"
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "put"
+          },
+          "trace": {
+            "Policies": [
+              {
+                "roles": {
+                  "value": [
+                    "role3"
+                  ]
+                }
+              },
+              {
+                "roles": {
+                  "value": [
+                    "role5"
+                  ]
+                },
+                "call": {
+                  "value": [
+                    {
+                      "max": 100,
+                      "unit_of_measure": "call_per_day"
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "trace"
+          }
+        }
+      },
+      "/base64/{value}": {
+        "Policies": [],
+        "Path": "/base64/{value}",
+        "SpecializedMethods": {
+          "get": {
+            "Policies": [
+              {
+                "roles": {
+                  "value": [
+                    "Admin"
+                  ]
+                }
+              },
+              {
+                "user": {
+                  "operator": "OR",
+                  "value": [
+                    "user1@teadal.eu",
+                    "user4@teadal.eu"
+                  ]
+                },
+                "storage_location": {
+                  "value": [
+                    "Italy"
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "get"
+          }
+        }
+      },
+      "/basic-auth/{user}/{passwd}": {
+        "Policies": [
+          {
+            "roles": {
+              "value": [
+                "Admin"
+              ]
+            }
+          },
+          {
+            "roles": {
+              "value": [
+                "researchers"
+              ]
+            },
+            "call": {
+              "value": [
+                {
+                  "max": 100,
+                  "unit_of_measure": "call_per_day"
+                }
+              ]
+            }
+          }
+        ],
+        "Path": "/basic-auth/{user}/{passwd}",
+        "SpecializedMethods": null
+      },
+      "/bearer": {
+        "Policies": [
+          {
+            "roles": {
+              "operator": "OR",
+              "value": [
+                "role3",
+                "role2"
+              ]
+            }
+          },
+          {
+            "user": {
+              "operator": "OR",
+              "value": [
+                "user1@teadal.eu",
+                "user2@teadal.eu"
+              ]
+            },
+            "storage_location": {
+              "operator": "OR",
+              "value": [
+                "Italy",
+                "Spain"
+              ]
+            }
+          }
+        ],
+        "Path": "/bearer",
+        "SpecializedMethods": {
+          "get": {
+            "Policies": [
+              {
+                "user": {
+                  "value": [
+                    "jeejee@teadal.eu"
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "get"
+          }
+        }
+      },
+      "/brotli": {
+        "Policies": [],
+        "Path": "/brotli",
+        "SpecializedMethods": {
+          "get": {
+            "Policies": [
+              {
+                "roles": {
+                  "operator": "OR",
+                  "value": [
+                    "role1",
+                    "role2"
+                  ]
+                }
+              },
+              {
+                "storage_location": {
+                  "operator": "OR",
+                  "value": [
+                    "Italy",
+                    "Spain"
+                  ]
+                },
+                "timeliness": {
+                  "value": [
+                    {
+                      "min": 10,
+                      "unit_of_measure": "minutes"
+                    }
+                  ]
+                }
+              },
+              {
+                "user": {
+                  "value": [
+                    "sebs@teadal.eu"
+                  ]
+                }
+              }
+            ],
+            "Path": "",
+            "Method": "get"
+          }
+        }
+      }
+    }
+  }
+}
