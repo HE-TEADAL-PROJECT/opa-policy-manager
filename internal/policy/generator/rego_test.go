@@ -2,7 +2,7 @@ package generator
 
 import (
 	. "dspn-regogenerator/internal/policy"
-	"slices"
+	"regexp"
 	"testing"
 )
 
@@ -350,10 +350,8 @@ func TestGeneratePathPolicies(t *testing.T) {
 				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}\nmethod == \"POST\"\nroles == {\"role3\",\"role4\"}",
 				"path == \"/example\"\nuser in {\"user3\",\"user4\"}\nmethod == \"GET\"\nroles == {\"role1\",\"role2\"}",
 				"path == \"/example\"\nuser in {\"user3\",\"user4\"}\nmethod == \"POST\"\nroles == {\"role3\",\"role4\"}",
-				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}\nnot method in {\"GET\",\"POST\"}",
-				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}\nnot method in {\"POST\",\"GET\"}",
-				"path == \"/example\"\nuser in {\"user3\",\"user4\"}\nnot method in {\"GET\",\"POST\"}",
-				"path == \"/example\"\nuser in {\"user3\",\"user4\"}\nnot method in {\"POST\",\"GET\"}",
+				`path == "/example"\n{user} == {"user1","user2"}\nnot method in {("GET","POST"|"POST","GET")}`,
+				`path == "/example"\nuser in {"user3","user4"}\nnot method in {("GET","POST"|"POST","GET")}`,
 			},
 		},
 		{
@@ -377,36 +375,68 @@ func TestGeneratePathPolicies(t *testing.T) {
 						},
 						Method: "get",
 					},
+					"post": {
+						Policies: []PolicyClause{
+							{
+								RolePolicy: &RolePolicy{
+									Operator: OperatorAnd,
+									EnumeratedValue: EnumeratedValue{
+										Value: []string{
+											"role3", "role4",
+										},
+									},
+								},
+							},
+						},
+						Method: "get",
+					},
 				},
 			},
 			expected: []string{
-				"path == \"/example\"\nnot method in {\"GET\"}",
+				`path == \"/example\"\nnot method in {("GET","POST"|"POST","GET")}`,
 				"path == \"/example\"\nmethod == \"GET\"\nroles == {\"role1\",\"role2\"}",
+				"path == \"/example\"\nmethod == \"POST\"\nroles == {\"role3\",\"role4\"}",
 			},
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			regopolicies, err := generatePoliciesForPath(ServiceData{}, tc.path, tc.policies)
+			got, err := generatePoliciesForPath(ServiceData{}, tc.path, tc.policies)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if len(regopolicies) == 0 {
-				t.Fatal("expected non-empty policies")
+			// Sort the results to ensure a consistent comparison
+			if len(got) != len(tc.expected) {
+				t.Errorf("expected %d policies, got %d", len(tc.expected), len(got))
 			}
-			for i, rego := range regopolicies {
-				index := slices.Index(tc.expected, rego)
-				if index == -1 {
-					t.Errorf("%d: unexpected %s", i, rego)
-				} else {
-					tc.expected = slices.Delete(tc.expected, index, index+1)
+
+			// Create maps to track matched policies
+			matchedGot := make(map[int]bool)
+			matchedExpected := make(map[int]bool)
+
+			// Check each expected policy against all got policies
+			for i, expected := range tc.expected {
+				found := false
+				for j, g := range got {
+					if matched, err := regexp.MatchString(expected, g); matched && err == nil && !matchedGot[j] {
+						matchedGot[j] = true
+						matchedExpected[i] = true
+						found = true
+						break
+					} else if err != nil {
+						t.Errorf("error matching regex %s against %s: %v", expected, g, err)
+					}
+				}
+				if !found {
+					t.Errorf("missing expected policy: %s", expected)
 				}
 			}
-			if t.Failed() {
-				t.Logf("Missing expected entries:")
-				for _, exp := range tc.expected {
-					t.Logf("%s", exp)
+
+			// Check for unexpected policies
+			for j, g := range got {
+				if !matchedGot[j] {
+					t.Errorf("unexpected policy: %s", g)
 				}
 			}
 		})
@@ -541,6 +571,59 @@ func TestGenerateServicePolicies(t *testing.T) {
 				"    global_policy\n" +
 				"    path == \"/example\"\n" +
 				"    roles == {\"role1\",\"role2\"}\n" +
+				"}\n\n" +
+				"allow_request if {\n" +
+				"    global_policy\n" +
+				"    not path in {\"/example\"}\n" +
+				"}\n",
+		},
+		{
+			name: "General policies with specialized methods",
+			policies: GeneralPolicies{
+				Policies: []PolicyClause{
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user1", "user2"},
+							},
+						},
+					},
+				},
+				SpecializedPaths: map[string]PathPolicies{
+					"/example": PathPolicies{
+						SpecializedMethods: map[string]PathMethodPolicies{
+							"GET": PathMethodPolicies{
+								Policies: []PolicyClause{
+									{
+										RolePolicy: &RolePolicy{
+											Operator: OperatorAnd,
+											EnumeratedValue: EnumeratedValue{
+												Value: []string{"role1", "role2"},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "default global_policy := false\n\n" +
+				"global_policy if {\n" +
+				"    {user} == {\"user1\",\"user2\"}\n" +
+				"}\n\n" +
+				"default allow_request := false\n\n" +
+				"allow_request if {\n" +
+				"    global_policy\n" +
+				"    path == \"/example\"\n" +
+				"    method == \"GET\"\n" +
+				"    roles == {\"role1\",\"role2\"}\n" +
+				"}\n\n" +
+				"allow_request if {\n" +
+				"    global_policy\n" +
+				"    path == \"/example\"\n" +
+				"    not method in {\"GET\"}\n" +
 				"}\n\n" +
 				"allow_request if {\n" +
 				"    global_policy\n" +

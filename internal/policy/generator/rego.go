@@ -255,6 +255,7 @@ func generatePoliciesForPath(serviceData ServiceData, path string, policies Path
 			return nil, fmt.Errorf("error generating Rego for policy clause %d: %w", i, err)
 		}
 		if rego != "" {
+			rego = "path == \"" + path + "\"\n" + rego // Add path condition
 			clausesRego = append(clausesRego, rego)
 		}
 	}
@@ -272,27 +273,26 @@ func generatePoliciesForPath(serviceData ServiceData, path string, policies Path
 		}
 	}
 	// If there are no specialized methods, use the default method
-	if len(methodsClauses) == 0 && len(clausesRego) == 0 {
-		return []string{}, nil // No policies to generate
-	} else if len(methodsClauses) == 0 {
-		for i, clause := range clausesRego {
-			clausesRego[i] = "path == \"" + path + "\"\n" + clause
-		}
-		return clausesRego, nil // No specialized methods, return only the path policies
-	} else if len(clausesRego) == 0 {
-		for i, methodClause := range methodsClauses {
-			methodsClauses[i] = "path == \"" + path + "\"\n" + methodClause
-		}
-		return methodsClauses, nil // No path policies, return only the specialized methods
+	if len(methodsClauses) == 0 {
+		return clausesRego, nil // No specialized methods, return only path policies
+	} else {
+		// Add a clause for the default method (not specified in specialized methods)
+		methodsClauses = append(methodsClauses, "not method in "+arrayToRegoSet(methodSet))
 	}
 	// Combine path policies with specialized methods
 	blocks := make([]string, 0, len(methodsClauses)*len(clausesRego)+len(clausesRego))
-	for _, clause := range clausesRego {
+	if len(clausesRego) == 0 {
 		for _, methodClause := range methodsClauses {
 			// Combine path and method clauses
-			blocks = append(blocks, "path == \""+path+"\"\n"+clause+"\n"+methodClause)
+			blocks = append(blocks, "path == \""+path+"\"\n"+methodClause)
 		}
-		blocks = append(blocks, "path == \""+path+"\"\n"+clause+"\n"+"not method in "+arrayToRegoSet(methodSet))
+	} else {
+		for _, clause := range clausesRego {
+			for _, methodClause := range methodsClauses {
+				// Combine path and method clauses
+				blocks = append(blocks, clause+"\n"+methodClause)
+			}
+		}
 	}
 	return blocks, nil
 }
