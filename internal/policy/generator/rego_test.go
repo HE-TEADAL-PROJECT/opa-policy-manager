@@ -2,19 +2,61 @@ package generator
 
 import (
 	. "dspn-regogenerator/internal/policy"
+	"slices"
 	"testing"
 )
 
-func TestGenerateRego(t *testing.T) {
+func TestGeneratePolicyRego(t *testing.T) {
 	tt := []struct {
 		name     string
-		policies []any
+		policies any
 		expected string
 	}{
 		{
 			name: "UserPolicy with AND operator",
-			policies: []any{
-				UserPolicy{
+			policies: UserPolicy{
+				Operator: OperatorAnd,
+				EnumeratedValue: EnumeratedValue{
+					Value: []string{"user1", "user2"},
+				},
+			},
+
+			expected: "{user} == {\"user1\",\"user2\"}",
+		},
+		{
+			name: "UserPolicy with OR operator",
+			policies: UserPolicy{
+				Operator: OperatorOr,
+				EnumeratedValue: EnumeratedValue{
+					Value: []string{"user1", "user2"},
+				},
+			},
+			expected: "user in {\"user1\",\"user2\"}",
+		},
+		{
+			name: "RolePolicy with AND operator",
+			policies: RolePolicy{
+				Operator: OperatorAnd,
+				EnumeratedValue: EnumeratedValue{
+					Value: []string{"role1", "role2"},
+				},
+			},
+			expected: "roles == {\"role1\",\"role2\"}",
+		},
+		{
+			name: "RolePolicy with OR operator",
+			policies: RolePolicy{
+				Operator: OperatorOr,
+				EnumeratedValue: EnumeratedValue{
+					Value: []string{"role1", "role2"},
+				},
+			},
+			expected: "roles & {\"role1\",\"role2\"} != set()",
+		},
+		{
+			name: "PolicyClause with UserPolicy",
+			policies: PolicyClause{
+				UserPolicy: &UserPolicy{
 					Operator: OperatorAnd,
 					EnumeratedValue: EnumeratedValue{
 						Value: []string{"user1", "user2"},
@@ -24,51 +66,497 @@ func TestGenerateRego(t *testing.T) {
 			expected: "{user} == {\"user1\",\"user2\"}",
 		},
 		{
-			name: "UserPolicy with OR operator",
-			policies: []any{
-				UserPolicy{
-					Operator: OperatorOr,
+			name: "PolicyClause with UserPolicy and RolePolicy",
+			policies: PolicyClause{
+				UserPolicy: &UserPolicy{
+					Operator: OperatorAnd,
 					EnumeratedValue: EnumeratedValue{
 						Value: []string{"user1", "user2"},
 					},
 				},
-			},
-			expected: "{user} in {\"user1\",\"user2\"}",
-		},
-		{
-			name: "RolePolicy with AND operator",
-			policies: []any{
-				RolePolicy{
-					Operator: OperatorAnd,
-					EnumeratedValue: EnumeratedValue{
-						Value: []string{"role1", "role2"},
-					},
-				},
-			},
-			expected: "roles == {\"role1\",\"role2\"}",
-		},
-		{
-			name: "RolePolicy with OR operator",
-			policies: []any{
-				RolePolicy{
+				RolePolicy: &RolePolicy{
 					Operator: OperatorOr,
 					EnumeratedValue: EnumeratedValue{
 						Value: []string{"role1", "role2"},
 					},
 				},
 			},
-			expected: "roles & {\"role1\",\"role2\"} != set()",
+			expected: "{user} == {\"user1\",\"user2\"}\nroles & {\"role1\",\"role2\"} != set()",
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			regopolicies, err := GenerateRego(ServiceData{}, tc.policies)
+			regopolicies, err := GeneratePolicyRego(ServiceData{}, tc.policies)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 			if regopolicies != tc.expected {
 				t.Errorf("expected %s, got %s", tc.expected, regopolicies)
+			}
+		})
+	}
+}
+
+func TestGenerateMethodPolicies(t *testing.T) {
+	tt := []struct {
+		name     string
+		method   string
+		policies PathMethodPolicies
+		expected []string
+	}{
+		{
+			name:   "MethodPolicies with UserPolicy",
+			method: "get",
+			policies: PathMethodPolicies{
+				Policies: []PolicyClause{
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user1", "user2"},
+							},
+						},
+					},
+				},
+			},
+			expected: []string{"method == \"GET\"\n{user} == {\"user1\",\"user2\"}"},
+		},
+		{
+			name:   "MethodPolicies with multiple clause",
+			method: "post",
+			policies: PathMethodPolicies{
+				Policies: []PolicyClause{
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user1", "user2"},
+							},
+						},
+					},
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorOr,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user3", "user4"},
+							},
+						},
+					},
+				},
+			},
+			expected: []string{
+				"method == \"POST\"\n{user} == {\"user1\",\"user2\"}",
+				"method == \"POST\"\nuser in {\"user3\",\"user4\"}",
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			regopolicies, err := generatePoliciesForMethod(ServiceData{}, tc.method, tc.policies)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if len(regopolicies) == 0 {
+				t.Fatal("expected non-empty policies")
+			}
+			for i, rego := range regopolicies {
+				if rego != tc.expected[i] {
+					t.Errorf("%d: expected %s, got %s", i, tc.expected[i], rego)
+				}
+			}
+		})
+	}
+}
+
+func TestGeneratePathPolicies(t *testing.T) {
+	tt := []struct {
+		name     string
+		path     string
+		policies PathPolicies
+		expected []string
+	}{
+		{
+			name: "PathPolicies non specialized with UserPolicy",
+			path: "/example",
+			policies: PathPolicies{
+				Policies: []PolicyClause{
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user1", "user2"},
+							},
+						},
+					},
+				},
+			},
+			expected: []string{
+				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}",
+			},
+		},
+		{
+			name: "PathPolicies non specialized with multiple clauses",
+			path: "/example",
+			policies: PathPolicies{
+				Policies: []PolicyClause{
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user1", "user2"},
+							},
+						},
+					},
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user3", "user4"},
+							},
+						},
+					},
+				},
+			},
+			expected: []string{
+				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}",
+				"path == \"/example\"\n{user} == {\"user3\",\"user4\"}",
+			},
+		},
+		{
+			name: "PathPolicies with UserPolicy and empty specialized method clauses",
+			path: "/example",
+			policies: PathPolicies{
+				Policies: []PolicyClause{
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user1", "user2"},
+							},
+						},
+					},
+				},
+				SpecializedMethods: map[string]PathMethodPolicies{
+					"get": {
+						Policies: []PolicyClause{},
+						Method:   "get",
+						Path:     "/example",
+					},
+				},
+			},
+			expected: []string{
+				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}",
+			},
+		},
+		{
+			name: "PathPolicies with UserPolicy and specialized method clause",
+			path: "/example",
+			policies: PathPolicies{
+				Policies: []PolicyClause{
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user1", "user2"},
+							},
+						},
+					},
+				},
+				SpecializedMethods: map[string]PathMethodPolicies{
+					"get": {
+						Policies: []PolicyClause{
+							{
+								RolePolicy: &RolePolicy{
+									Operator: OperatorAnd,
+									EnumeratedValue: EnumeratedValue{
+										Value: []string{
+											"role1", "role2",
+										},
+									},
+								},
+							},
+						},
+						Method: "get",
+						Path:   "/example",
+					},
+				},
+			},
+			expected: []string{
+				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}\nmethod == \"GET\"\nroles == {\"role1\",\"role2\"}",
+				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}\nnot method in {\"GET\"}",
+			},
+		},
+		{
+			name: "PathPolicies with multiple clauses and specialized method clause",
+			path: "/example",
+			policies: PathPolicies{
+				Policies: []PolicyClause{
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user1", "user2"},
+							},
+						},
+					},
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorOr,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user3", "user4"},
+							},
+						},
+					},
+				},
+				SpecializedMethods: map[string]PathMethodPolicies{
+					"get": {
+						Policies: []PolicyClause{
+							{
+								RolePolicy: &RolePolicy{
+									Operator: OperatorAnd,
+									EnumeratedValue: EnumeratedValue{
+										Value: []string{
+											"role1", "role2",
+										},
+									},
+								},
+							},
+						},
+						Method: "get",
+						Path:   "/example",
+					},
+					"post": {
+						Policies: []PolicyClause{
+							{
+								RolePolicy: &RolePolicy{
+									Operator: OperatorAnd,
+									EnumeratedValue: EnumeratedValue{
+										Value: []string{
+											"role3", "role4",
+										},
+									},
+								},
+							},
+						},
+						Method: "post",
+						Path:   "/example",
+					},
+				},
+			},
+			expected: []string{
+				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}\nmethod == \"GET\"\nroles == {\"role1\",\"role2\"}",
+				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}\nmethod == \"POST\"\nroles == {\"role3\",\"role4\"}",
+				"path == \"/example\"\nuser in {\"user3\",\"user4\"}\nmethod == \"GET\"\nroles == {\"role1\",\"role2\"}",
+				"path == \"/example\"\nuser in {\"user3\",\"user4\"}\nmethod == \"POST\"\nroles == {\"role3\",\"role4\"}",
+				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}\nnot method in {\"GET\",\"POST\"}",
+				"path == \"/example\"\n{user} == {\"user1\",\"user2\"}\nnot method in {\"POST\",\"GET\"}",
+				"path == \"/example\"\nuser in {\"user3\",\"user4\"}\nnot method in {\"GET\",\"POST\"}",
+				"path == \"/example\"\nuser in {\"user3\",\"user4\"}\nnot method in {\"POST\",\"GET\"}",
+			},
+		},
+		{
+			name: "PathPolicies with no policies but specialized methods",
+			path: "/example",
+			policies: PathPolicies{
+				Policies: []PolicyClause{},
+				SpecializedMethods: map[string]PathMethodPolicies{
+					"get": {
+						Policies: []PolicyClause{
+							{
+								RolePolicy: &RolePolicy{
+									Operator: OperatorAnd,
+									EnumeratedValue: EnumeratedValue{
+										Value: []string{
+											"role1", "role2",
+										},
+									},
+								},
+							},
+						},
+						Method: "get",
+					},
+				},
+			},
+			expected: []string{
+				"path == \"/example\"\nnot method in {\"GET\"}",
+				"path == \"/example\"\nmethod == \"GET\"\nroles == {\"role1\",\"role2\"}",
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			regopolicies, err := generatePoliciesForPath(ServiceData{}, tc.path, tc.policies)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if len(regopolicies) == 0 {
+				t.Fatal("expected non-empty policies")
+			}
+			for i, rego := range regopolicies {
+				index := slices.Index(tc.expected, rego)
+				if index == -1 {
+					t.Errorf("%d: unexpected %s", i, rego)
+				} else {
+					tc.expected = slices.Delete(tc.expected, index, index+1)
+				}
+			}
+			if t.Failed() {
+				t.Logf("Missing expected entries:")
+				for _, exp := range tc.expected {
+					t.Logf("%s", exp)
+				}
+			}
+		})
+	}
+}
+
+func TestGenerateServicePolicies(t *testing.T) {
+	tt := []struct {
+		name     string
+		policies GeneralPolicies
+		expected string
+	}{
+		{
+			name: "Only 1 general policy clause",
+			policies: GeneralPolicies{
+				Policies: []PolicyClause{
+					{UserPolicy: &UserPolicy{
+						Operator: OperatorAnd,
+						EnumeratedValue: EnumeratedValue{
+							Value: []string{"user1", "user2"},
+						},
+					},
+						RolePolicy: &RolePolicy{
+							Operator: OperatorOr,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"role1", "role2"},
+							},
+						},
+					},
+				},
+			},
+			expected: "default global_policy := false\n\n" +
+				"global_policy if {\n" +
+				"    {user} == {\"user1\",\"user2\"}\n" +
+				"    roles & {\"role1\",\"role2\"} != set()\n" +
+				"}\n\n" +
+				"allow_request if {\n    global_policy\n}\n",
+		},
+		{
+			name: "Multiple general policy clauses",
+			policies: GeneralPolicies{
+				Policies: []PolicyClause{
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user1", "user2"},
+							},
+						},
+					},
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorOr,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user3", "user4"},
+							},
+						},
+					},
+				},
+			},
+			expected: "default global_policy := false\n\n" +
+				"global_policy if {\n" +
+				"    {user} == {\"user1\",\"user2\"}\n" +
+				"}\n\n" +
+				"global_policy if {\n" +
+				"    user in {\"user3\",\"user4\"}\n" +
+				"}\n\n" +
+				"allow_request if {\n    global_policy\n}\n",
+		},
+		{
+			name: "Multiple policies clause (some unimplemented yet)",
+			policies: GeneralPolicies{
+				Policies: []PolicyClause{
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user1", "user2"},
+							},
+						},
+					},
+					{
+						StorageLocationPolicy: &StoragePolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"location1", "location2"},
+							},
+						},
+					},
+				},
+			},
+			expected: "default global_policy := false\n\n" +
+				"global_policy if {\n" +
+				"    {user} == {\"user1\",\"user2\"}\n" +
+				"}\n\n" +
+				"allow_request if {\n    global_policy\n}\n",
+		},
+		{
+			name: "General policies with specialized paths",
+			policies: GeneralPolicies{
+				Policies: []PolicyClause{
+					{
+						UserPolicy: &UserPolicy{
+							Operator: OperatorAnd,
+							EnumeratedValue: EnumeratedValue{
+								Value: []string{"user1", "user2"},
+							},
+						},
+					},
+				},
+				SpecializedPaths: map[string]PathPolicies{
+					"/example": PathPolicies{
+						Policies: []PolicyClause{
+							{
+								RolePolicy: &RolePolicy{
+									Operator: OperatorAnd,
+									EnumeratedValue: EnumeratedValue{
+										Value: []string{"role1", "role2"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: "default global_policy := false\n\n" +
+				"global_policy if {\n" +
+				"    {user} == {\"user1\",\"user2\"}\n" +
+				"}\n\n" +
+				"default allow_request := false\n\n" +
+				"allow_request if {\n" +
+				"    global_policy\n" +
+				"    path == \"/example\"\n" +
+				"    roles == {\"role1\",\"role2\"}\n" +
+				"}\n\n" +
+				"allow_request if {\n" +
+				"    global_policy\n" +
+				"    not path in {\"/example\"}\n" +
+				"}\n",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			regopolicies, err := GenerateServiceRego(ServiceData{}, tc.policies)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if regopolicies != tc.expected {
+				t.Errorf("expected\n%s, got\n%s", tc.expected, regopolicies)
 			}
 		})
 	}
