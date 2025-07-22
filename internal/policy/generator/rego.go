@@ -128,12 +128,8 @@ func GenerateServiceRego(serviceData ServiceData, policies GeneralPolicies) (str
 	}
 
 	if len(pathsClauses) == 0 {
-		allowRule := createRegoRule(RequestPolicyName, globalPolicyName)
-		if allowRule != "" {
-			rules = append(rules, allowRule)
-		} else {
-			return "", fmt.Errorf("error generating Rego for request policy: empty rule")
-		}
+		allowRule := RequestPolicyName + " := " + globalPolicyName + "\n"
+		rules = append(rules, allowRule)
 	} else {
 		pathsClauses = append(pathsClauses, "not path in "+arrayToRegoSet(pathSet))
 		rules = append(rules, "default "+RequestPolicyName+" := false\n")

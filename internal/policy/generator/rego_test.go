@@ -473,7 +473,7 @@ func TestGenerateServicePolicies(t *testing.T) {
 				"    {user} == {\"user1\",\"user2\"}\n" +
 				"    roles & {\"role1\",\"role2\"} != set()\n" +
 				"}\n\n" +
-				"allow_request if {\n    global_policy\n}\n",
+				"allow_request := global_policy\n",
 		},
 		{
 			name: "Multiple general policy clauses",
@@ -504,7 +504,7 @@ func TestGenerateServicePolicies(t *testing.T) {
 				"global_policy if {\n" +
 				"    user in {\"user3\",\"user4\"}\n" +
 				"}\n\n" +
-				"allow_request if {\n    global_policy\n}\n",
+				"allow_request := global_policy\n",
 		},
 		{
 			name: "Multiple policies clause (some unimplemented yet)",
@@ -532,7 +532,7 @@ func TestGenerateServicePolicies(t *testing.T) {
 				"global_policy if {\n" +
 				"    {user} == {\"user1\",\"user2\"}\n" +
 				"}\n\n" +
-				"allow_request if {\n    global_policy\n}\n",
+				"allow_request := global_policy\n",
 		},
 		{
 			name: "General policies with specialized paths",
