@@ -1,3 +1,8 @@
+// Package generator provides functionality to generate or update the rego files for the each openapi service.
+//
+// Each service is composed by a collection of rego files organized in a single flat folder.
+//   - the `service.rego` file contains the rules for the service
+//   - the `identity.rego` file contains the authorization rules for the service
 package generator
 
 import (

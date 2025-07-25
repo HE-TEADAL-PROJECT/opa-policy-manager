@@ -3,8 +3,6 @@ package bundle
 import (
 	"bytes"
 	"context"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -63,33 +61,6 @@ func TestNewMinioRepository(t *testing.T) {
 	}
 }
 
-func createBundleFromFiles(t *testing.T, files map[string]string, servicesName []string) *Bundle {
-	// Create a bundle from files or other sources
-	// This is a placeholder function. Replace with actual bundle creation logic.
-	tempDir := t.TempDir()
-	for name, content := range files {
-		fullPath := filepath.Join(tempDir, name)
-		fullDir := filepath.Dir(fullPath)
-		if err := os.MkdirAll(fullDir, 0755); err != nil {
-			t.Fatalf("Failed to create directory: %v", err)
-		}
-		if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
-			t.Fatalf("Failed to write file: %v", err)
-		}
-	}
-	if opa, err := opabundle.NewCustomReader(opabundle.NewFSLoaderWithRoot(os.DirFS(tempDir), ".")).Read(); err != nil {
-		t.Fatalf("Failed to read bundle: %v", err)
-	} else {
-		bundle := &Bundle{
-			bundle: &opa,
-		}
-		bundle.bundle.Manifest.Metadata = make(map[string]interface{})
-		bundle.bundle.Manifest.Metadata["services"] = servicesName
-		return bundle
-	}
-	return nil
-}
-
 func TestMinioRepository(t *testing.T) {
 	ctx := context.Background()
 	minioContainer := createMinioContainer(ctx, t)
@@ -117,7 +88,11 @@ func TestMinioRepository(t *testing.T) {
 		t.Fatalf("Failed to create MinioRepository: %v", err)
 	}
 
-	bundle := createBundleFromFiles(t, map[string]string{"service1/service.rego": "package service1\ndefault allow = false"}, []string{"service1"})
+	opaBundle := prepareOpaBundle(t, []string{"service1"}, map[string]string{"/service1/service.rego": "package service1\ndefault allow = false"})
+	bundle := &Bundle{
+		bundle:       &opaBundle,
+		serviceNames: []string{"service1"},
+	}
 
 	t.Run("WriteBundle", func(t *testing.T) {
 		t.Cleanup(func() {
@@ -155,10 +130,10 @@ func TestMinioRepository(t *testing.T) {
 		if bundle == nil {
 			t.Fatalf("Expected non-nil bundle, got nil")
 		}
-		if len(bundle.bundle.Manifest.Metadata["services"].([]string)) != 1 {
+		if len(bundle.serviceNames) != 1 {
 			t.Fatalf("Expected 1 service, got %d", len(bundle.bundle.Manifest.Metadata["services"].([]string)))
 		}
-		if bundle.bundle.Manifest.Metadata["services"].([]string)[0] != "service1" {
+		if bundle.serviceNames[0] != "service1" {
 			t.Fatalf("Expected service name 'service1', got '%s'", bundle.bundle.Manifest.Metadata["services"].([]string)[0])
 		}
 	})

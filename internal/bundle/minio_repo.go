@@ -25,7 +25,7 @@ func (m *MinioRepository) Read(path string) (*Bundle, error) {
 	}
 	defer reader.Close()
 
-	if bundle, err := NewFromArchive(context.Background(), reader); err != nil {
+	if bundle, err := NewFromTarball(reader); err != nil {
 		return nil, err
 	} else {
 		return bundle, nil
