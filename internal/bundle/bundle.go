@@ -1,6 +1,7 @@
 package bundle
 
 import (
+	policygen "dspn-regogenerator/internal/policy/generator"
 	"fmt"
 	"io"
 	"slices"
@@ -9,6 +10,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	opabundle "github.com/open-policy-agent/opa/v1/bundle"
 )
+
+const mainFilePath = "/main.rego"
 
 func compileServiceFiles(files map[string]string) (map[string]*ast.Module, error) {
 	modules := make(map[string]*ast.Module)
@@ -24,6 +27,19 @@ func compileServiceFiles(files map[string]string) (map[string]*ast.Module, error
 	return modules, nil
 }
 
+func generateMainFile(serviceNames []string) string {
+	// Generate a main.rego file that imports all service files
+	imports := make([]string, len(serviceNames))
+	for i, name := range serviceNames {
+		imports[i] = fmt.Sprintf("import data.%s", name)
+	}
+	allowRules := make([]string, len(serviceNames))
+	for i, name := range serviceNames {
+		allowRules[i] = fmt.Sprintf("allow if %s.%s", name, policygen.RequestPolicyName)
+	}
+	return fmt.Sprintf("package main\n\n%s\ndefault allow := false\n\n%s\n", strings.Join(imports, "\n"), strings.Join(allowRules, "\n"))
+}
+
 // A collection of rego files and metadata that represent all services files
 type Bundle struct {
 	bundle       *opabundle.Bundle
@@ -36,6 +52,7 @@ func (b *Bundle) AddService(service Service) error {
 	if err != nil {
 		return fmt.Errorf("failed to generate service files for %s: %w", service.name, err)
 	}
+	newFiles[mainFilePath] = generateMainFile(append(b.serviceNames, service.name))
 	newModules, err := compileServiceFiles(newFiles)
 	if err != nil {
 		return fmt.Errorf("failed to compile service files for %s: %w", service.name, err)
@@ -57,6 +74,10 @@ func (b *Bundle) AddService(service Service) error {
 	} else if len(newFiles) > 0 {
 		// Add new files to the bundle
 		for path, content := range newFiles {
+			if path == mainFilePath {
+				// Skip main.rego here, it will be updated later
+				continue
+			}
 			b.bundle.Modules = append(b.bundle.Modules, opabundle.ModuleFile{
 				URL:    path,
 				Path:   path,
@@ -65,6 +86,15 @@ func (b *Bundle) AddService(service Service) error {
 			})
 		}
 		b.serviceNames = append(b.serviceNames, service.name)
+	}
+
+	// update the main.rego file
+	for i, module := range b.bundle.Modules {
+		if module.Path == mainFilePath {
+			b.bundle.Modules[i].Raw = []byte(newFiles[mainFilePath])
+			b.bundle.Modules[i].Parsed = newModules[mainFilePath]
+			break
+		}
 	}
 
 	return nil
@@ -81,12 +111,25 @@ func (b *Bundle) RemoveService(serviceName string) error {
 
 	newModules := make([]opabundle.ModuleFile, 0, len(b.bundle.Modules))
 	for _, module := range b.bundle.Modules {
-		if strings.HasPrefix(module.Path, "/"+serviceName) {
+		if strings.HasPrefix(module.Path, "/"+serviceName) || module.Path == mainFilePath {
 			// Skip modules that belong to the service being removed
 			continue
 		}
 		newModules = append(newModules, module)
 	}
+	mainFileContent := generateMainFile(b.serviceNames)
+	newFiles, err := compileServiceFiles(map[string]string{
+		mainFilePath: mainFileContent,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to compile main.rego after removing service %s: %w", serviceName, err)
+	}
+	newModules = append(newModules, opabundle.ModuleFile{
+		URL:    mainFilePath,
+		Path:   mainFilePath,
+		Raw:    []byte(mainFileContent),
+		Parsed: newFiles[mainFilePath],
+	})
 
 	b.bundle.Modules = newModules
 	b.bundle.Manifest.Metadata["services"] = b.serviceNames
@@ -100,6 +143,7 @@ func NewFromService(service Service) (*Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
+	files[mainFilePath] = generateMainFile([]string{service.name})
 
 	manifest := opabundle.Manifest{}
 	manifest.Init()

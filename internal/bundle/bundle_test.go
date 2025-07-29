@@ -1,6 +1,7 @@
 package bundle
 
 import (
+	"bytes"
 	policy "dspn-regogenerator/internal/policy"
 	"os"
 	"path/filepath"
@@ -59,27 +60,37 @@ func TestBundleFromService(t *testing.T) {
 		},
 	}
 
-	bundle, err := NewFromService(service)
+	testedBundle, err := NewFromService(service)
 	if err != nil {
 		t.Fatalf("NewBundleFromService() error = %v", err)
 	}
 
-	if len(bundle.serviceNames) != 1 || bundle.serviceNames[0] != service.name {
+	if len(testedBundle.serviceNames) != 1 || testedBundle.serviceNames[0] != service.name {
 		t.Errorf("NewBundleFromService() did not set service names correctly")
 	}
 
-	if len(bundle.bundle.Modules) != 2 {
-		t.Errorf("NewBundleFromService() did not generate the expected number of modules, got %d, want 2", len(bundle.bundle.Modules))
-	} else {
-		urls := []string{bundle.bundle.Modules[0].URL, bundle.bundle.Modules[1].URL}
-		if !slices.Contains(urls, "/test_service/service.rego") || !slices.Contains(urls, "/test_service/oidc.rego") {
-			t.Errorf("NewBundleFromService() did not generate expected module URLs, got %v", urls)
+	testedBundleUrls := make([]string, len(testedBundle.bundle.Modules))
+	for i, module := range testedBundle.bundle.Modules {
+		testedBundleUrls[i] = module.URL
+	}
+	expectedUrls := []string{
+		"/test_service/service.rego",
+		"/test_service/oidc.rego",
+		"/main.rego",
+	}
+	if len(testedBundleUrls) != len(expectedUrls) {
+		t.Errorf("NewBundleFromService() did not generate expected module URLs, got %v, want %v", testedBundleUrls, expectedUrls)
+	}
+	for _, expectedUrl := range expectedUrls {
+		if !slices.Contains(testedBundleUrls, expectedUrl) {
+			t.Errorf("NewBundleFromService() did not generate expected module URL %s, got %v", expectedUrl, testedBundleUrls)
 		}
 	}
-	if _, ok := bundle.bundle.Manifest.Metadata["services"]; !ok {
+
+	if _, ok := testedBundle.bundle.Manifest.Metadata["services"]; !ok {
 		t.Error("NewBundleFromService() did not set services in manifest metadata")
 	} else {
-		services, ok := bundle.bundle.Manifest.Metadata["services"].([]string)
+		services, ok := testedBundle.bundle.Manifest.Metadata["services"].([]string)
 		if !ok || len(services) != 1 || services[0] != service.name {
 			t.Errorf("NewBundleFromService() did not set correct service name in manifest metadata, got %v", services)
 		}
@@ -90,24 +101,18 @@ func TestBundleFromService(t *testing.T) {
 	}
 
 	files, err := service.generateServiceFiles()
+	files["/main.rego"] = generateMainFile(testedBundle.serviceNames)
 	if err != nil {
 		t.Fatalf("GenerateServiceFiles() error = %v", err)
 	}
-	standardBundle := prepareOpaBundle(t, bundle.serviceNames, files)
+	standardBundle := prepareOpaBundle(t, testedBundle.serviceNames, files)
 
-	// compare the modules of generated bundle and OPA bundle
-	if len(standardBundle.Modules) != len(bundle.bundle.Modules) {
-		t.Errorf("opaBundleReader.Read() returned %d modules, expected %d", len(standardBundle.Modules), len(bundle.bundle.Modules))
-	} else {
-		actualUrls := []string{bundle.bundle.Modules[0].URL, bundle.bundle.Modules[1].URL}
-		t.Logf("custom build bundle has modules %v", actualUrls)
-		for _, module := range standardBundle.Modules {
-			t.Logf("opaBundleReader.Read() returned module %s", module.URL)
-			if index := slices.Index(actualUrls, module.URL); index == -1 {
-				t.Errorf("opaBundleReader.Read() returned module %s, expected %s", module.URL, actualUrls)
-			} else if string(module.Raw) != string(bundle.bundle.Modules[index].Raw) {
-				t.Errorf("opaBundleReader.Read() returned module %s content does not match generated bundle content", module.URL)
-			}
+	for _, module := range standardBundle.Modules {
+		index := slices.Index(testedBundleUrls, module.URL)
+		if index == -1 {
+			t.Errorf("Expected Module %s not found in generated bundle", module.URL)
+		} else if !slices.Equal(module.Raw, testedBundle.bundle.Modules[index].Raw) {
+			t.Errorf("Module %s content does not match", module.URL)
 		}
 	}
 }
@@ -192,6 +197,10 @@ func TestAddServiceToBundle(t *testing.T) {
 			"metadata if {\n" +
 			"    metadata_url := input.metadata_url\n" +
 			"}\n",
+		"/main.rego": "package main\n\n" +
+			"import data.test_service\n\n" +
+			"default allow := false\n\n" +
+			"allow if test_service.request_policy\n",
 	})
 
 	bundle := &Bundle{
@@ -207,10 +216,13 @@ func TestAddServiceToBundle(t *testing.T) {
 	if len(bundle.serviceNames) != 2 || !slices.Contains(bundle.serviceNames, service.name) {
 		t.Errorf("AddService() did not update service names correctly, got %v", bundle.serviceNames)
 	}
-	if len(bundle.bundle.Modules) != 4 {
-		t.Errorf("AddService() did not generate the expected number of modules, got %d, want 4", len(bundle.bundle.Modules))
+	if len(bundle.bundle.Modules) != 5 {
+		t.Errorf("AddService() did not generate the expected number of modules, got %d, want 5", len(bundle.bundle.Modules))
 	} else {
-		urls := []string{bundle.bundle.Modules[0].URL, bundle.bundle.Modules[1].URL, bundle.bundle.Modules[2].URL, bundle.bundle.Modules[3].URL}
+		urls := make([]string, len(bundle.bundle.Modules))
+		for i, module := range bundle.bundle.Modules {
+			urls[i] = module.URL
+		}
 		if !slices.Contains(urls, "/new_service/service.rego") || !slices.Contains(urls, "/new_service/oidc.rego") {
 			t.Errorf("AddService() did not generate expected module URLs, got %v", urls)
 		}
@@ -254,6 +266,12 @@ func TestRemoveServiceFromBundle(t *testing.T) {
 			"metadata if {\n" +
 			"    metadata_url := input.metadata_url\n" +
 			"}\n",
+		"/main.rego": "package main\n\n" +
+			"import data.test_service\n" +
+			"import data.other_service\n\n" +
+			"default allow := false\n\n" +
+			"allow if test_service.request_policy\n" +
+			"allow if other_service.request_policy\n",
 	})
 
 	bundle := &Bundle{
@@ -269,7 +287,20 @@ func TestRemoveServiceFromBundle(t *testing.T) {
 	if len(bundle.serviceNames) != 1 {
 		t.Errorf("RemoveService() did not remove service names correctly, got %v", bundle.serviceNames)
 	}
-	if len(bundle.bundle.Modules) != 2 {
-		t.Errorf("RemoveService() did not remove modules correctly, got %d, want 2", len(bundle.bundle.Modules))
+	if len(bundle.bundle.Modules) != 3 {
+		t.Errorf("RemoveService() did not remove modules correctly, got %d, want 3", len(bundle.bundle.Modules))
 	}
+
+	index := slices.IndexFunc(bundle.bundle.Modules, func(m opabundle.ModuleFile) bool {
+		return m.URL == mainFilePath
+	})
+	if index == -1 {
+		t.Errorf("RemoveService() did not generate main.rego file")
+	} else {
+		mainModule := bundle.bundle.Modules[index]
+		if bytes.Contains(mainModule.Raw, []byte("import data.test_service")) || bytes.Contains(mainModule.Raw, []byte("allow if test_service.request_policy")) {
+			t.Errorf("RemoveService() did not remove other_service import from main.rego")
+		}
+	}
+
 }
