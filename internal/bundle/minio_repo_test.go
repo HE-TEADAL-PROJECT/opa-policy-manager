@@ -100,7 +100,7 @@ func TestMinioRepository(t *testing.T) {
 				t.Fatalf("Failed to remove object: %v", err)
 			}
 		})
-		err := repo.Write("test-bundle.tar.gz", *bundle)
+		err := repo.Save("test-bundle.tar.gz", *bundle)
 		if err != nil {
 			t.Fatalf("Failed to write bundle: %v", err)
 		}
@@ -123,7 +123,7 @@ func TestMinioRepository(t *testing.T) {
 		}
 
 		// Read the bundle from MinIO
-		bundle, err := repo.Read("test-bundle.tar.gz")
+		bundle, err := repo.Get("test-bundle.tar.gz")
 		if err != nil {
 			t.Fatalf("Failed to read bundle: %v", err)
 		}

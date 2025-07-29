@@ -18,7 +18,7 @@ type MinioRepository struct {
 }
 
 // Read implements [Repository].
-func (m *MinioRepository) Read(path string) (*Bundle, error) {
+func (m *MinioRepository) Get(path string) (*Bundle, error) {
 	reader, err := m.client.GetObject(context.Background(), m.bucket, path, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (m *MinioRepository) Read(path string) (*Bundle, error) {
 }
 
 // Write implements [Repository].
-func (m *MinioRepository) Write(path string, bundle Bundle) error {
+func (m *MinioRepository) Save(path string, bundle Bundle) error {
 	reader, writer := io.Pipe()
 
 	go func() {

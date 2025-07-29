@@ -24,11 +24,13 @@ func compileServiceFiles(files map[string]string) (map[string]*ast.Module, error
 	return modules, nil
 }
 
+// A collection of rego files and metadata that represent all services files
 type Bundle struct {
 	bundle       *opabundle.Bundle
 	serviceNames []string
 }
 
+// Add or update the files associated to a service in the bundle
 func (b *Bundle) AddService(service Service) error {
 	newFiles, err := service.generateServiceFiles()
 	if err != nil {
@@ -68,6 +70,7 @@ func (b *Bundle) AddService(service Service) error {
 	return nil
 }
 
+// Remove the file associated to a service from the bundle
 func (b *Bundle) RemoveService(serviceName string) error {
 	for i, name := range b.serviceNames {
 		if name == serviceName {
@@ -91,6 +94,7 @@ func (b *Bundle) RemoveService(serviceName string) error {
 	return nil
 }
 
+// Load an empty bundle with the service refo files
 func NewFromService(service Service) (*Bundle, error) {
 	files, err := service.generateServiceFiles()
 	if err != nil {
@@ -129,6 +133,7 @@ func NewFromService(service Service) (*Bundle, error) {
 	}, nil
 }
 
+// Load a bundle from a reader of a tar.gz file
 func NewFromTarball(reader io.Reader) (*Bundle, error) {
 	loader := opabundle.NewTarballLoader(reader)
 	bundleReader := opabundle.NewCustomReader(loader)
@@ -155,4 +160,13 @@ func NewFromTarball(reader io.Reader) (*Bundle, error) {
 		bundle:       &bundle,
 		serviceNames: serviceNames,
 	}, nil
+}
+
+// Repository is an interface for writing bundle to a storage system.
+type Repository interface {
+	// Write a bundle to the repository, returning an error if it fails.
+	Save(path string, bundle Bundle) error
+
+	// Read reads the bundle from the repository, returning the bundle and an error if it fails.
+	Get(path string) (*Bundle, error)
 }
