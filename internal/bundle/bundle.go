@@ -144,6 +144,11 @@ func (b *Bundle) RemoveService(serviceName string) error {
 	return nil
 }
 
+// Return the list of services in the bundle
+func (b *Bundle) Describe() []string {
+	return b.serviceNames
+}
+
 // Load an empty bundle with the service refo files
 func New(service Service) (*Bundle, error) {
 	files, err := service.generateServiceFiles()
