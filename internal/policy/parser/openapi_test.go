@@ -43,7 +43,7 @@ func TestParseOpenAPISpec(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to read OpenAPI file: %v", err)
 			}
-			doc, err := ParseOpenAPISpec(strings.NewReader(string(file)))
+			doc, err := parseOpenAPIDocument(strings.NewReader(string(file)))
 			if err != nil {
 				t.Fatalf("Failed to parse OpenAPI spec: %v", err)
 			}
@@ -74,7 +74,7 @@ func TestGetIdentityProvider(t *testing.T) {
 		},
 	}
 
-	url, err := GetIdentityProviderTag(docModel)
+	url, err := getIdentityProviderTag(docModel)
 	if err != nil {
 		t.Fatalf("Failed to get identity provider tag: %v", err)
 	}
@@ -230,7 +230,7 @@ func TestGetPolicies(t *testing.T) {
 			}
 
 			// Get the policies
-			actualPolicies, err := GetPolicies(docModel)
+			actualPolicies, err := getPolicies(docModel)
 			if err != nil {
 				t.Fatalf("Failed to get general policies: %v", err)
 			}
@@ -262,7 +262,7 @@ func TestParseHTTPBinAPI(t *testing.T) {
 	defer file.Close()
 
 	// Parse the OpenAPI document
-	docModel, err := ParseOpenAPISpec(file)
+	docModel, err := parseOpenAPIDocument(file)
 	if err != nil {
 		t.Fatalf("Failed to parse OpenAPI file: %v", err)
 	}
@@ -271,13 +271,13 @@ func TestParseHTTPBinAPI(t *testing.T) {
 	}
 
 	// Get the identity provider URL
-	url, err := GetIdentityProviderTag(docModel)
+	url, err := getIdentityProviderTag(docModel)
 	if err != nil && url == "" {
 		t.Fatalf("Failed to get identity provider tag: %v", err)
 	}
 
 	// Get the policies
-	structuredPolicies, err := GetPolicies(docModel)
+	structuredPolicies, err := getPolicies(docModel)
 	if err != nil {
 		t.Fatalf("Failed to get general policies: %v", err)
 	}

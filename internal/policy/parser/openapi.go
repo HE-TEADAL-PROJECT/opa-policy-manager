@@ -10,6 +10,11 @@ import (
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
+type ServiceSpec struct {
+	Policies         StructuredPolicies
+	IdentityProvider string
+}
+
 const (
 	PolicyExtensionTag = "x-teadal-policies"
 	IamExtensionTag    = "x-teadal-IAM-provider"
@@ -37,7 +42,7 @@ func (e *BuildingModelError) Error() string {
 	return result
 }
 
-func ParseOpenAPISpec(spec io.Reader) (*libopenapi.DocumentModel[v3.Document], error) {
+func parseOpenAPIDocument(spec io.Reader) (*libopenapi.DocumentModel[v3.Document], error) {
 	specByteArray, err := io.ReadAll(spec)
 	if err != nil {
 		return &libopenapi.DocumentModel[v3.Document]{}, fmt.Errorf("failed to read OpenAPI spec: %v", err)
@@ -60,7 +65,7 @@ func ParseOpenAPISpec(spec io.Reader) (*libopenapi.DocumentModel[v3.Document], e
 	return docModel, nil
 }
 
-func GetPolicies(docModel *libopenapi.DocumentModel[v3.Document]) (*StructuredPolicies, error) {
+func getPolicies(docModel *libopenapi.DocumentModel[v3.Document]) (*StructuredPolicies, error) {
 	result := policy.NewGeneralPolicies()
 	var err error
 
@@ -148,7 +153,7 @@ func GetPolicies(docModel *libopenapi.DocumentModel[v3.Document]) (*StructuredPo
 	return result, nil
 }
 
-func GetIdentityProviderTag(docModel *libopenapi.DocumentModel[v3.Document]) (string, error) {
+func getIdentityProviderTag(docModel *libopenapi.DocumentModel[v3.Document]) (string, error) {
 	// Check if the document has any security requirements
 	if docModel.Model.Components.SecuritySchemes.Len() == 0 {
 		return "", fmt.Errorf("no security requirements found in OpenAPI spec")
@@ -180,17 +185,26 @@ func GetIdentityProviderTag(docModel *libopenapi.DocumentModel[v3.Document]) (st
 	return url, err
 }
 
-func getDocumentFromData(specByteArray []byte) (*libopenapi.DocumentModel[v3.Document], error) {
-	document, err := libopenapi.NewDocument(specByteArray)
+// ParseServiceSpec reads an OpenAPI specification from the provided [io.Reader],
+// extracts the policies and identity provider information, and returns a [ServiceSpec].
+func ParseServiceSpec(spec io.Reader) (*ServiceSpec, error) {
+	docModel, err := parseOpenAPIDocument(spec)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse OpenAPI spec: %v", err)
+		return nil, err
 	}
-	docModel, errors := document.BuildV3Model()
-	if len(errors) > 0 {
-		for i := range errors {
-			fmt.Printf("error: %e\n", errors[i])
-		}
-		panic(fmt.Sprintf("cannot create v3 model from document: %d errors reported", len(errors)))
+
+	policies, err := getPolicies(docModel)
+	if err != nil {
+		return nil, err
 	}
-	return docModel, nil
+
+	idProvider, err := getIdentityProviderTag(docModel)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ServiceSpec{
+		Policies:         *policies,
+		IdentityProvider: idProvider,
+	}, nil
 }

@@ -3,6 +3,7 @@ package bundle
 import (
 	policy "dspn-regogenerator/internal/policy"
 	policygenerator "dspn-regogenerator/internal/policy/generator"
+	"dspn-regogenerator/internal/policy/parser"
 	"fmt"
 	"strings"
 	"text/template"
@@ -129,9 +130,10 @@ func (s *Service) generateServiceFiles() (map[string]string, error) {
 	return files, nil
 }
 
-func NewService(name string, generalPolicy policy.GeneralPolicies) *Service {
+func NewService(name string, spec *parser.ServiceSpec) *Service {
 	return &Service{
-		name:   name,
-		policy: generalPolicy,
+		name:    name,
+		policy:  spec.Policies,
+		oidcUrl: spec.IdentityProvider,
 	}
 }
