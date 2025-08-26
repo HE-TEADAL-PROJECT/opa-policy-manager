@@ -1,3 +1,10 @@
+// The bundle package wrap the OPA bundle object to provide methods to manage services and their associated rego files.
+// It allows adding, updating, and removing services, and ensures that the bundle is always in a consistent state.
+// The bundle can be saved to and loaded from a tar.gz file using a Repository interface that support filesystema and minio storage
+// Create a new bundle using [New] or use [Repository.Get] to load an existing one from a tar.gz file.
+// Bundle operations allow to add, update, and remove services using [AddService] and [RemoveService] methods.
+// The generated opa bundle always contains a main.rego file that imports all service files and defines the top-level policy rule.
+// The generated opa bundle manifest metadata contains a "services" key that lists all the services in the bundle
 package bundle
 
 import (
@@ -138,7 +145,7 @@ func (b *Bundle) RemoveService(serviceName string) error {
 }
 
 // Load an empty bundle with the service refo files
-func NewFromService(service Service) (*Bundle, error) {
+func New(service Service) (*Bundle, error) {
 	files, err := service.generateServiceFiles()
 	if err != nil {
 		return nil, err
@@ -178,7 +185,7 @@ func NewFromService(service Service) (*Bundle, error) {
 }
 
 // Load a bundle from a reader of a tar.gz file
-func NewFromTarball(reader io.Reader) (*Bundle, error) {
+func newFromTarball(reader io.Reader) (*Bundle, error) {
 	loader := opabundle.NewTarballLoader(reader)
 	bundleReader := opabundle.NewCustomReader(loader)
 	bundle, err := bundleReader.Read()

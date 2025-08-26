@@ -14,7 +14,7 @@ func (f FSRepository) Get(path string) (*Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewFromTarball(reader)
+	return newFromTarball(reader)
 }
 
 // Save implements Repository.

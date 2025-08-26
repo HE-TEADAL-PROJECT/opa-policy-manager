@@ -60,7 +60,7 @@ func TestBundleFromService(t *testing.T) {
 		},
 	}
 
-	testedBundle, err := NewFromService(service)
+	testedBundle, err := New(service)
 	if err != nil {
 		t.Fatalf("NewBundleFromService() error = %v", err)
 	}
@@ -150,7 +150,7 @@ func TestBundleFromTarball(t *testing.T) {
 		t.Fatalf("Failed to open tarball file %s: %v", tarballPath, err)
 	}
 
-	loadedBundle, err := NewFromTarball(file)
+	loadedBundle, err := newFromTarball(file)
 	if err != nil {
 		t.Fatalf("NewBundleFromTarball() error = %v", err)
 	}
