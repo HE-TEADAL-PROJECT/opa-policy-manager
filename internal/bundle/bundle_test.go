@@ -9,9 +9,10 @@ import (
 	"testing"
 
 	opabundle "github.com/open-policy-agent/opa/v1/bundle"
+	"github.com/open-policy-agent/opa/v1/compile"
 )
 
-func prepareOpaBundle(t testing.TB, serviceNames []string, files map[string]string) opabundle.Bundle {
+func prepareOpaBundle(t testing.TB, serviceNames []string, files map[string]string) *opabundle.Bundle {
 	t.Helper()
 
 	// Store files in a temporary directory
@@ -26,12 +27,17 @@ func prepareOpaBundle(t testing.TB, serviceNames []string, files map[string]stri
 		}
 	}
 	// Compile a bundle using standard OPA bundle reader
-	loader, err := opabundle.NewFSLoader(os.DirFS(temp))
-	bundleReader := opabundle.NewCustomReader(loader)
-	bundle, err := bundleReader.Read()
+	bundle, err := opabundle.NewCustomReader(opabundle.NewFSLoaderWithRoot(os.DirFS(temp), ".")).Read()
 	if err != nil {
-		t.Fatalf("opaBundleReader.Read() error = %v", err)
+		t.Fatalf("opaBundleReader.Read() error: %v", err)
 	}
+	compiler := compile.New().WithBundle(&bundle)
+	err = compiler.Build(t.Context())
+	if err != nil {
+		t.Fatalf("Failed to compile bundle: %v", err)
+	}
+
+	bundle = *compiler.Bundle()
 	if len(bundle.Modules) != len(files) {
 		t.Fatalf("opaBundleReader.Read() returned %d modules, expected %d", len(bundle.Modules), len(files))
 	}
@@ -39,7 +45,7 @@ func prepareOpaBundle(t testing.TB, serviceNames []string, files map[string]stri
 	bundle.Manifest.Metadata = make(map[string]any)
 	bundle.Manifest.Metadata["services"] = serviceNames
 	bundle.Manifest.Roots = &serviceNames
-	return bundle
+	return &bundle
 }
 
 func TestBundleFromService(t *testing.T) {
@@ -121,11 +127,11 @@ func TestBundleFromTarball(t *testing.T) {
 	generatedBundle := prepareOpaBundle(t, []string{"service1", "service2"}, map[string]string{
 		"/service1/policy.rego": "package service1\n\n" +
 			"request_policy if {\n" +
-			"    \"valid\": valid,\n" +
+			"    true\n" +
 			"}\n",
 		"/service2/policy.rego": "package service2\n\n" +
 			"request_policy if {\n" +
-			"    \"valid\": valid,\n" +
+			"    true\n" +
 			"}\n",
 	})
 
@@ -139,7 +145,7 @@ func TestBundleFromTarball(t *testing.T) {
 		file.Close()
 	})
 	writer := opabundle.NewWriter(file)
-	if err := writer.Write(generatedBundle); err != nil {
+	if err := writer.Write(*generatedBundle); err != nil {
 		t.Fatalf("Failed to write bundle to tarball: %v", err)
 	}
 	if err := file.Close(); err != nil {
@@ -190,7 +196,7 @@ func TestAddServiceToBundle(t *testing.T) {
 	opaBundle := prepareOpaBundle(t, []string{"test_service"}, map[string]string{
 		"/test_service/service.rego": "package test_service\n\n" +
 			"request_policy if {\n" +
-			"    \"valid\": valid,\n" +
+			"    true\n" +
 			"}\n",
 		"/test_service/oidc.rego": "package test_service.oidc\n\n" +
 			"metadata_url := \"https://example.com/oidc\"\n\n" +
@@ -204,7 +210,7 @@ func TestAddServiceToBundle(t *testing.T) {
 	})
 
 	bundle := &Bundle{
-		bundle:       &opaBundle,
+		bundle:       opaBundle,
 		serviceNames: []string{"test_service"},
 	}
 
@@ -250,7 +256,7 @@ func TestRemoveServiceFromBundle(t *testing.T) {
 	opaBundle := prepareOpaBundle(t, []string{"test_service", "other_service"}, map[string]string{
 		"/test_service/service.rego": "package test_service\n\n" +
 			"request_policy if {\n" +
-			"    \"valid\": valid,\n" +
+			"    true\n" +
 			"}\n",
 		"/test_service/oidc.rego": "package test_service.oidc\n\n" +
 			"metadata_url := \"https://example.com/oidc\"\n\n" +
@@ -259,7 +265,7 @@ func TestRemoveServiceFromBundle(t *testing.T) {
 			"}\n",
 		"/other_service/service.rego": "package other_service\n\n" +
 			"request_policy if {\n" +
-			"    \"valid\": valid,\n" +
+			"    true\n" +
 			"}\n",
 		"/other_service/oidc.rego": "package other_service.oidc\n" +
 			"metadata_url := \"https://example.com/oidc\"\n\n" +
@@ -275,7 +281,7 @@ func TestRemoveServiceFromBundle(t *testing.T) {
 	})
 
 	bundle := &Bundle{
-		bundle:       &opaBundle,
+		bundle:       opaBundle,
 		serviceNames: []string{"test_service", "other_service"},
 	}
 

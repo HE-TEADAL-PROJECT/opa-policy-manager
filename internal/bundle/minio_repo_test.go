@@ -90,7 +90,7 @@ func TestMinioRepository(t *testing.T) {
 
 	opaBundle := prepareOpaBundle(t, []string{"service1"}, map[string]string{"/service1/service.rego": "package service1\ndefault allow = false"})
 	bundle := &Bundle{
-		bundle:       &opaBundle,
+		bundle:       opaBundle,
 		serviceNames: []string{"service1"},
 	}
 

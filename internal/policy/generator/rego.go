@@ -158,6 +158,8 @@ func generateBasicPolicyRego(_ ServiceData, policy any) (string, error) {
 		}
 		userSet := arrayToRegoSet(p.Value)
 		switch p.Operator {
+		case "":
+			fallthrough
 		case OperatorAnd:
 			rego = fmt.Sprintf("{user} == %s", userSet)
 		case OperatorOr:
@@ -171,6 +173,8 @@ func generateBasicPolicyRego(_ ServiceData, policy any) (string, error) {
 		}
 		roleSet := arrayToRegoSet(p.Value)
 		switch p.Operator {
+		case "":
+			fallthrough
 		case OperatorAnd:
 			rego = fmt.Sprintf("roles == %s", string(roleSet))
 		case OperatorOr:

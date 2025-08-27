@@ -8,6 +8,7 @@
 package bundle
 
 import (
+	"context"
 	policygen "dspn-regogenerator/internal/policy/generator"
 	"fmt"
 	"io"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	opabundle "github.com/open-policy-agent/opa/v1/bundle"
+	"github.com/open-policy-agent/opa/v1/compile"
 )
 
 const mainFilePath = "/main.rego"
@@ -104,6 +106,14 @@ func (b *Bundle) AddService(service Service) error {
 		}
 	}
 
+	compiler := compile.New()
+	compiler.WithBundle(b.bundle)
+	err = compiler.Build(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to build bundle after adding service %s: %w", service.name, err)
+	}
+	b.bundle = compiler.Bundle()
+
 	return nil
 }
 
@@ -141,6 +151,14 @@ func (b *Bundle) RemoveService(serviceName string) error {
 	b.bundle.Modules = newModules
 	b.bundle.Manifest.Metadata["services"] = b.serviceNames
 
+	compiler := compile.New()
+	compiler.WithBundle(b.bundle)
+	err = compiler.Build(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to build bundle after removing service %s: %w", serviceName, err)
+	}
+	b.bundle = compiler.Bundle()
+
 	return nil
 }
 
@@ -161,7 +179,7 @@ func New(service Service) (*Bundle, error) {
 	manifest.Init()
 	manifest.Metadata = make(map[string]interface{})
 	manifest.Metadata["services"] = []string{service.name}
-	manifest.Roots = &[]string{service.name}
+	manifest.Roots = &[]string{service.name, "main"}
 
 	modules, err := compileServiceFiles(files)
 	if err != nil {
@@ -181,10 +199,18 @@ func New(service Service) (*Bundle, error) {
 	bundle := opabundle.Bundle{
 		Manifest: manifest,
 		Modules:  bundleFiles,
+		Data:     map[string]any{},
+	}
+
+	compiler := compile.New()
+	compiler.WithBundle(&bundle)
+	err = compiler.Build(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("failed to build bundle: %w", err)
 	}
 
 	return &Bundle{
-		bundle:       &bundle,
+		bundle:       compiler.Bundle(),
 		serviceNames: []string{service.name},
 	}, nil
 }
@@ -202,7 +228,7 @@ func newFromTarball(reader io.Reader) (*Bundle, error) {
 	if bundle.Manifest.Metadata == nil || bundle.Manifest.Metadata["services"] == nil {
 		return nil, fmt.Errorf("bundle manifest metadata does not contain 'services' key")
 	}
-	array := bundle.Manifest.Metadata["services"].([]interface{})
+	array := bundle.Manifest.Metadata["services"].([]any)
 	serviceNames := make([]string, 0, len(array))
 	for _, v := range array {
 		if serviceName, ok := v.(string); ok {

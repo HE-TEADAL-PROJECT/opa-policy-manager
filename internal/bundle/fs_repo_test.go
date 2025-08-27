@@ -21,7 +21,7 @@ func TestGetBundle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error creating bundle file. %v", err)
 	}
-	err = opabundle.NewWriter(file).Write(opaBundle)
+	err = opabundle.NewWriter(file).Write(*opaBundle)
 	if err != nil {
 		t.Fatalf("Error writing bundle file: %v", err)
 	}
@@ -53,7 +53,7 @@ func TestSaveOpaBundle(t *testing.T) {
 	temp := t.TempDir()
 	bundlePath := filepath.Join(temp, "bundle.tar.gz")
 	bundle := Bundle{
-		bundle:       &opaBundle,
+		bundle:       opaBundle,
 		serviceNames: []string{"service1", "service2"},
 	}
 
