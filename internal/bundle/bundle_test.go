@@ -236,22 +236,7 @@ func TestAddServiceToBundle(t *testing.T) {
 }
 
 func TestRemoveServiceFromBundle(t *testing.T) {
-	service := Service{
-		name:    "test_service",
-		oidcUrl: "https://example.com/oidc",
-		policy: policy.GeneralPolicies{
-			Policies: []policy.PolicyClause{
-				{
-					UserPolicy: &policy.UserPolicy{
-						Operator: policy.OperatorAnd,
-						EnumeratedValue: policy.EnumeratedValue{
-							Value: []string{"user1", "user2"},
-						},
-					},
-				},
-			},
-		},
-	}
+	serviceName := "test_service"
 
 	opaBundle := prepareOpaBundle(t, []string{"test_service", "other_service"}, map[string]string{
 		"/test_service/service.rego": "package test_service\n\n" +
@@ -280,12 +265,16 @@ func TestRemoveServiceFromBundle(t *testing.T) {
 			"allow if other_service.request_policy\n",
 	})
 
+	containsFunc := func(m opabundle.ModuleFile) bool {
+		return m.URL == "/test_service/service.rego" || m.URL == "/test_service/oidc.rego"
+	}
+
 	bundle := &Bundle{
 		bundle:       opaBundle,
 		serviceNames: []string{"test_service", "other_service"},
 	}
 
-	err := bundle.RemoveService(service.name)
+	err := bundle.RemoveService(serviceName)
 	if err != nil {
 		t.Fatalf("RemoveService() error = %v", err)
 	}
@@ -293,7 +282,7 @@ func TestRemoveServiceFromBundle(t *testing.T) {
 	if len(bundle.serviceNames) != 1 {
 		t.Errorf("RemoveService() did not remove service names correctly, got %v", bundle.serviceNames)
 	}
-	if len(bundle.bundle.Modules) != 3 {
+	if len(bundle.bundle.Modules) != 3 || slices.ContainsFunc(bundle.bundle.Modules, containsFunc) {
 		t.Errorf("RemoveService() did not remove modules correctly, got %d, want 3", len(bundle.bundle.Modules))
 	}
 
