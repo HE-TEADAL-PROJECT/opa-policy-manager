@@ -4,7 +4,7 @@
 // Create a new bundle using [New] or use [Repository.Get] to load an existing one from a tar.gz file.
 // Bundle operations allow to add, update, and remove services using [AddService] and [RemoveService] methods.
 // The generated opa bundle always contains a main.rego file that imports all service files and defines the top-level policy rule.
-// The generated opa bundle manifest metadata contains a "services" key that lists all the services in the bundle
+// The generated opa bundle manifest metadata contains a [metadataServicesKey] key that lists all the services in the bundle
 package bundle
 
 import (
@@ -21,6 +21,8 @@ import (
 )
 
 const mainFilePath = "/main.rego"
+const mainPackageName = "main"
+const metadataServicesKey = "services"
 
 func compileServiceFiles(files map[string]string) (map[string]*ast.Module, error) {
 	modules := make(map[string]*ast.Module)
@@ -57,18 +59,32 @@ type Bundle struct {
 
 // Add or update the files associated to a service in the bundle
 func (b *Bundle) AddService(service Service) error {
+	isNewService := !slices.Contains(b.serviceNames, service.name)
+
+	// Generate new service files
 	newFiles, err := service.generateServiceFiles()
 	if err != nil {
 		return fmt.Errorf("failed to generate service files for %s: %w", service.name, err)
 	}
-	newFiles[mainFilePath] = generateMainFile(append(b.serviceNames, service.name))
+
+	// Generate main files
+	if isNewService {
+		newFiles[mainFilePath] = generateMainFile(append(b.serviceNames, service.name))
+	}
+
+	// Parse files
 	newModules, err := compileServiceFiles(newFiles)
 	if err != nil {
 		return fmt.Errorf("failed to compile service files for %s: %w", service.name, err)
 	}
 
 	// Merge the new bundle into the existing one
-	b.bundle.Manifest.Metadata["services"] = append(b.serviceNames, service.name)
+	if isNewService {
+		// Update manifest metadata
+		b.bundle.Manifest.Metadata[metadataServicesKey] = append(b.serviceNames, service.name)
+		newRoots := append(*b.bundle.Manifest.Roots, service.name)
+		b.bundle.Manifest.Roots = &newRoots
+	}
 	if slices.Contains(b.serviceNames, service.name) {
 		// Fetch existing files and update them
 		for path, content := range newFiles {
@@ -149,7 +165,14 @@ func (b *Bundle) RemoveService(serviceName string) error {
 	})
 
 	b.bundle.Modules = newModules
-	b.bundle.Manifest.Metadata["services"] = b.serviceNames
+	b.bundle.Manifest.Metadata[metadataServicesKey] = b.serviceNames
+	newRoots := make([]string, 0, len(*b.bundle.Manifest.Roots))
+	for _, root := range *b.bundle.Manifest.Roots {
+		if root != serviceName {
+			newRoots = append(newRoots, root)
+		}
+	}
+	b.bundle.Manifest.Roots = &newRoots
 
 	compiler := compile.New()
 	compiler.WithBundle(b.bundle)
@@ -178,7 +201,7 @@ func New(service Service) (*Bundle, error) {
 	manifest := opabundle.Manifest{}
 	manifest.Init()
 	manifest.Metadata = make(map[string]interface{})
-	manifest.Metadata["services"] = []string{service.name}
+	manifest.Metadata[metadataServicesKey] = []string{service.name}
 	manifest.Roots = &[]string{service.name, "main"}
 
 	modules, err := compileServiceFiles(files)
@@ -225,10 +248,10 @@ func newFromTarball(reader io.Reader) (*Bundle, error) {
 	}
 
 	// Load from the bundle manifest metadata the service names
-	if bundle.Manifest.Metadata == nil || bundle.Manifest.Metadata["services"] == nil {
+	if bundle.Manifest.Metadata == nil || bundle.Manifest.Metadata[metadataServicesKey] == nil {
 		return nil, fmt.Errorf("bundle manifest metadata does not contain 'services' key")
 	}
-	array := bundle.Manifest.Metadata["services"].([]any)
+	array := bundle.Manifest.Metadata[metadataServicesKey].([]any)
 	serviceNames := make([]string, 0, len(array))
 	for _, v := range array {
 		if serviceName, ok := v.(string); ok {

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"io"
 	"os"
 	"os/exec"
 	"slices"
@@ -13,15 +14,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/bundle"
 )
 
-func TestCreateNewBundle(t *testing.T) {
-	bundlePath := t.TempDir() + "/test_bundle.tar.gz"
-	serviceName := "test_service"
-	cmd := exec.Command(binaryPath, "service", "add", serviceName, getProjectRoot()+"/testdata/schemas/httpbin-api.json", bundlePath, "--new")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("Failed to execute command: %v\nOutput: %s", err, string(output))
-	}
-
+func bundleReader(t *testing.T, bundlePath string) *tar.Reader {
+	t.Helper()
 	file, err := os.Open(bundlePath)
 	if err != nil {
 		t.Fatalf("Failed to open bundle file: %v", err)
@@ -34,7 +28,20 @@ func TestCreateNewBundle(t *testing.T) {
 	}
 	defer gzipReader.Close()
 
-	tarReader := tar.NewReader(gzipReader)
+	return tar.NewReader(gzipReader)
+}
+
+func TestCreateNewBundle(t *testing.T) {
+	bundlePath := t.TempDir() + "/test_bundle.tar.gz"
+	serviceName := "test_service"
+	cmd := exec.Command(binaryPath, "service", "add", serviceName, getProjectRoot()+"/testdata/schemas/httpbin-api.json", bundlePath, "--new")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("Failed to execute command: %v\nOutput: %s", err, string(output))
+	}
+
+	tarReader := bundleReader(t, bundlePath)
+
 	for file, err := tarReader.Next(); err == nil; file, err = tarReader.Next() {
 		switch file.Name {
 		case "/data.json":
@@ -82,5 +89,76 @@ func TestAddService(t *testing.T) {
 	output, err = cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Failed to add service to existing bundle: %v\nOutput: %s", err, string(output))
+	}
+
+	tarReader := bundleReader(t, bundlePath)
+
+	for file, err := tarReader.Next(); err == nil; file, err = tarReader.Next() {
+		switch file.Name {
+		case "/.manifest":
+			data, err := io.ReadAll(tarReader)
+			if err != nil {
+				t.Fatalf("Failed to read .manifest content: %v", err)
+			}
+			manifest := bundle.Manifest{}
+			err = json.Unmarshal(data, &manifest)
+
+			if manifest.Roots == nil || len(*manifest.Roots) != 3 || !slices.Contains(*manifest.Roots, "test_service") || !slices.Contains(*manifest.Roots, "another_service") || !slices.Contains(*manifest.Roots, "main") {
+				t.Fatalf("Manifest roots do not contain expected services: %v", manifest.Roots)
+			}
+			services, ok := manifest.Metadata["services"].([]any)
+			if !ok {
+				t.Fatalf("Manifest metadata 'services' is not a slice: %v", manifest.Metadata["services"])
+			}
+			if len(services) != 2 || !slices.Contains(services, "test_service") || !slices.Contains(services, "another_service") {
+				t.Fatalf("Manifest metadata 'services' does not contain expected services: %v", manifest.Metadata["services"])
+			}
+		}
+	}
+}
+
+func TestRemoveService(t *testing.T) {
+	bundlePath := t.TempDir() + "/test_bundle.tar.gz"
+	cmd := exec.Command(binaryPath, "service", "add", "test_service", getProjectRoot()+"/testdata/schemas/httpbin-api.json", bundlePath, "--new")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("Failed to create new bundle: %v\nOutput: %s", err, string(output))
+	}
+
+	cmd = exec.Command(binaryPath, "service", "add", "another_service", getProjectRoot()+"/testdata/schemas/httpbin-api.json", bundlePath)
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("Failed to add service to existing bundle: %v\nOutput: %s", err, string(output))
+	}
+
+	cmd = exec.Command(binaryPath, "service", "remove", "test_service", bundlePath)
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("Failed to remove service from existing bundle: %v\nOutput: %s", err, string(output))
+	}
+
+	tarReader := bundleReader(t, bundlePath)
+
+	for file, err := tarReader.Next(); err == nil; file, err = tarReader.Next() {
+		switch file.Name {
+		case "/.manifest":
+			data, err := io.ReadAll(tarReader)
+			if err != nil {
+				t.Fatalf("Failed to read .manifest content: %v", err)
+			}
+			manifest := bundle.Manifest{}
+			err = json.Unmarshal(data, &manifest)
+
+			if manifest.Roots == nil || len(*manifest.Roots) != 2 || slices.Contains(*manifest.Roots, "test_service") || !slices.Contains(*manifest.Roots, "another_service") || !slices.Contains(*manifest.Roots, "main") {
+				t.Fatalf("Manifest roots do not contain expected services: %v", manifest.Roots)
+			}
+			services, ok := manifest.Metadata["services"].([]any)
+			if !ok {
+				t.Fatalf("Manifest metadata 'services' is not a slice: %v", manifest.Metadata["services"])
+			}
+			if len(services) != 1 || slices.Contains(services, "test_service") || !slices.Contains(services, "another_service") {
+				t.Fatalf("Manifest metadata 'services' does not contain expected services: %v", manifest.Metadata["services"])
+			}
+		}
 	}
 }

@@ -43,8 +43,11 @@ func prepareOpaBundle(t testing.TB, serviceNames []string, files map[string]stri
 	}
 	bundle.Manifest.Init()
 	bundle.Manifest.Metadata = make(map[string]any)
-	bundle.Manifest.Metadata["services"] = serviceNames
-	bundle.Manifest.Roots = &serviceNames
+	bundle.Manifest.Metadata[metadataServicesKey] = serviceNames
+	roots := make([]string, len(serviceNames))
+	copy(roots, serviceNames)
+	roots = append(roots, "main")
+	bundle.Manifest.Roots = &roots
 	return &bundle
 }
 
@@ -93,10 +96,10 @@ func TestBundleFromService(t *testing.T) {
 		}
 	}
 
-	if _, ok := testedBundle.bundle.Manifest.Metadata["services"]; !ok {
+	if _, ok := testedBundle.bundle.Manifest.Metadata[metadataServicesKey]; !ok {
 		t.Error("NewBundleFromService() did not set services in manifest metadata")
 	} else {
-		services, ok := testedBundle.bundle.Manifest.Metadata["services"].([]string)
+		services, ok := testedBundle.bundle.Manifest.Metadata[metadataServicesKey].([]string)
 		if !ok || len(services) != 1 || services[0] != service.name {
 			t.Errorf("NewBundleFromService() did not set correct service name in manifest metadata, got %v", services)
 		}
@@ -232,6 +235,15 @@ func TestAddServiceToBundle(t *testing.T) {
 		if !slices.Contains(urls, "/new_service/service.rego") || !slices.Contains(urls, "/new_service/oidc.rego") {
 			t.Errorf("AddService() did not generate expected module URLs, got %v", urls)
 		}
+	}
+
+	if len(*bundle.bundle.Manifest.Roots) != 3 || !slices.Contains(*bundle.bundle.Manifest.Roots, "test_service") || !slices.Contains(*bundle.bundle.Manifest.Roots, "new_service") {
+		t.Errorf("AddService() did not update manifest roots correctly, got %v", bundle.bundle.Manifest.Roots)
+	}
+
+	services, ok := bundle.bundle.Manifest.Metadata[metadataServicesKey].([]string)
+	if !ok || len(services) != 2 || !slices.Contains(services, "test_service") || !slices.Contains(services, "new_service") {
+		t.Errorf("AddService() did not update manifest services metadata correctly, got %v", bundle.bundle.Manifest.Metadata[metadataServicesKey])
 	}
 }
 
