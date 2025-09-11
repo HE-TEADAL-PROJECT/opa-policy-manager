@@ -1,0 +1,24 @@
+services:
+  opa:
+    image: openpolicyagent/opa:latest-envoy-static
+    command: |
+      run --server --addr=:8181
+      --set=plugins.envoy_ext_authz_grpc.addr=:9191
+      --set=decision_logs.console=true
+      --log-format=json
+      --log-level=debug
+      /policies
+    volumes:
+      - ./policy.rego:/policies/policy.rego
+    ports:
+      - "8181:8181"
+  envoy:
+    image: envoyproxy/envoy:v1.33-latest
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
+    ports:
+      - "8080:8080"
+  backend:
+    image: kennethreitz/httpbin
+    ports:
+      - "8000:80"
