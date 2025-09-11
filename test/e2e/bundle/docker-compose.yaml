@@ -7,9 +7,10 @@ services:
       --set=decision_logs.console=true
       --log-format=json
       --log-level=debug
-      /policies
+      --bundle
+      /policies/bundle.tar.gz
     volumes:
-      - ./policy.rego:/policies/policy.rego
+      - ./bundle.tar.gz:/policies/bundle.tar.gz
     ports:
       - "8181:8181"
   envoy:
