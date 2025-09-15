@@ -21,7 +21,7 @@ import (
 )
 
 const mainFilePath = "/main.rego"
-const mainPackageName = "main"
+const mainPackageName = "envoy.authz"
 const metadataServicesKey = "services"
 
 func compileServiceFiles(files map[string]string) (map[string]*ast.Module, error) {
@@ -48,7 +48,7 @@ func generateMainFile(serviceNames []string) string {
 	for i, name := range serviceNames {
 		allowRules[i] = fmt.Sprintf("allow if %s.%s", name, policygen.RequestPolicyName)
 	}
-	return fmt.Sprintf("package main\n\n%s\ndefault allow := false\n\n%s\n", strings.Join(imports, "\n"), strings.Join(allowRules, "\n"))
+	return fmt.Sprintf("package %s\n\n%s\ndefault allow := false\n\n%s\n", mainPackageName, strings.Join(imports, "\n"), strings.Join(allowRules, "\n"))
 }
 
 // A collection of rego files and metadata that represent all services files
