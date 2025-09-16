@@ -61,7 +61,7 @@ func getRepositoryAndPath(args []string) (bundle.Repository, string, error) {
 			path = config.LatestBundleName
 		}
 	case File:
-		repo = bundle.FSRepository{}
+		repo = &bundle.FSRepository{}
 	}
 	return repo, path, nil
 }

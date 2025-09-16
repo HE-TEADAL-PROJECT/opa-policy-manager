@@ -5,13 +5,45 @@ import (
 	"dspn-regogenerator/internal/config"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	opabundle "github.com/open-policy-agent/opa/v1/bundle"
 )
 
-// MinioRepository implements the [Repository] interface using Minio as the backend. It provides additional feataures like creating the associated bucket if it does not exist, setting the bucket policy, and checking if a bundle exists in the bucket.
+// Repository is an interface for writing bundle to a storage system.
+type Repository interface {
+	// Write a bundle to the repository, returning an error if it fails.
+	Save(path string, bundle *Bundle) error
+
+	// Read reads the bundle from the repository, returning the bundle and an error if it fails.
+	Get(path string) (*Bundle, error)
+}
+
+type FSRepository struct{}
+
+// Get implements Repository.
+func (f *FSRepository) Get(path string) (*Bundle, error) {
+	reader, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	return newFromTarball(reader)
+}
+
+// Save implements Repository.
+func (f *FSRepository) Save(path string, bundle *Bundle) error {
+	w, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	opabundle.NewWriter(w).Write(*bundle.bundle)
+	return nil
+}
+
+var _ Repository = &FSRepository{}
+
 type MinioRepository struct {
 	client *minio.Client
 	bucket string
@@ -33,7 +65,7 @@ func (m *MinioRepository) Get(path string) (*Bundle, error) {
 }
 
 // Write implements [Repository].
-func (m *MinioRepository) Save(path string, bundle Bundle) error {
+func (m *MinioRepository) Save(path string, bundle *Bundle) error {
 	reader, writer := io.Pipe()
 
 	go func() {
@@ -187,3 +219,33 @@ func (m *MinioRepository) CopyBundle(ctx context.Context, srcBundleName, destBun
 	}
 	return nil
 }
+
+// Load a bundle from a reader of a tar.gz file
+func newFromTarball(reader io.Reader) (*Bundle, error) {
+	loader := opabundle.NewTarballLoader(reader)
+	bundleReader := opabundle.NewCustomReader(loader)
+	bundle, err := bundleReader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("impossible to read bundle form tarball archive: %w", err)
+	}
+
+	// Load from the bundle manifest metadata the service names
+	if bundle.Manifest.Metadata == nil || bundle.Manifest.Metadata[metadataServicesKey] == nil {
+		return nil, fmt.Errorf("bundle manifest metadata does not contain 'services' key")
+	}
+	array := bundle.Manifest.Metadata[metadataServicesKey].([]any)
+	serviceNames := make([]string, 0, len(array))
+	for _, v := range array {
+		if serviceName, ok := v.(string); ok {
+			serviceNames = append(serviceNames, serviceName)
+		} else {
+			return nil, fmt.Errorf("invalid service name in bundle manifest metadata: %v", v)
+		}
+	}
+
+	return &Bundle{
+		bundle:       &bundle,
+		serviceNames: serviceNames,
+	}, nil
+}
+

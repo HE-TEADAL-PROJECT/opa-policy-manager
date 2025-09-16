@@ -1,17 +1,10 @@
-// The bundle package wrap the OPA bundle object to provide methods to manage services and their associated rego files.
-// It allows adding, updating, and removing services, and ensures that the bundle is always in a consistent state.
-// The bundle can be saved to and loaded from a tar.gz file using a Repository interface that support filesystema and minio storage
-// Create a new bundle using [New] or use [Repository.Get] to load an existing one from a tar.gz file.
-// Bundle operations allow to add, update, and remove services using [AddService] and [RemoveService] methods.
-// The generated opa bundle always contains a main.rego file that imports all service files and defines the top-level policy rule.
-// The generated opa bundle manifest metadata contains a [metadataServicesKey] key that lists all the services in the bundle
 package bundle
 
 import (
 	"context"
-	policygen "dspn-regogenerator/internal/policy/generator"
+	policy "dspn-regogenerator/internal/policy"
+	"dspn-regogenerator/internal/policy/parser"
 	"fmt"
-	"io"
 	"slices"
 	"strings"
 
@@ -21,34 +14,23 @@ import (
 )
 
 const mainFilePath = "/main.rego"
-const mainPackageName = "envoy.authz"
+const mainPackage = "envoy.authz"
 const metadataServicesKey = "services"
 
-func compileServiceFiles(files map[string]string) (map[string]*ast.Module, error) {
-	modules := make(map[string]*ast.Module)
-	for path, content := range files {
-		module := ast.MustParseModule(content)
-		modules[path] = module
-	}
-	compiler := ast.NewCompiler()
-	compiler.Compile(modules)
-	if compiler.Failed() {
-		return nil, fmt.Errorf("failed to compile service files: %v", compiler.Errors)
-	}
-	return modules, nil
+// Represent a single generated service in the bundle
+type Service struct {
+	name    string
+	oidcUrl string
+	policy  policy.GeneralPolicies
 }
 
-func generateMainFile(serviceNames []string) string {
-	// Generate a main.rego file that imports all service files
-	imports := make([]string, len(serviceNames))
-	for i, name := range serviceNames {
-		imports[i] = fmt.Sprintf("import data.%s", name)
+// Create a new service with the given name and specification
+func NewService(name string, spec *parser.ServiceSpec) *Service {
+	return &Service{
+		name:    name,
+		policy:  spec.Policies,
+		oidcUrl: spec.IdentityProvider,
 	}
-	allowRules := make([]string, len(serviceNames))
-	for i, name := range serviceNames {
-		allowRules[i] = fmt.Sprintf("allow if %s.%s", name, policygen.RequestPolicyName)
-	}
-	return fmt.Sprintf("package %s\n\n%s\ndefault allow := false\n\n%s\n", mainPackageName, strings.Join(imports, "\n"), strings.Join(allowRules, "\n"))
 }
 
 // A collection of rego files and metadata that represent all services files
@@ -191,7 +173,7 @@ func (b *Bundle) Describe() []string {
 }
 
 // Load an empty bundle with the service refo files
-func New(service Service) (*Bundle, error) {
+func New(service *Service) (*Bundle, error) {
 	files, err := service.generateServiceFiles()
 	if err != nil {
 		return nil, err
@@ -238,40 +220,16 @@ func New(service Service) (*Bundle, error) {
 	}, nil
 }
 
-// Load a bundle from a reader of a tar.gz file
-func newFromTarball(reader io.Reader) (*Bundle, error) {
-	loader := opabundle.NewTarballLoader(reader)
-	bundleReader := opabundle.NewCustomReader(loader)
-	bundle, err := bundleReader.Read()
-	if err != nil {
-		return nil, fmt.Errorf("impossible to read bundle form tarball archive: %w", err)
+func compileServiceFiles(files map[string]string) (map[string]*ast.Module, error) {
+	modules := make(map[string]*ast.Module)
+	for path, content := range files {
+		module := ast.MustParseModule(content)
+		modules[path] = module
 	}
-
-	// Load from the bundle manifest metadata the service names
-	if bundle.Manifest.Metadata == nil || bundle.Manifest.Metadata[metadataServicesKey] == nil {
-		return nil, fmt.Errorf("bundle manifest metadata does not contain 'services' key")
+	compiler := ast.NewCompiler()
+	compiler.Compile(modules)
+	if compiler.Failed() {
+		return nil, fmt.Errorf("failed to compile service files: %v", compiler.Errors)
 	}
-	array := bundle.Manifest.Metadata[metadataServicesKey].([]any)
-	serviceNames := make([]string, 0, len(array))
-	for _, v := range array {
-		if serviceName, ok := v.(string); ok {
-			serviceNames = append(serviceNames, serviceName)
-		} else {
-			return nil, fmt.Errorf("invalid service name in bundle manifest metadata: %v", v)
-		}
-	}
-
-	return &Bundle{
-		bundle:       &bundle,
-		serviceNames: serviceNames,
-	}, nil
-}
-
-// Repository is an interface for writing bundle to a storage system.
-type Repository interface {
-	// Write a bundle to the repository, returning an error if it fails.
-	Save(path string, bundle Bundle) error
-
-	// Read reads the bundle from the repository, returning the bundle and an error if it fails.
-	Get(path string) (*Bundle, error)
+	return modules, nil
 }

@@ -47,7 +47,7 @@ func init() {
 			var bundle *bundlelib.Bundle
 
 			if newBundle {
-				bundle, err = bundlelib.New(*bundlelib.NewService(serviceName, spec))
+				bundle, err = bundlelib.New(bundlelib.NewService(serviceName, spec))
 				if err != nil {
 					cmd.PrintErrf("Error creating new bundle with service %q: %v\n", serviceName, err)
 					os.Exit(1)
@@ -65,7 +65,7 @@ func init() {
 				}
 			}
 
-			err = repo.Save(path, *bundle)
+			err = repo.Save(path, bundle)
 			if err != nil {
 				cmd.PrintErrf("Error saving bundle %q: %v\n", path, err)
 				os.Exit(1)
@@ -94,7 +94,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			err = repo.Save(path, *bundle)
+			err = repo.Save(path, bundle)
 			if err != nil {
 				return err
 			}

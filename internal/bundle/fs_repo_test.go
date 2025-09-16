@@ -59,7 +59,7 @@ func TestSaveOpaBundle(t *testing.T) {
 
 	// Test code
 	repo := FSRepository{}
-	err := repo.Save(bundlePath, bundle)
+	err := repo.Save(bundlePath, &bundle)
 	if err != nil {
 		t.Errorf("Error saving the bundle: %v", err)
 	}

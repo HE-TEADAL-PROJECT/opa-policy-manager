@@ -23,7 +23,7 @@ func TestBundleExecution(t *testing.T) {
 		policy:  policy.GeneralPolicies{},
 	}
 
-	b, err := New(service)
+	b, err := New(&service)
 	if err != nil {
 		t.Fatalf("NewBundleFromService() error = %v", err)
 	}

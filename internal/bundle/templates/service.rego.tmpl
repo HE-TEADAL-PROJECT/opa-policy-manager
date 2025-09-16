@@ -1,0 +1,26 @@
+package {{.ServiceName}}
+
+import rego.v1
+import data.{{.ServiceName}}.oidc.token
+
+request := input.attributes.request.http
+
+user := token.payload.preferred_username
+roles contains role if some role in token.payload.realm_access.roles
+
+{{ if .PathPrefix -}}
+path := trim_prefix(request.path, "{{.PathPrefix}}")
+{{- else -}}
+path := request.path
+{{- end }}
+method := lower(request.method)
+
+default allow := false
+allow if {
+	# Check if the user is authenticated
+	token.valid
+
+	# Check if request is valid
+	{{.GlobalRuleName}}
+}
+# Generated access control policies

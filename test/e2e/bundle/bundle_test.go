@@ -17,12 +17,12 @@ func createTestBundle(t testing.TB) {
 		Policies:         parser.StructuredPolicies{},
 		IdentityProvider: "http://127.0.0.1:5555",
 	})
-	b, err := bundle.New(*service)
+	b, err := bundle.New(service)
 	if err != nil {
 		t.Fatalf("failed to create bundle: %v", err)
 	}
 	repo := bundle.FSRepository{}
-	if err := repo.Save(bundlePath, *b); err != nil {
+	if err := repo.Save(bundlePath, b); err != nil {
 		t.Fatalf("failed to save bundle: %v", err)
 	}
 }

@@ -69,7 +69,7 @@ func TestBundleFromService(t *testing.T) {
 		},
 	}
 
-	testedBundle, err := New(service)
+	testedBundle, err := New(&service)
 	if err != nil {
 		t.Fatalf("NewBundleFromService() error = %v", err)
 	}

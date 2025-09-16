@@ -1,0 +1,39 @@
+package {{.ServiceName}}.oidc
+
+import rego.v1
+
+request := input.attributes.request.http
+
+# OIDC configuration discover url
+metadata_url := "{{.MetadataURL}}"
+
+# Generate code
+
+metadata := http.send({
+    "url": metadata_url,
+    "method": "GET",
+    "headers": {
+        "accept": "application/json"
+    },
+    "force_cache": true,
+    "force_cache_duration_seconds": 86400 # Cache response for 24 hours
+}).body
+
+jwks_uri := metadata.jwks_uri
+
+jwks := http.send({
+    "url": jwks_uri,
+    "method": "GET",
+    "headers": {
+        "accept": "application/json"
+    },
+    "force_cache": true,
+    "force_cache_duration_seconds": 3600 # Cache response for 1 hour
+}).body
+
+encoded := split(request.headers.authorization, " ")[1]
+
+token := {"valid": valid, "payload": payload} if {
+    [_, encoded] := split(request.headers.authorization, " ")
+    [valid, _, payload] := io.jwt.decode_verify(encoded,{ "cert": json.marshal(jwks) })
+}
