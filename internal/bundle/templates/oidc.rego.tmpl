@@ -33,7 +33,8 @@ jwks := http.send({
 
 encoded := split(request.headers.authorization, " ")[1]
 
+default token := {"valid": false, "payload": {}}
+
 token := {"valid": valid, "payload": payload} if {
-    [_, encoded] := split(request.headers.authorization, " ")
     [valid, _, payload] := io.jwt.decode_verify(encoded,{ "cert": json.marshal(jwks) })
 }
