@@ -11,16 +11,14 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/docker/compose/v2/pkg/progress"
 	"github.com/open-policy-agent/opa/v1/ast"
 	opabundle "github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/storage"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
 	"github.com/open-policy-agent/opa/v1/tester"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/log"
+	testcompose "github.com/testcontainers/testcontainers-go/modules/compose"
 	"github.com/testcontainers/testcontainers-go/wait"
-
-	keycloak "github.com/stillya/testcontainers-keycloak"
 )
 
 //go:embed testdata/bundle_test.rego
@@ -83,26 +81,30 @@ var oidcTest string
 func setupKeycloakContainer(t *testing.T, ctx context.Context) string {
 	t.Helper()
 
-	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
-	container, err := keycloak.Run(ctx, "quay.io/keycloak/keycloak:latest",
-		keycloak.WithAdminUsername("admin"),
-		keycloak.WithAdminPassword("admin"),
-		keycloak.WithContextPath("/keycloak"),
-		keycloak.WithRealmImportFile("../../config/keycloak/teadal-bootstrap.json"),
-		testcontainers.WithWaitStrategy(wait.ForListeningPort("8080/tcp")),
-		testcontainers.WithLogger(log.TestLogger(t)),
+	progress.Mode = progress.ModeQuiet
+	stack, err := testcompose.NewDockerComposeWith(
+		testcompose.WithStackFiles("testdata/compose.yaml"),
+		testcompose.StackIdentifier("test-oidc-stack"),
 	)
 	if err != nil {
-		t.Fatalf("Failed to start Keycloak container: %v", err)
+		t.Fatalf("Failed to create Docker Compose stack: %v", err)
 	}
-
+	if err := stack.WaitForService("keycloak", wait.ForHTTP("/keycloak")).Up(ctx); err != nil {
+		t.Fatalf("Failed to start Docker Compose stack: %v", err)
+	}
 	t.Cleanup(func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatalf("Failed to terminate container: %s", err)
+		if err := stack.Down(ctx); err != nil {
+			t.Fatalf("Failed to stop Docker Compose stack: %v", err)
 		}
 	})
 
-	endpoint, err := container.GetAuthServerURL(ctx)
+	container, err := stack.ServiceContainer(ctx, "keycloak")
+	if err != nil {
+		t.Fatalf("Failed to get Keycloak container: %v", err)
+	}
+
+	endpoint, err := container.Endpoint(ctx, "http")
+	endpoint += "/keycloak"
 	if err != nil {
 		t.Fatalf("Failed to get Keycloak endpoint: %v", err)
 	}

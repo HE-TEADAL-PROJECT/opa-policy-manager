@@ -26,5 +26,7 @@ test_token_valid if {
 
 test_token_payload if {
     payload := oidc.token.payload with oidc.encoded as encoded_token
-    print(payload)
+    payload.preferred_username == "jeejee"
+    some i, role in payload.realm_access.roles
+    role == "researchers"
 }
