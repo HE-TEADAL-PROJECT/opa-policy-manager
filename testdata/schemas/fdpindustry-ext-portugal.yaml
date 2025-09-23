@@ -1,0 +1,1288 @@
+---
+openapi: 3.0.0
+info:
+  title: TEADAL - Evidence based medicine - TEST VERSION
+  version: 1.0.0
+  description: TEADAL FDP industry node Rest API.
+  termsOfService: https://www.teadal.eu/about-teadal/
+  contact:
+    name: ERT TEADAL API Support
+    email: not@defined
+    url: www.ert.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+tags:
+- name: service
+  description: Checks availability of the Teadal node.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: forecast
+  description: Provides information about forecast.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: productions
+  description: Provides information about production.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: receptions
+  description: Provides information about receptions.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: sales
+  description: Provides information about sales.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: quality
+  description: Provides information about quality.
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+security:
+- bearerAuth: []
+paths:
+  "/":
+    get:
+      tags:
+      - service
+      summary: Checks node's availability
+      operationId: root
+      description: Confirms availability with a message
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - shareholder
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: string
+        '301':
+          "$ref": "#/components/responses/301"
+        '401':
+          "$ref": "#/components/responses/401"
+        '404':
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/forecasts":
+    get:
+      tags:
+      - forecast
+      summary: Request for all forecasts
+      operationId: GetForecastAll
+      description: The whole 'Forecast' dataset will be returned. No parameters are
+        needed.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - customer
+                - shareholder
+                operator: OR
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Forecast"
+        '401':
+          "$ref": "#/components/responses/401"
+        '404':
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/forecasts/{forecast_id}":
+    get:
+      tags:
+      - forecast
+      summary: Request for a specific forecast
+      operationId: GetForecastById
+      description: The forecast specified by 'forecast_id' will be returned. Parameter
+        'forecast_id' is mandatory.
+      parameters:
+      - in: path
+        name: forecast_id
+        required: true
+        schema:
+          type: integer
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - customer
+                - shareholder
+                operator: OR
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    "$ref": "#/components/schemas/Forecast"
+        '401':
+          "$ref": "#/components/responses/401"
+        '404':
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/productions":
+    get:
+      tags:
+      - productions
+      summary: Request for all productions
+      operationId: GetProductionsAll
+      description: The whole 'Productions' dataset will be returned. No parameters
+        are needed.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - customer
+                - shareholder
+                operator: OR
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Productions"
+        '401':
+          "$ref": "#/components/responses/401"
+        '404':
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/productions/{productions_id}":
+    get:
+      tags:
+      - productions
+      summary: Request for a specific productions
+      operationId: GetProductionsById
+      description: The productions specified by 'productions_id' will be returned.
+        Parameter 'productions_id' is mandatory.
+      parameters:
+      - in: path
+        name: forecast_id
+        required: true
+        schema:
+          type: integer
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - customer
+                - shareholder
+                operator: OR
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    "$ref": "#/components/schemas/Productions"
+        '401':
+          "$ref": "#/components/responses/401"
+        '404':
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/receptions":
+    get:
+      tags:
+      - receptions
+      summary: Request for all receptions
+      operationId: GetReceptionsAll
+      description: The whole 'Receptions' dataset will be returned. No parameters
+        are needed.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - shareholder
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Receptions"
+        '401':
+          "$ref": "#/components/responses/401"
+        '404':
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/receptions/{receptions_id}":
+    get:
+      tags:
+      - receptions
+      summary: Request for a specific receptions
+      operationId: GetReceptionsById
+      description: The receptions specified by 'receptions_id' will be returned. Parameter
+        'receptions_id' is mandatory.
+      parameters:
+      - in: path
+        name: receptions_id
+        required: true
+        schema:
+          type: integer
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - shareholder
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    "$ref": "#/components/schemas/Receptions"
+        '401':
+          "$ref": "#/components/responses/401"
+        '404':
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/sales":
+    get:
+      tags:
+      - sales
+      summary: Request for all sales
+      operationId: GetSalesAll
+      description: The whole 'Sales' dataset will be returned. No parameters are needed.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - shareholder
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Sales"
+        '401':
+          "$ref": "#/components/responses/401"
+        '404':
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/sales/{sales_id}":
+    get:
+      tags:
+      - sales
+      summary: Request for a specific sales
+      operationId: GetSalesById
+      description: The sales specified by 'sales_id' will be returned. Parameter 'sales_id'
+        is mandatory.
+      parameters:
+      - in: path
+        name: sales_id
+        required: true
+        schema:
+          type: integer
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - shareholder
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Sales"
+        '401':
+          "$ref": "#/components/responses/401"
+        '404':
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/quality":
+    get:
+      tags:
+      - quality
+      summary: Request for all quality information
+      operationId: GetQualityAll
+      description: The whole 'Quality' dataset will be returned. No parameters are
+        needed.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - shareholder
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Quality"
+        '401':
+          "$ref": "#/components/responses/401"
+        '404':
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+  "/quality/{quality_id}":
+    get:
+      tags:
+      - quality
+      summary: Request for a specific quality information.
+      operationId: GetQualityById
+      description: The quality measure specified by 'quality_id' will be returned.
+        Parameter 'quality_id' is mandatory.
+      parameters:
+      - in: path
+        name: quality_id
+        required: true
+        schema:
+          type: integer
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - shareholder
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Quality"
+        '401':
+          "$ref": "#/components/responses/401"
+        '404':
+          "$ref": "#/components/responses/404"
+        5XX:
+          "$ref": "#/components/responses/5XX"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      x-teadal-IAM-provider: http://baseline.teadal.ubiwhere.eu/realms/master/.well-known/openid-configuration
+  schemas:
+    Forecast:
+      type: object
+      properties:
+        ZDATADADOS_0:
+          type: string
+          description: Data date
+        ZSEMANADADOS_0:
+          type: integer
+          description: Data week
+        ZENCOMENDA_0:
+          type: string
+          description: Order number
+        ZANOEXPED_0:
+          type: integer
+          description: Expedition year
+        ZSEMANAEXPED_0:
+          type: integer
+          description: Expedition week
+        ZDATAEXPED_0:
+          type: string
+          format: date-time
+          description: Expedition date
+        ZVATCLI_0:
+          type: string
+          description: Client VAT number
+        ZNOMECLI_0:
+          type: string
+          description: Client name
+        ZEND_0:
+          type: string
+          description: Address
+        ZCONTRATO_0:
+          type: string
+          description: Contract number
+        ZART_0:
+          type: string
+          description: Article number
+        ZARTCLI_0:
+          type: string
+          description: Client article number
+        ZDESC_0:
+          type: string
+          description: Description
+        ZQTD_0:
+          type: number
+          format: double
+          description: Quantity
+        ZCOMP_0:
+          type: string
+          description: Component
+        ZPRECO_0:
+          type: number
+          format: double
+          description: Price
+        ZVALOR_0:
+          type: number
+          format: double
+          description: Value
+        ZSTU_0:
+          type: string
+          description: Status
+        ZUI_0:
+          type: string
+          description: UI
+        ZCPY_0:
+          type: string
+          description: Company
+        ZFCY_0:
+          type: string
+          description: Factory
+    Productions:
+      type: object
+      properties:
+        Fonte:
+          type: string
+          description: Source
+        ESTAB:
+          type: string
+          description: Establishment
+        Localização:
+          type: string
+          description: Location
+        OF_OS:
+          type: string
+          description: Order/Service
+        Status_OF_X3:
+          type: string
+          description: Status OF X3
+        Ultima_data_modif_OF_X3:
+          type: string
+          format: date-time
+          description: Last modification date OF X3
+        Status_OF_Ert_soft:
+          type: string
+          description: Status OF Ert-soft
+        Ultima_data_modif_OF_Ert_soft:
+          type: string
+          format: date-time
+          description: Last modification date OF Ert-soft
+        Cliente_OF:
+          type: string
+          description: Client OF
+        Nome_Cliente_OF:
+          type: string
+          description: Client name OF
+        OF_Novo_Sistema:
+          type: string
+          description: New system order
+        Categoria_Produzido:
+          type: string
+          description: Produced category
+        Artigo_Produzido:
+          type: string
+          description: Produced article
+        Descricao_Produzido:
+          type: string
+          description: Produced description
+        Unidade_Eixo_PN_Prod:
+          type: string
+          description: Axis unit (PN Prod)
+        Descricao_Ramo_Eixo_PN_Prod:
+          type: string
+          description: Axis branch description (PN Prod)
+        Projeto_Eixo_PN_Prod:
+          type: string
+          description: Axis project (PN Prod)
+        Descricao_Projeto_Interno_Eixo_PN_Prod:
+          type: string
+          description: Internal project description (PN Prod)
+        Categoria_Consumido:
+          type: string
+          description: Consumed category
+        Artigo_Consumido:
+          type: string
+          description: Consumed article
+        Descricao_Consumido:
+          type: string
+          description: Consumed description
+        Unidade_Eixo_PN_Cons:
+          type: string
+          description: Axis unit (PN Cons)
+        Descricao_Ramo_Eixo_PN_Cons:
+          type: string
+          description: Axis branch description (PN Cons)
+        Projeto_Eixo_PN_Cons:
+          type: string
+          description: Axis project (PN Cons)
+        Descricao_Projeto_Interno_Eixo_PN_Cons:
+          type: string
+          description: Internal project description (PN Cons)
+        BOM:
+          type: string
+          description: Bill of materials
+        RETRABALHO:
+          type: string
+          description: Rework
+        SUBCONTR:
+          type: string
+          description: Subcontract
+        PRIMFACE:
+          type: string
+          description: Primary face
+        Qtd_Prod_Acum:
+          type: string
+          description: Accumulated production quantity
+        Consumo_teorico_Acum_qtd:
+          type: string
+          description: Theoretical accumulated consumption quantity
+        Qtd_conc_Acum:
+          type: string
+          description: Accumulated quantity concluded
+        Dif_qtd_acum:
+          type: string
+          description: Accumulated quantity difference
+        Dif_valor_acum:
+          type: string
+          description: Accumulated value difference
+        Ano:
+          type: integer
+          description: Year
+        Mês_Analise:
+          type: integer
+          description: Analysis month
+        Data:
+          type: string
+          format: date-time
+          description: Date
+        WK_PRODUÇÃO_IPT:
+          type: string
+          description: Production week IPT
+        Produção_qtd:
+          type: string
+          description: Production quantity
+        ValorProdução:
+          type: string
+          description: Production value
+        WK_CONSUMO_IPT:
+          type: integer
+          description: Consumption week IPT
+        Consumo_STD_qtd:
+          type: number
+          format: double
+          description: Standard consumption quantity
+        Consumo_STD_valor:
+          type: number
+          format: double
+          description: Standard consumption value
+        Consumo_qtd:
+          type: number
+          format: double
+          description: Consumption quantity
+        Consumo_valor:
+          type: number
+          format: float
+          description: Consumption value
+        Scrap_qtd:
+          type: number
+          format: double
+          description: Scrap quantity
+        Scrap_valor:
+          type: number
+          format: float
+          description: Scrap value
+        Status:
+          type: string
+          description: Status
+        Status_Original:
+          type: string
+          description: Original status
+        Status_Destino:
+          type: string
+          description: Destination status
+        STA_TRF:
+          type: string
+          description: Transfer status
+        Lote:
+          type: string
+          description: Batch
+        Sublote:
+          type: string
+          description: Sub-batch
+        Tipo_Movimento:
+          type: string
+          description: Movement type
+        Nº_Doc:
+          type: string
+          description: Document number
+        Utilizador:
+          type: string
+          description: User
+        Automático:
+          type: string
+          description: Automatic
+        Motivo_REASON_0_REASON_1:
+          type: string
+          description: Reason
+        Posto:
+          type: string
+          description: Post
+        Operação:
+          type: string
+          description: Operation
+        Desc_Operação:
+          type: string
+          description: Operation description
+        Depreciação:
+          type: integer
+          description: Depreciation percentage
+        COEF_VAL_ORI:
+          type: number
+          format: float
+          description: Original value coefficient
+        COEF_VAL_DEST:
+          type: number
+          format: float
+          description: Destination value coefficient
+        TERCEIRO:
+          type: string
+          description: Third party
+        NOME_TERCEIRO:
+          type: string
+          description: Third party name
+        Artigo_consumido_Custo_STD_MP_INB:
+          type: number
+          format: double
+          description: Consumed article - Standard cost MP+INB
+        Artigo_consumido_Custo_STD_INB:
+          type: number
+          format: double
+          description: Consumed article - Standard cost INB
+        Artigo_consumido_Custo_STD_MP:
+          type: number
+          format: double
+          description: Consumed article - Standard cost MP
+        Tipo_OF:
+          type: string
+          description: Order type
+        QtdAproveitada:
+          type: number
+          format: double
+          description: Utilized quantity
+    Receptions:
+      type: object
+      properties:
+        ANO:
+          type: integer
+          description: Year
+        MES:
+          type: integer
+          description: Month
+        SEMANA:
+          type: integer
+          description: Week
+        Est_Recep:
+          type: string
+          description: Reception establishment
+        Est_Consumo:
+          type: string
+          description: Consumption establishment
+        Data:
+          type: string
+          format: date-time
+          description: Date
+        Encomenda:
+          type: string
+          description: Order
+        Rececao:
+          type: string
+          description: Reception
+        Nº_Guia_Forn:
+          type: string
+          description: Supplier guide number
+        Cód_Forn:
+          type: string
+          description: Supplier code
+        Nome:
+          type: string
+          description: Name
+        País:
+          type: string
+          description: Country
+        Inco:
+          type: string
+          description: Incoterms
+        Categoria:
+          type: string
+          description: Category
+        Grupo_Material:
+          type: string
+          description: Material group
+        Artigo:
+          type: string
+          description: Article
+        Descrição:
+          type: string
+          description: Description
+        Qtd_Recepção:
+          type: number
+          format: double
+          description: Reception quantity
+        Unidade_Compra:
+          type: string
+          description: Purchase unit
+        Preço_tarifa:
+          type: number
+          format: double
+          description: Tariff price
+        Preço_Compra:
+          type: number
+          format: double
+          description: Purchase price
+        Moeda_Compra:
+          type: string
+          description: Purchase currency
+        Preço_Compra_EUR:
+          type: number
+          format: double
+          description: Purchase price in EUR
+        PREÇO_STDA_A_1:
+          type: number
+          format: double
+          description: Standard price A-1
+        DATA_STDA:
+          type: string
+          format: date
+          description: Standard date
+        Unidade_Stock:
+          type: string
+          description: Stock unit
+        Custo_Unidade_Stock_Encomenda:
+          type: number
+          format: double
+          description: Stock unit cost (order)
+        Custo_Unidade_Stock_Receção:
+          type: number
+          format: double
+          description: Stock unit cost (reception)
+        Custo_Unidade_Stock_X3:
+          type: number
+          format: double
+          description: Stock unit cost (X3)
+        Coef_UC_US:
+          type: number
+          format: double
+          description: UC-US coefficient
+        Cambio_Encomeda:
+          type: number
+          format: double
+          description: Order exchange rate
+        Cambio_Compra:
+          type: number
+          format: double
+          description: Purchase exchange rate
+        Saldo:
+          type: string
+          description: Balance
+        Projeto:
+          type: string
+          description: Project
+        Código_Contabil:
+          type: string
+          description: Accounting code
+        Num_Doc_Factura:
+          type: string
+          description: Document/Invoice number
+        Data_Contab:
+          type: string
+          format: date-time
+          description: Accounting date
+        Qtd_Fat:
+          type: number
+          format: double
+          description: Invoiced quantity
+        Unidade_Fat:
+          type: string
+          description: Invoiced unit
+        Preço_Fat:
+          type: number
+          format: double
+          description: Invoiced price
+        Qtd_Devolvida:
+          type: number
+          format: double
+          description: Returned quantity
+        Dif_Qtd_Rec_e_Faturada:
+          type: number
+          format: double
+          description: Difference between received and invoiced quantity
+        Nota_Credito:
+          type: string
+          description: Credit note
+        QTD_Credito:
+          type: number
+          format: double
+          description: Credit quantity
+        Preço_Fac_EUR:
+          type: number
+          format: double
+          description: Invoice price in EUR
+        ACC:
+          type: string
+          description: ACC
+        Valor_Factura_EUR:
+          type: number
+          format: double
+          description: Invoice value in EUR
+        Valor_Receção_EUR:
+          type: number
+          format: double
+          description: Reception value in EUR
+        Dif_Fact_vs_Rec:
+          type: number
+          format: double
+          description: Difference between invoice and reception
+        Cambio_data_fatura:
+          type: number
+          format: double
+          description: Invoice date exchange rate
+        Moeda:
+          type: string
+          description: Currency
+        RQV_Qtd:
+          type: number
+          format: double
+          description: RQV quantity
+        RQV_Total:
+          type: number
+          format: double
+          description: RQV total
+        RPV_Unitário:
+          type: number
+          format: double
+          description: RPV unit
+        RPV_Total:
+          type: number
+          format: double
+          description: RPV total
+        PPV_Unitario:
+          type: number
+          format: double
+          description: PPV unit
+        PPV_Total:
+          type: number
+          format: double
+          description: PPV total
+        Desconto_comercial:
+          type: number
+          format: double
+          description: Commercial discount
+    Sales:
+      type: object
+      properties:
+        Sociedade:
+          type: string
+          description: Society
+        TipoDoc:
+          type: string
+          description: Document type
+        DescritivoTipo:
+          type: string
+          description: Type description
+        Diário:
+          type: string
+          description: Journal
+        NumDoc:
+          type: string
+          description: Document number
+        AnoContab:
+          type: integer
+          description: Accounting year
+        MesContab:
+          type: integer
+          description: Accounting month
+        SemanaContab:
+          type: integer
+          description: Accounting week
+        DataContab:
+          type: string
+          format: date-time
+          description: Accounting date
+        DataLançamento:
+          type: string
+          format: date-time
+          description: Launch date
+        Mercado:
+          type: string
+          description: Market
+        PaisFatura:
+          type: string
+          description: Invoice country
+        PaisExpedicao:
+          type: string
+          description: Expedition country
+        GrupoCliente:
+          type: string
+          description: Client group
+        CodigoCliente:
+          type: string
+          description: Client code
+        NomeCliente:
+          type: string
+          description: Client name
+        Incoterm:
+          type: string
+          description: Incoterm
+        CondPag:
+          type: string
+          description: Payment condition
+        Vendedor:
+          type: string
+          description: Seller
+        EstabStock:
+          type: string
+          description: Stock establishment
+        EstabVenda:
+          type: string
+          description: Sales establishment
+        Categoria:
+          type: string
+          description: Category
+        Artigo:
+          type: string
+          description: Article
+        UnidadeArtigo:
+          type: string
+          description: Article unit
+        ArtigoCliente:
+          type: string
+          description: Client article
+        DescriçãoDoc:
+          type: string
+          description: Document description
+        QtdDoc:
+          type: number
+          format: double
+          description: Document quantity
+        Unidade:
+          type: string
+          description: Unit
+        ValorUn:
+          type: number
+          format: double
+          description: Unit value
+        ValorTOT:
+          type: number
+          format: double
+          description: Total value
+        Moeda:
+          type: string
+          description: Currency
+        Sentido:
+          type: integer
+          description: Direction
+        ValorTOTFinal:
+          type: number
+          format: double
+          description: Final total value
+        MoedaANA:
+          type: string
+          description: Analysis currency
+        ContaANA:
+          type: string
+          description: Analysis account
+        Descrição:
+          type: string
+          description: Description
+        UnidadeANA:
+          type: string
+          description: Analysis unit
+        DesUn:
+          type: string
+          description: Unit description
+        RamosANA:
+          type: string
+          description: Analysis branch
+        DesRamo:
+          type: string
+          description: Branch description
+        ProcessoANA:
+          type: string
+          description: Analysis process
+        DesProc:
+          type: string
+          description: Process description
+        ProjetoANA:
+          type: string
+          description: Analysis project
+        DesProj:
+          type: string
+          description: Project description
+        ProjetoIntANA:
+          type: string
+          description: Internal analysis project
+        DesProjInt:
+          type: string
+          description: Internal project description
+        UnidadeStock:
+          type: string
+          description: Stock unit
+        CustoSTDA:
+          type: number
+          format: double
+          description: Standard cost
+        Seq:
+          type: integer
+          description: Sequence
+        DataCusto:
+          type: string
+          format: date-time
+          description: Cost date
+        CustoMAT:
+          type: number
+          format: double
+          description: Material cost
+        CustoMAT_IN:
+          type: number
+          format: double
+          description: Material cost IN
+        Custo_In:
+          type: number
+          format: double
+          description: Cost IN
+        Guia:
+          type: string
+          description: Guide
+        DataEXP:
+          type: string
+          format: date-time
+          description: Expedition date
+        SemanaExp:
+          type: integer
+          description: Expedition week
+        DataCriaçãoGuia:
+          type: string
+          format: date-time
+          description: Guide creation date
+        QtdEXP:
+          type: number
+          format: double
+          description: Expedition quantity
+        UnidadeEXP:
+          type: string
+          description: Expedition unit
+        PreçoEXP:
+          type: number
+          format: double
+          description: Expedition price
+        PreçoEXPvsQTY:
+          type: number
+          format: double
+          description: Expedition price vs quantity
+        DifFatura_Guia:
+          type: number
+          format: double
+          description: Difference between invoice and guide
+        MoedaEXP:
+          type: string
+          description: Expedition currency
+        Encomenda:
+          type: string
+          description: Order
+        QtdENC:
+          type: number
+          format: double
+          description: Order quantity
+        DepENC:
+          type: string
+          description: Order department
+        Devolução:
+          type: string
+          description: Return
+        DataDevolução:
+          type: string
+          format: date-time
+          description: Return date
+        QtdDevolução:
+          type: number
+          format: double
+          description: Return quantity
+        DeduzFact:
+          type: string
+          description: Deduct invoice
+        LancaCredito:
+          type: string
+          description: Launch credit
+        CreditoDevolucao:
+          type: string
+          description: Return credit
+        DocFatOrigem:
+          type: string
+          description: Original invoice document
+        DocDevolOrigem:
+          type: string
+          description: Original return document
+        ArtigoMov:
+          type: string
+          description: Movement article
+        Lote:
+          type: string
+          description: Batch
+        SubLote:
+          type: string
+          description: Sub-batch
+        TipoLote:
+          type: string
+          description: Batch type
+        QtdMovimento:
+          type: number
+          format: double
+          description: Movement quantity
+        ValorMovFatura:
+          type: number
+          format: double
+          description: Invoice movement value
+        ValorMovGuia:
+          type: number
+          format: double
+          description: Guide movement value
+        Conta2:
+          type: string
+          description: Account 2
+    Quality:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Primary key
+        Estab:
+          type: string
+          description: Establishment
+        TipoLoc:
+          type: string
+          description: Type of Location
+        CodCtb:
+          type: string
+          description: Accounting Code
+        Cat:
+          type: string
+          description: Category
+        Cliente:
+          type: string
+          description: Client
+        DataInicial:
+          type: string
+          format: date-time
+          description: Initial Date
+        Ano:
+          type: integer
+          description: Year
+        CustoTotal:
+          type: number
+          format: float
+          description: Total Cost
+        Projeto:
+          type: string
+          description: Project
+        Processo:
+          type: string
+          description: Process
+        Artigo:
+          type: string
+          description: Article
+        Descricao:
+          type: string
+          description: Description
+        QtdStock:
+          type: number
+          format: float
+          description: Stock Quantity
+        UnStock:
+          type: string
+          description: Stock Unit
+        Lote:
+          type: string
+          description: Batch
+        Sublote:
+          type: string
+          description: Sub-batch
+        Status:
+          type: string
+          description: Status
+        Localizacao:
+          type: string
+          description: Location
+        HistoricoOrigemRejeicaoPROD:
+          type: string
+          description: Origin Rejection History
+        Aceites:
+          type: number
+          format: float
+          description: Accepted Quantity
+        HistoricoMotivoRejeicaoPROD:
+          type: string
+          description: Rejection Reason History
+        UltimoMovimento:
+          type: string
+          format: date-time
+          description: Last Movement
+        CustoStda:
+          type: number
+          format: float
+          description: Standard Cost
+  responses:
+    '200':
+      description: OK
+    '202':
+      description: Request accepted but not completed.
+    '204':
+      description: No content.
+    '301':
+      description: Resource moved permanently. Redirecting...
+    '400':
+      description: Bad request.
+    '401':
+      description: Authorization information is missing or invalid.
+    '404':
+      description: The specified resource was not found.
+    5XX:
+      description: Unexpected error.
