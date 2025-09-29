@@ -1,6 +1,7 @@
 package oidc_test
 
 import data.testservice.oidc
+import data.testservice
 
 test_valid_metadata_url if {
     oidc.metadata_url
@@ -29,4 +30,13 @@ test_token_payload if {
     payload.preferred_username == "jeejee"
     some i, role in payload.realm_access.roles
     role == "researchers"
+}
+
+
+test_user if {
+    testservice.user == "jeejee" with oidc.encoded as encoded_token
+}
+
+test_roles if {
+    "researchers" in testservice.roles with oidc.encoded as encoded_token
 }

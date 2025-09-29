@@ -77,6 +77,9 @@ func TestBundleExecution(t *testing.T) {
 //go:embed testdata/oidc_test.rego
 var oidcTest string
 
+//go:embed testdata/service_test.rego
+var serviceTest string
+
 // setupKeycloakContainer starts a Keycloak container and returns the auth server URL
 func setupKeycloakContainer(t *testing.T, ctx context.Context) string {
 	t.Helper()
@@ -182,6 +185,25 @@ func prepareOIDCModule(t *testing.T, endpoint string) *ast.Module {
 	return ast.MustParseModule(oidcBuffer.String())
 }
 
+// prepareServiceModule creates a Rego module for the service
+func prepareServiceModule(t *testing.T) *ast.Module {
+	t.Helper()
+	const globalRuleName = "allow_request"
+
+	var templateData = ServiceTemplateData{
+		ServiceName:    "testservice",
+		GlobalRuleName: globalRuleName,
+		PathPrefix:     "/testservice",
+	}
+	var serviceBuffer bytes.Buffer
+	if err := serviceTemplate.Execute(&serviceBuffer, templateData); err != nil {
+		t.Fatalf("Failed to execute service template: %v", err)
+	}
+	serviceBuffer.WriteString(globalRuleName + " := true\n")
+
+	return ast.MustParseModule(serviceBuffer.String())
+}
+
 // prepareTestModule creates the test module with the access token
 func prepareTestModule(t *testing.T, accessToken string) *ast.Module {
 	t.Helper()
@@ -241,11 +263,26 @@ func TestOidcIntegration(t *testing.T) {
 
 	// Prepare OIDC and test modules
 	oidcModule := prepareOIDCModule(t, endpoint)
+	serviceModule := prepareServiceModule(t)
 	testModule := prepareTestModule(t, accessToken)
 
 	// Run tests
 	runTests(t, ctx, map[string]*ast.Module{
-		"oidc.rego": oidcModule,
-		"test.rego": testModule,
+		"oidc.rego":    oidcModule,
+		"test.rego":    testModule,
+		"service.rego": serviceModule,
+	})
+}
+
+func TestServiceIntegration(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	serviceModule := prepareServiceModule(t)
+	testModule := ast.MustParseModule(serviceTest)
+
+	runTests(t, ctx, map[string]*ast.Module{
+		"service.rego": serviceModule,
+		"test.rego":    testModule,
 	})
 }
