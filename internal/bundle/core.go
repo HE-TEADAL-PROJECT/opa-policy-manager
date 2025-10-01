@@ -182,9 +182,9 @@ func New(service *Service) (*Bundle, error) {
 
 	manifest := opabundle.Manifest{}
 	manifest.Init()
-	manifest.Metadata = make(map[string]interface{})
+	manifest.Metadata = make(map[string]any)
 	manifest.Metadata[metadataServicesKey] = []string{service.name}
-	manifest.Roots = &[]string{service.name, "main"}
+	manifest.Roots = &[]string{service.name, "envoy"}
 
 	modules, err := compileServiceFiles(files)
 	if err != nil {

@@ -3,6 +3,7 @@ package bundle
 import (
 	policygen "dspn-regogenerator/internal/policy/generator"
 	policygenerator "dspn-regogenerator/internal/policy/generator"
+	_ "embed"
 	"fmt"
 	"strings"
 	"text/template"
@@ -19,8 +20,14 @@ type OIDDTemplateData struct {
 	MetadataURL string
 }
 
-var serviceTemplate = template.Must(template.ParseFiles("./templates/service.rego.tmpl"))
-var oidcTemplate = template.Must(template.ParseFiles("./templates/oidc.rego.tmpl"))
+//go:embed templates/service.rego.tmpl
+var serviceTemplateContent string
+
+//go:embed templates/oidc.rego.tmpl
+var oidcTemplateContent string
+
+var serviceTemplate = template.Must(template.New("service").Parse(serviceTemplateContent))
+var oidcTemplate = template.Must(template.New("oidc").Parse(oidcTemplateContent))
 
 func (s *Service) generateServiceFiles() (map[string]string, error) {
 	files := make(map[string]string)
