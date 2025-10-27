@@ -263,3 +263,9 @@ func newFromTarball(reader io.Reader) (*Bundle, error) {
 	}, nil
 }
 
+func NewMinioRepositoryFromClient(client *minio.Client, bucketName string) *MinioRepository {
+	return &MinioRepository{
+		client: client,
+		bucket: bucketName,
+	}
+}
