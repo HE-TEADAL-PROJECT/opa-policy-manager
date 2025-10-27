@@ -1,0 +1,1004 @@
+openapi: 3.0.0
+info:
+  title: AMTS GTFS static data sFDP
+  description: sFDP API for interacting with AMTS GTFS static datasets.
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: "/sfdp-amts-gtfs-static"
+    description: Base path for AMTS GTFS static data API
+
+paths:
+  /routes:
+    get:
+      summary: Retrieve all rows from the routes dataset.
+      operationId: getRoutes
+      x-router-controller: routes
+      description: |
+        Returns all the routes available in the dataset.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      responses:
+        '200':
+          description: A list of all rows in the routes dataset.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Route'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /routes/{route_id}:
+    get:
+      summary: Retrieve a specific row from the routes dataset based on route_id.
+      operationId: getRouteById
+      x-router-controller: routes
+      description: Returns the details of a specific route using its unique identifier.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: route_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Details of the specified row.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Route not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /trips:
+    get:
+      summary: Retrieve all rows from the trips dataset.
+      operationId: getTrips
+      x-router-controller: trips
+      description: |
+        Returns all the trips available in the dataset.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      responses:
+        '200':
+          description: A list of all rows in the trips dataset.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trip'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trips/{trip_id}:
+    get:
+      summary: Retrieve a specific row from the trips dataset based on trip_id.
+      operationId: getTripById
+      x-router-controller: trips
+      description: Returns the details of a specific trip using its unique identifier.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: trip_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Details of the specified row.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trip not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /trips/route/{route_id}:
+    get:
+      summary: Retrieve the trips of a specific route from the trips dataset based on route_id.
+      operationId: getTripsByRouteId
+      x-router-controller: trips
+      description: Returns the details of all trips of a specific route using its unique identifier.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: route_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Details of the specified row.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trip'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trip route not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /trips/service/{service_id}:
+    get:
+      summary: Retrieve the trips of a specific service from the trips dataset based on service_id.
+      operationId: getTripsByServiceId
+      x-router-controller: trips
+      description: Returns the details of all trips of a specific service using its unique identifier.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: service_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Details of the specified row.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trip'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trip service not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /calendar:
+    get:
+      summary: Retrieve all rows from the calendar dataset.
+      operationId: getCalendars
+      x-router-controller: calendar
+      description: |
+        Returns all calendar entries available in the dataset.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      responses:
+        '200':
+          description: A list of all rows in the calendar dataset.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Calendar'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /calendar/{service_id}:
+    get:
+      summary: Retrieve a specific row from the calendar dataset based on service_id.
+      operationId: getCalendarById
+      x-router-controller: calendar
+      description: Returns the details of a specific calendar entry using its unique identifier.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: service_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Details of the specified row.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Calendar'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Calendar not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /agency:
+    get:
+      summary: Retrieve all rows from the agency dataset.
+      operationId: getAgencies
+      x-router-controller: agency
+      description: |
+        Returns all agency entries available in the dataset.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      responses:
+        '200':
+          description: A list of all rows in the agency dataset.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Agency'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /agency/{agency_id}:
+    get:
+      summary: Retrieve a specific row from the agency dataset based on agency_id.
+      operationId: getAgencyById
+      x-router-controller: agency
+      description: Returns the details of a specific agency entry using its unique identifier.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: agency_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Details of the specified row.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agency'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Agency not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /shapes:
+    get:
+      summary: Retrieve paginated rows from the shapes dataset.
+      operationId: getShapes
+      x-router-controller: shapes
+      description: |
+        Returns paginated shape entries available in the dataset.
+        Supports pagination using `offset` and `limit` query parameters.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: offset
+          in: query
+          description: Number of records to skip (default is 0).
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          description: Number of records to return per page (default is 10).
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: A paginated list of shape entries.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  offset:
+                    type: integer
+                    example: 0
+                  limit:
+                    type: integer
+                    example: 10
+                  totalItems:
+                    type: integer
+                    example: 100
+                  totalPages:
+                    type: integer
+                    example: 10
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Shape'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /shapes/{shape_id}:
+    get:
+      summary: Retrieve a specific row from the shapes dataset based on shape_id.
+      operationId: getShapeById
+      x-router-controller: shapes
+      description: Returns the details of a specific shape entry using its unique identifier.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: shape_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Details of the specified row.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Shape'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Shape not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /stops:
+    get:
+      summary: Retrieve all rows from the stops dataset.
+      operationId: getStops
+      x-router-controller: stops
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      description: |
+        Returns all stop entries available in the dataset.
+      responses:
+        '200':
+          description: A list of all rows in the stops dataset.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stop'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /stops/{stop_id}:
+    get:
+      summary: Retrieve a specific row from the stops dataset based on trip_id.
+      operationId: getStopById
+      x-router-controller: stops
+      description: Returns the details of a specific stop entry using its unique stop identifier.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: stop_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Details of the specified row.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stop'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Stop not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /stop_times:
+    get:
+      summary: Retrieve paginated rows from the stop_times dataset.
+      operationId: getStopTimes
+      x-router-controller: stoptimes
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      description: |
+        Returns paginated stop time entries available in the dataset.
+        Supports pagination using `offset` and `limit` query parameters.
+      parameters:
+        - name: offset
+          in: query
+          description: Number of records to skip (default is 0).
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          description: Number of records to return per page (default is 10).
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: A paginated list of stop time entries.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  offset:
+                    type: integer
+                    example: 0
+                  limit:
+                    type: integer
+                    example: 10
+                  totalItems:
+                    type: integer
+                    example: 100
+                  totalPages:
+                    type: integer
+                    example: 10
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StopTime'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /stop_times/{trip_id}:
+    get:
+      summary: Retrieve a specific row from the stop_times dataset based on trip_id.
+      operationId: getStopTimeByTripId
+      x-router-controller: stoptimes
+      description: Returns the details of a specific stop time entry using its unique trip_id identifier.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: trip_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Details of the specified row.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StopTime'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Stop time not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /stop_times/stop/{stop_id}:
+    get:
+      summary: Retrieve stop times based on stop_id.
+      operationId: getStopTimeByStopId
+      x-router-controller: stoptimes
+      description: Returns stop time entries for the given stop_id.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: stop_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stop time entries for the given stop_id.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StopTime'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Stop time not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /generic-daily-stats:
+    get:
+      summary: Retrieve aggregated daily statistics for all routes over a period for generic user.
+      operationId: getGenericDailyRouteStats
+      x-router-controller: busLinesController
+      description: |
+        Returns an aggregated view of daily statistics for all routes over a specified number of days for generic user.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: days
+          in: query
+          description: The number of previous days to include in the aggregation (default is 7).
+          required: false
+          schema:
+            type: integer
+            default: 7
+      responses:
+        '200':
+          description: An aggregated list of daily statistics for all routes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AggregatedRouteStats'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /generic-daily-stats/by-ids:
+    get:
+      summary: Retrieve aggregated daily statistics for multiple routes over a period for generic user.
+      operationId: getGenericDailyRouteStatsByIds
+      x-router-controller: busLinesController
+      description: Returns aggregated daily stats for the specified route IDs over N days for generic user.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - generic_user
+      parameters:
+        - name: route_ids
+          in: query
+          required: true
+          description: Comma-separated route IDs (e.g. 12,34,56)
+          schema:
+            type: string
+        - name: days
+          in: query
+          required: false
+          description: Number of previous days to include (default 7)
+          schema:
+            type: integer
+            default: 7
+      responses:
+        '200':
+          description: Aggregated daily statistics for the specified routes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AggregatedRouteStats'
+        '400':
+          description: Missing or invalid route_ids parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No data found for the given route IDs and time period.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /federated-daily-stats:
+    get:
+      summary: Retrieve aggregated daily statistics for all routes over a period for federated user.
+      operationId: getFederatedDailyRouteStats
+      x-router-controller: busLinesController
+      description: |
+        Returns an aggregated view of daily statistics for all routes over a specified number of days for federated user.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - federated_user
+      parameters:
+        - name: days
+          in: query
+          description: The number of previous days to include in the aggregation (default is 7).
+          required: false
+          schema:
+            type: integer
+            default: 7
+      responses:
+        '200':
+          description: An aggregated list of daily statistics for all routes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AggregatedRouteStats'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /federated-daily-stats/by-ids:
+    get:
+      summary: Retrieve aggregated daily statistics for multiple routes over a period for federated user.
+      operationId: getFederatedDailyRouteStatsByIds
+      x-router-controller: busLinesController
+      description: Returns aggregated daily stats for the specified route IDs over N days for federated user.
+      x-teadal-policies:
+        description: placeholder (TODO fixme)
+        access-policies:
+            - roles:
+                value:
+                - federated_user
+      parameters:
+        - name: route_ids
+          in: query
+          required: true
+          description: Comma-separated route IDs (e.g. 12,34,56)
+          schema:
+            type: string
+        - name: days
+          in: query
+          required: false
+          description: Number of previous days to include (default 7)
+          schema:
+            type: integer
+            default: 7
+      responses:
+        '200':
+          description: Aggregated daily statistics for the specified routes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AggregatedRouteStats'
+        '400':
+          description: Missing or invalid route_ids parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No data found for the given route IDs and time period.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Route:
+      type: object
+      properties:
+        route_id:
+          type: string
+        agency_id:
+          type: string
+        route_short_name:
+          type: string
+        route_long_name:
+          type: string
+        route_type:
+          type: integer
+    Trip:
+      type: object
+      properties:
+        route_id:
+          type: string
+        service_id:
+          type: string
+        trip_id:
+          type: string
+        trip_headsign:
+          type: string
+        direction_id:
+          type: string
+        shape_id:
+          type: string
+    Calendar:
+      type: object
+      properties:
+        service_id:
+          type: string
+        sunday:
+          type: integer
+        monday:
+          type: integer
+        tuesday:
+          type: integer
+        wednesday:
+          type: integer
+        thursday:
+          type: integer
+        friday:
+          type: integer
+        saturday:
+          type: integer
+        start_date:
+          type: string
+        end_date:
+          type: string
+    Agency:
+      type: object
+      properties:
+        agency_id:
+          type: string
+        agency_name:
+          type: string
+        agency_url:
+          type: string
+        agency_timezone:
+          type: string
+        agency_lang:
+          type: string
+        agency_phone:
+          type: string
+        agency_fare_url:
+          type: string
+        agency_email:
+          type: string
+    Stop:
+      type: object
+      properties:
+        stop_id:
+          type: string
+        stop_code:
+          type: string
+        stop_name:
+          type: string
+        stop_desc:
+          type: string
+        stop_lat:
+          type: string
+        stop_lon:
+          type: string
+        zone_id:
+          type: string
+        stop_url:
+          type: string
+        location_type:
+          type: string
+        parent_station:
+          type: string
+        stop_timezone:
+          type: string
+        wheelchair_boarding:
+          type: string
+    Shape:
+      type: object
+      properties:
+        shape_id:
+          type: string
+        shape_pt_lat:
+          type: string
+        shape_pt_lon:
+          type: string
+        shape_pt_sequence:
+          type: integer
+        shape_dist_traveled:
+          type: string
+    StopTime:
+      type: object
+      properties:
+        trip_id:
+          type: string
+        arrival_time:
+          type: string
+        departure_time:
+          type: string
+        stop_id:
+          type: string
+        stop_sequence:
+          type: integer
+        stop_headsign:
+          type: string
+        pickup_type:
+          type: string
+        drop_off_type:
+          type: string
+        shape_dist_traveled:
+          type: string
+        timepoint:
+          type: string
+    AggregatedRouteStats:
+      type: object
+      properties:
+        routeId:
+          type: string
+          description: The unique identifier of the route.
+        trips:
+          type: array
+          description: An array containing all trips for the route over the specified period.
+          items:
+            $ref: '#/components/schemas/DailyTripStats'
+    DailyTripStats:
+      type: object
+      properties:
+        tripId:
+          type: string
+          description: The unique identifier of the trip.
+        delay:
+          type: integer
+          description: The delay in seconds at the end of the trip.
+        speed:
+          type: number
+          format: float
+          description: The average speed of the trip in km/h.
+        runtime:
+          type: number
+          description: The actual travel time of the trip in seconds.
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
