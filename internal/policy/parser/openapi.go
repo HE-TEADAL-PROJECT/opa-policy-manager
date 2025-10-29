@@ -15,7 +15,7 @@ const (
 )
 
 type XTeadalPolicies struct {
-	Policies    []policy.PolicyClause `json:"policies"`
+	Policies    []policy.PolicyClause `json:"access-policies" yaml:"access-policies"`
 	Description string                `json:"description"`
 }
 
