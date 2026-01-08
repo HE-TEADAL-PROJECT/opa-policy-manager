@@ -60,9 +60,11 @@ jwks := http.send({
 
 encoded := split(request.headers.authorization, " ")[1]
 
-token := {"valid": valid, "payload": payload} if {
-    [_, encoded] := split(request.headers.authorization, " ")
-    [valid, _, payload] := io.jwt.decode_verify(encoded,{ "cert": json.marshal(jwks) })
+#token := {"valid": valid, "payload": payload} if {
+token := {"payload": payload} if {
+	[_, encoded] := split(request.headers.authorization, " ")
+    #[valid, _, payload] := io.jwt.decode_verify(encoded,{ "cert": json.marshal(jwks) })
+	[_, payload, _] := io.jwt.decode(encoded)
 }
 `
 
@@ -96,7 +98,6 @@ allow if {
 		"roles": roles,
 		"path": path,
 		"method": method,
-		"valid_token": token.valid,
 		"allow_request": allow_request
 	})
 
