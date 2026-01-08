@@ -101,7 +101,7 @@ allow if {
 	})
 
 	# Check if the user is authenticated
-	token.valid
+	#token.valid
 
 	# Check if request is valid
 	allow_request
