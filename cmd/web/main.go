@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"dspn-regogenerator/cmd/web/handlers"
+	"dspn-regogenerator/internal/config"
 	"dspn-regogenerator/internal/usecases"
 	"errors"
 	"log/slog"
 	"net/http"
+	"os"
 )
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: config.LogLevel})))
 	slog.Info("Starting OPA policy manager")
 
 	// Perform initial tests

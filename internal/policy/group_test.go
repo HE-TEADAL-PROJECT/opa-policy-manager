@@ -1,8 +1,9 @@
 package policy_test
 
 import (
-	"dspn-regogenerator/internal/policy"
 	"testing"
+
+	"dspn-regogenerator/internal/policy"
 )
 
 type groupTestCase struct {
@@ -253,8 +254,10 @@ func TestPathPolicies(t *testing.T) {
 
 				Path: "/path1",
 			},
-			want: []string{"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\n",
-				"request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\n"},
+			want: []string{
+				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\n",
+				"request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\n",
+			},
 		},
 		{
 			name: "with specialized methods",
@@ -288,8 +291,10 @@ func TestPathPolicies(t *testing.T) {
 					},
 				},
 			},
-			want: []string{"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nnot request.method in [\"GET\"]\n",
-				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nrequest.method == \"GET\"\nuser in [\"user5\",\"user6\"]\n"},
+			want: []string{
+				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nnot request.method in [\"GET\"]\n",
+				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nrequest.method == \"GET\"\nuser in [\"user5\",\"user6\"]\n",
+			},
 		},
 		{
 			name: "only specialized methods",
@@ -324,8 +329,36 @@ func TestPathPolicies(t *testing.T) {
 				},
 				Path: "/path1",
 			},
-			want: []string{"request.path == \"/path1\"\nrequest.method == \"GET\"\nuser in [\"user5\",\"user6\"]\n",
-				"request.path == \"/path1\"\nrequest.method == \"POST\"\nuser in [\"user7\",\"user8\"]\n"},
+			want: []string{
+				"regex.match(\"^/path1$\", path)\nmethod == \"GET\"\nuser in [\"user5\",\"user6\"]\n",
+				"regex.match(\"^/path1$\", path)\nmethod == \"POST\"\nuser in [\"user7\",\"user8\"]\n",
+			},
+		},
+		{
+			// A path clause that translates to no rego (e.g. an empty placeholder)
+			// must not degenerate into a rule allowing every request of the path.
+			name: "empty path clause generates no rule",
+			pol: &policy.PathPolicies{
+				Policies: []policy.PolicyClause{{}},
+				Path:     "/path1",
+				SpecializedMethods: map[string]policy.PathMethodPolicies{
+					"GET": {
+						Policies: []policy.PolicyClause{
+							{
+								UserPolicy: &policy.UserPolicy{
+									PolicyDetail: policy.PolicyDetail{
+										Operator: policy.OperatorOr,
+										Value:    []string{"user5", "user6"},
+									},
+								},
+							},
+						},
+						Path:   "/path1",
+						Method: "GET",
+					},
+				},
+			},
+			want: []string{"regex.match(\"^/path1$\", path)\nmethod == \"GET\"\nuser in [\"user5\",\"user6\"]\n"},
 		},
 		{
 			name: "two clauses with two specialized methods",
@@ -378,7 +411,8 @@ func TestPathPolicies(t *testing.T) {
 				},
 				Path: "/path1",
 			},
-			want: []string{"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nnot request.method in [\"GET\",\"POST\"]\n",
+			want: []string{
+				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nnot request.method in [\"GET\",\"POST\"]\n",
 				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nrequest.method == \"GET\"\n" + `count({"role1","role2"}&roles) != 0` + "\n",
 				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nrequest.method == \"POST\"\n" + `count({"role3","role4"}&roles) != 0` + "\n",
 				"request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\nnot request.method in [\"GET\",\"POST\"]\n",
@@ -391,7 +425,13 @@ func TestPathPolicies(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := test.pol.ToRego()
+			if len(got) != len(test.want) {
+				t.Errorf("got %d rules, want %d: %q", len(got), len(test.want), got)
+			}
 			for i, g := range got {
+				if i >= len(test.want) {
+					break
+				}
 				if g != test.want[i] {
 					t.Errorf("policy %d:got %q, want %q", i, g, test.want[i])
 				}
@@ -449,8 +489,10 @@ func TestPathMethodPolicies(t *testing.T) {
 				Method: "POST",
 				Path:   "/path1",
 			},
-			want: []string{"request.method == \"POST\"\nuser in [\"user1\",\"user2\"]\n",
-				"request.method == \"POST\"\nuser in [\"user3\",\"user4\"]\n"},
+			want: []string{
+				"request.method == \"POST\"\nuser in [\"user1\",\"user2\"]\n",
+				"request.method == \"POST\"\nuser in [\"user3\",\"user4\"]\n",
+			},
 		},
 	}
 

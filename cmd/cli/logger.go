@@ -9,11 +9,12 @@ import (
 
 type CliHandler struct {
 	writer *os.File
+	level  slog.Level
 }
 
 // Enabled implements slog.Handler.
 func (h *CliHandler) Enabled(_ context.Context, level slog.Level) bool {
-	return level >= slog.LevelInfo
+	return level >= h.level
 }
 
 // Handle implements slog.Handler.
@@ -47,9 +48,10 @@ func (h *CliHandler) WithGroup(name string) slog.Handler {
 	return h
 }
 
-func NewCliHandler(writer *os.File) *CliHandler {
+func NewCliHandler(writer *os.File, level slog.Level) *CliHandler {
 	return &CliHandler{
 		writer,
+		level,
 	}
 }
 
