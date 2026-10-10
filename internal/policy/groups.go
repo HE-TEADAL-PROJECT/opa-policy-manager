@@ -2,11 +2,14 @@ package policy
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"maps"
 	"regexp"
 	"slices"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Represent a policy clauses, which can contains at most one of each type of policy
@@ -16,6 +19,49 @@ type PolicyClause struct {
 	LocationPolicy   *LocationPolicy   `yaml:"location"`
 	CallPolicy       *CallPolicy       `yaml:"calls"`
 	TimelinessPolicy *TimelinessPolicy `yaml:"timeliness"`
+}
+
+func (p *PolicyClause) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind != yaml.MappingNode {
+		return fmt.Errorf("expected mapping node for PolicyClause, got kind %d", value.Kind)
+	}
+	for i := 0; i < len(value.Content); i += 2 {
+		keyNode := value.Content[i]
+		valNode := value.Content[i+1]
+		switch keyNode.Value {
+		case "user", "users":
+			var up UserPolicy
+			if err := valNode.Decode(&up); err != nil {
+				return err
+			}
+			p.UserPolicy = &up
+		case "role", "roles":
+			var rp RolePolicy
+			if err := valNode.Decode(&rp); err != nil {
+				return err
+			}
+			p.RolePolicy = &rp
+		case "location", "locations", "storage_location", "storage-location":
+			var lp LocationPolicy
+			if err := valNode.Decode(&lp); err != nil {
+				return err
+			}
+			p.LocationPolicy = &lp
+		case "call", "calls":
+			var cp CallPolicy
+			if err := valNode.Decode(&cp); err != nil {
+				return err
+			}
+			p.CallPolicy = &cp
+		case "timeliness":
+			var tp TimelinessPolicy
+			if err := valNode.Decode(&tp); err != nil {
+				return err
+			}
+			p.TimelinessPolicy = &tp
+		}
+	}
+	return nil
 }
 
 func (p *PolicyClause) ToRego() string {

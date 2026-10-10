@@ -9,13 +9,16 @@ import (
 )
 
 func GenerateServiceFolder(options ServiceOptions, outputDir string, IAMprovider string, policies *policy.GeneralPolicies) error {
+	if options.PackageName == "" {
+		options.PackageName = ToPackageName(options.ServiceName)
+	}
 	// Create the service directory
 	serviceDir := outputDir + "/" + options.ServiceName
 	if err := os.MkdirAll(serviceDir, 0755); err != nil {
 		return err
 	}
 	// create service specific files
-	if err := generateOIDCfile(options.ServiceName, serviceDir, IAMprovider); err != nil {
+	if err := generateOIDCfile(options.PackageName, serviceDir, IAMprovider); err != nil {
 		return fmt.Errorf("failed to generate OIDC file: %v", err)
 	}
 	if err := generateServiceFile(options, serviceDir, policies); err != nil {
@@ -68,15 +71,15 @@ token := {"payload": payload} if {
 }
 `
 
-func generateOIDCfile(serviceName string, outputDir string, url string) error {
-	data := fmt.Sprintf(oidcTemplate, serviceName, url)
+func generateOIDCfile(packageName string, outputDir string, url string) error {
+	data := fmt.Sprintf(oidcTemplate, packageName, url)
 	return os.WriteFile(outputDir+"/oidc.rego", []byte(data), 0644)
 }
 
-const serviceTemplate = `package {{.ServiceName}}
+const serviceTemplate = `package {{.PackageName}}
 
 import rego.v1
-import data.{{.ServiceName}}.oidc.token
+import data.{{.PackageName}}.oidc.token
 
 request := input.attributes.request.http
 
@@ -115,10 +118,14 @@ default allow_request := false
 
 type ServiceOptions struct {
 	ServiceName string
+	PackageName string
 	PathPrefix  string
 }
 
 func generateServiceFile(serviceOptions ServiceOptions, outputDir string, policies *policy.GeneralPolicies) error {
+	if serviceOptions.PackageName == "" {
+		serviceOptions.PackageName = ToPackageName(serviceOptions.ServiceName)
+	}
 	t := template.Must(template.New("service").Parse(serviceTemplate))
 	buffer := &bytes.Buffer{}
 	err := t.Execute(buffer, serviceOptions)

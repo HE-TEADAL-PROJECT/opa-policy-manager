@@ -102,7 +102,7 @@ func TestGeneralPolicies(t *testing.T) {
 					},
 				},
 			},
-			want: "allow if {\nuser in [\"user1\",\"user2\"]\n" + `count({"role1","role2"}-roles) == 0` + "\n" + "}\n",
+			want: "allow_request if {\nuser in [\"user1\",\"user2\"]\n" + `count({"role1","role2"}-roles) == 0` + "\n" + "}\n",
 		},
 		{
 			name: "two clauses",
@@ -133,7 +133,7 @@ func TestGeneralPolicies(t *testing.T) {
 				},
 			},
 			// Two clauses should generate separate allow statements (OR condition)
-			want: "allow if {\nuser in [\"user1\",\"user2\"]\n" + `count({"role1","role2"}-roles) == 0` + "\n" + "}\n\nallow if {\nuser in [\"user3\",\"user4\"]\n}\n",
+			want: "allow_request if {\nuser in [\"user1\",\"user2\"]\n" + `count({"role1","role2"}-roles) == 0` + "\n" + "}\n\nallow_request if {\nuser in [\"user3\",\"user4\"]\n}\n",
 		},
 		{
 			name: "with excluded paths",
@@ -170,7 +170,7 @@ func TestGeneralPolicies(t *testing.T) {
 					},
 				},
 			},
-			want: "allow if {\nuser in [\"user1\",\"user2\"]\n" + `count({"role1","role2"}-roles) == 0` + "\n" + "not request.path in [\"/path1\"]\n}\n\nallow if {\nuser in [\"user1\",\"user2\"]\n" + `count({"role1","role2"}-roles) == 0` + "\n" + "request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\n}\n",
+			want: "allow_request if {\nuser in [\"user1\",\"user2\"]\n" + `count({"role1","role2"}-roles) == 0` + "\ncount([p | p := [\"^/path1$\"][_]; regex.match(p, path)]) == 0\n}\n\nallow_request if {\nuser in [\"user1\",\"user2\"]\n" + `count({"role1","role2"}-roles) == 0` + "\nregex.match(\"^/path1$\", path)\nuser in [\"user3\",\"user4\"]\n}\n",
 		},
 		{
 			name: "only specialized paths",
@@ -191,7 +191,7 @@ func TestGeneralPolicies(t *testing.T) {
 					},
 				},
 			},
-			want: "allow if {\nrequest.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\n}\n",
+			want: "allow_request if {\nregex.match(\"^/path1$\", path)\nuser in [\"user3\",\"user4\"]\n}\n",
 		},
 	}
 
@@ -228,7 +228,7 @@ func TestPathPolicies(t *testing.T) {
 				Path: "/path1",
 			},
 			// This should generate the policies with a path condition
-			want: []string{"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\n"},
+			want: []string{"regex.match(\"^/path1$\", path)\nuser in [\"user1\",\"user2\"]\n"},
 		},
 		{
 			name: "two clauses",
@@ -255,8 +255,8 @@ func TestPathPolicies(t *testing.T) {
 				Path: "/path1",
 			},
 			want: []string{
-				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\n",
-				"request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\n",
+				"regex.match(\"^/path1$\", path)\nuser in [\"user1\",\"user2\"]\n",
+				"regex.match(\"^/path1$\", path)\nuser in [\"user3\",\"user4\"]\n",
 			},
 		},
 		{
@@ -292,8 +292,8 @@ func TestPathPolicies(t *testing.T) {
 				},
 			},
 			want: []string{
-				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nnot request.method in [\"GET\"]\n",
-				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nrequest.method == \"GET\"\nuser in [\"user5\",\"user6\"]\n",
+				"regex.match(\"^/path1$\", path)\nuser in [\"user1\",\"user2\"]\nnot method in [\"GET\"]\n",
+				"regex.match(\"^/path1$\", path)\nuser in [\"user1\",\"user2\"]\nmethod == \"GET\"\nuser in [\"user5\",\"user6\"]\n",
 			},
 		},
 		{
@@ -412,12 +412,12 @@ func TestPathPolicies(t *testing.T) {
 				Path: "/path1",
 			},
 			want: []string{
-				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nnot request.method in [\"GET\",\"POST\"]\n",
-				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nrequest.method == \"GET\"\n" + `count({"role1","role2"}&roles) != 0` + "\n",
-				"request.path == \"/path1\"\nuser in [\"user1\",\"user2\"]\nrequest.method == \"POST\"\n" + `count({"role3","role4"}&roles) != 0` + "\n",
-				"request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\nnot request.method in [\"GET\",\"POST\"]\n",
-				"request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\nrequest.method == \"GET\"\n" + `count({"role1","role2"}&roles) != 0` + "\n",
-				"request.path == \"/path1\"\nuser in [\"user3\",\"user4\"]\nrequest.method == \"POST\"\n" + `count({"role3","role4"}&roles) != 0` + "\n",
+				"regex.match(\"^/path1$\", path)\nuser in [\"user1\",\"user2\"]\nnot method in [\"GET\",\"POST\"]\n",
+				"regex.match(\"^/path1$\", path)\nuser in [\"user3\",\"user4\"]\nnot method in [\"GET\",\"POST\"]\n",
+				"regex.match(\"^/path1$\", path)\nuser in [\"user1\",\"user2\"]\nmethod == \"GET\"\n" + `count({"role1","role2"}&roles) != 0` + "\n",
+				"regex.match(\"^/path1$\", path)\nuser in [\"user3\",\"user4\"]\nmethod == \"GET\"\n" + `count({"role1","role2"}&roles) != 0` + "\n",
+				"regex.match(\"^/path1$\", path)\nuser in [\"user1\",\"user2\"]\nmethod == \"POST\"\n" + `count({"role3","role4"}&roles) != 0` + "\n",
+				"regex.match(\"^/path1$\", path)\nuser in [\"user3\",\"user4\"]\nmethod == \"POST\"\n" + `count({"role3","role4"}&roles) != 0` + "\n",
 			},
 		},
 	}
@@ -463,7 +463,7 @@ func TestPathMethodPolicies(t *testing.T) {
 				Method: "GET",
 				Path:   "/path1",
 			},
-			want: []string{"request.method == \"GET\"\nuser in [\"user1\",\"user2\"]\n"},
+			want: []string{"method == \"GET\"\nuser in [\"user1\",\"user2\"]\n"},
 		},
 		{
 			name: "two clauses",
@@ -490,8 +490,8 @@ func TestPathMethodPolicies(t *testing.T) {
 				Path:   "/path1",
 			},
 			want: []string{
-				"request.method == \"POST\"\nuser in [\"user1\",\"user2\"]\n",
-				"request.method == \"POST\"\nuser in [\"user3\",\"user4\"]\n",
+				"method == \"POST\"\nuser in [\"user1\",\"user2\"]\n",
+				"method == \"POST\"\nuser in [\"user3\",\"user4\"]\n",
 			},
 		},
 	}

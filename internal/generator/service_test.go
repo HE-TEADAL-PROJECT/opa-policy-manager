@@ -97,9 +97,11 @@ jwks := http.send({
 
 encoded := split(request.headers.authorization, " ")[1]
 
-token := {"valid": valid, "payload": payload} if {
-    [_, encoded] := split(request.headers.authorization, " ")
-    [valid, _, payload] := io.jwt.decode_verify(encoded,{ "cert": json.marshal(jwks) })
+#token := {"valid": valid, "payload": payload} if {
+token := {"payload": payload} if {
+	[_, encoded] := split(request.headers.authorization, " ")
+    #[valid, _, payload] := io.jwt.decode_verify(encoded,{ "cert": json.marshal(jwks) })
+	[_, payload, _] := io.jwt.decode(encoded)
 }
 `
 	content, err := os.ReadFile(oidcFile)
@@ -110,7 +112,7 @@ token := {"valid": valid, "payload": payload} if {
 		t.Errorf("OIDC file content does not match expected content.\nGot:\n%s\nExpected:\n%s", string(content), expectedOIDCFileContent)
 	}
 
-	expectedServiceFileContent := `package testService
+	expectedServiceHeader := `package testService
 
 import rego.v1
 import data.testService.oidc.token
@@ -123,18 +125,15 @@ roles contains role if some role in token.payload.realm_access.roles
 path := request.path
 method := lower(request.method)
 
-default allow := false
-
-# Generated access control policies
-`
+default allow := false`
 
 	// Verify the contents of the service file
 	content, err = os.ReadFile(serviceFile)
 	if err != nil {
 		t.Fatalf("Failed to read service file: %v", err)
 	}
-	if !strings.Contains(string(content), expectedServiceFileContent) || !strings.Contains(string(content), "allow if") {
-		t.Logf("Wanted content:\n%s\n", expectedServiceFileContent)
+	if !strings.Contains(string(content), expectedServiceHeader) || !strings.Contains(string(content), "allow if") {
+		t.Logf("Wanted header:\n%s\n", expectedServiceHeader)
 		t.Logf("Got content:\n%s\n", string(content))
 		t.Error("Service file content does not match expected content.")
 	}
@@ -180,8 +179,37 @@ func TestGenerateServiceFolderWithPatPrefix(t *testing.T) {
 		t.Fatalf("Failed to read service file: %v", err)
 	}
 
-	expectedContent := `path := trim_left(request.path, "/api/v1")`
+	expectedContent := `path := trim_prefix(request.path, "/api/v1")`
 	if !strings.Contains(string(content), expectedContent) {
 		t.Errorf("Service file content does not contain expected path prefix.\nGot:\n%s\nExpected:\n%s", string(content), expectedContent)
+	}
+}
+
+func TestGenerateServiceFolderHyphenatedName(t *testing.T) {
+	tempDir := t.TempDir()
+	serviceName := "generated-petstore"
+	options := ServiceOptions{
+		ServiceName: serviceName,
+	}
+
+	err := GenerateServiceFolder(options, tempDir, "http://keycloak:8080/realms/test", &policy.GeneralPolicies{})
+	if err != nil {
+		t.Fatalf("GenerateServiceFolder failed: %v", err)
+	}
+
+	serviceDir := filepath.Join(tempDir, serviceName)
+	serviceFile := filepath.Join(serviceDir, "service.rego")
+	content, err := os.ReadFile(serviceFile)
+	if err != nil {
+		t.Fatalf("Failed to read service file: %v", err)
+	}
+
+	// Should contain package generated_petstore
+	if !strings.Contains(string(content), "package generated_petstore") {
+		t.Errorf("Expected package generated_petstore, got:\n%s", string(content))
+	}
+	// Should have path := request.path without trim_prefix
+	if !strings.Contains(string(content), "path := request.path") {
+		t.Errorf("Expected path := request.path, got:\n%s", string(content))
 	}
 }

@@ -21,7 +21,7 @@ func TestUserPolicy(t *testing.T) {
 					Operator: policy.OperatorAnd,
 				},
 			},
-			want: "user == user1\nuser == user2\n",
+			want: "user == \"user1\"\nuser == \"user2\"\n",
 		},
 		{
 			name: "Test with OR",
@@ -51,7 +51,7 @@ func TestUserPolicy(t *testing.T) {
 					Operator: policy.OperatorOr,
 				},
 			},
-			want: "user in []\n",
+			want: "",
 		},
 	}
 

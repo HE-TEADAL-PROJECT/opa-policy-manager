@@ -164,7 +164,7 @@ func (b *Bundle) GetMain() ([]byte, error) {
 	}
 
 	for _, module := range b.bundle.Modules {
-		if module.Path == mainFilePath {
+		if module.Path == mainFilePath || module.Path == "/main.rego" {
 			return module.Raw, nil
 		}
 	}
@@ -229,7 +229,8 @@ func (b *Bundle) RemoveService(serviceName string) error {
 
 	// Remove all modules related to the service
 	b.bundle.Modules = slices.DeleteFunc(b.bundle.Modules, func(module opabundle.ModuleFile) bool {
-		return strings.HasPrefix(module.Path, "/rego"+string(os.PathSeparator)+serviceName)
+		return strings.HasPrefix(module.Path, "/rego"+string(os.PathSeparator)+serviceName) ||
+			strings.HasPrefix(module.Path, string(os.PathSeparator)+serviceName)
 	})
 
 	return nil

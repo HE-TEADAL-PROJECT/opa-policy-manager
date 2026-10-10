@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Operator string
@@ -131,6 +133,55 @@ type RateLimitEntry struct {
 	Min  *int   `yaml:"min"`
 	Max  *int   `yaml:"max"`
 	Unit string `yaml:"unit"`
+}
+
+func (r *RateLimitEntry) UnmarshalYAML(value *yaml.Node) error {
+	var raw struct {
+		Min           yaml.Node `yaml:"min"`
+		Max           yaml.Node `yaml:"max"`
+		Unit          string    `yaml:"unit"`
+		UnitOfMeasure string    `yaml:"unit_of_measure"`
+	}
+	if err := value.Decode(&raw); err != nil {
+		return err
+	}
+	if raw.Unit != "" {
+		r.Unit = raw.Unit
+	} else {
+		r.Unit = raw.UnitOfMeasure
+	}
+	parseIntNode := func(node *yaml.Node) (*int, error) {
+		if node == nil || node.Kind == 0 || node.Tag == "!!null" {
+			return nil, nil
+		}
+		var val int
+		if err := node.Decode(&val); err == nil {
+			return &val, nil
+		}
+		var str string
+		if err := node.Decode(&str); err != nil {
+			return nil, err
+		}
+		if str == "" {
+			return nil, nil
+		}
+		i, err := strconv.Atoi(str)
+		if err != nil {
+			return nil, err
+		}
+		return &i, nil
+	}
+	min, err := parseIntNode(&raw.Min)
+	if err != nil {
+		return err
+	}
+	r.Min = min
+	max, err := parseIntNode(&raw.Max)
+	if err != nil {
+		return err
+	}
+	r.Max = max
+	return nil
 }
 
 // isValidTimeUnit returns true if the unit of measure is a valid one
