@@ -36,7 +36,7 @@ paths:
             - admin@teadal.eu
             - own_vineyard@teadal.eu
             operator: OR
-          timeliness:
+          call_time:
             value:
             - max: '7'
               unit_of_measure: days
@@ -60,7 +60,7 @@ paths:
             - admin@teadal.eu
             - own_vineyard@teadal.eu
             operator: OR
-          timeliness:
+          call_time:
             value:
             - max: '7'
               unit_of_measure: days

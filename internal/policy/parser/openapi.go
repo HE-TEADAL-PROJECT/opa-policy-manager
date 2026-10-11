@@ -86,8 +86,8 @@ func clauseTypes(clause *policy.PolicyClause) []string {
 	if clause.CallPolicy != nil {
 		types = append(types, "calls")
 	}
-	if clause.TimelinessPolicy != nil {
-		types = append(types, "timeliness")
+	if clause.CallTimePolicy != nil {
+		types = append(types, "call_time")
 	}
 	return types
 }

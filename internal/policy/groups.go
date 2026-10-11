@@ -14,11 +14,11 @@ import (
 
 // Represent a policy clauses, which can contains at most one of each type of policy
 type PolicyClause struct {
-	UserPolicy       *UserPolicy       `yaml:"users"`
-	RolePolicy       *RolePolicy       `yaml:"roles"`
-	LocationPolicy   *LocationPolicy   `yaml:"location"`
-	CallPolicy       *CallPolicy       `yaml:"calls"`
-	TimelinessPolicy *TimelinessPolicy `yaml:"timeliness"`
+	UserPolicy     *UserPolicy     `yaml:"users"`
+	RolePolicy     *RolePolicy     `yaml:"roles"`
+	LocationPolicy *LocationPolicy `yaml:"location"`
+	CallPolicy     *CallPolicy     `yaml:"calls"`
+	CallTimePolicy *CallTimePolicy `yaml:"call_time"`
 }
 
 func (p *PolicyClause) UnmarshalYAML(value *yaml.Node) error {
@@ -41,7 +41,7 @@ func (p *PolicyClause) UnmarshalYAML(value *yaml.Node) error {
 				return err
 			}
 			p.RolePolicy = &rp
-		case "location", "locations", "storage_location", "storage-location":
+		case "location", "locations":
 			var lp LocationPolicy
 			if err := valNode.Decode(&lp); err != nil {
 				return err
@@ -53,12 +53,12 @@ func (p *PolicyClause) UnmarshalYAML(value *yaml.Node) error {
 				return err
 			}
 			p.CallPolicy = &cp
-		case "timeliness":
-			var tp TimelinessPolicy
-			if err := valNode.Decode(&tp); err != nil {
+		case "call_time", "call-time", "calltime":
+			var ctp CallTimePolicy
+			if err := valNode.Decode(&ctp); err != nil {
 				return err
 			}
-			p.TimelinessPolicy = &tp
+			p.CallTimePolicy = &ctp
 		}
 	}
 	return nil
@@ -92,13 +92,13 @@ func (p *PolicyClause) ToRego() string {
 		recognized++
 		addClause("calls", p.CallPolicy.ToRego())
 	}
-	if p.TimelinessPolicy != nil {
+	if p.CallTimePolicy != nil {
 		recognized++
-		addClause("timeliness", p.TimelinessPolicy.ToRego())
+		addClause("call_time", p.CallTimePolicy.ToRego())
 	}
 	if recognized == 0 {
 		slog.Warn("Policy clause declares no recognized policy type, the clause is dropped from the generated policy",
-			"recognizedClauses", 0, "expectedClauseKeys", []string{"users", "roles", "location", "calls", "timeliness"})
+			"recognizedClauses", 0, "expectedClauseKeys", []string{"users", "roles", "location", "calls", "call_time"})
 	}
 	return result
 }

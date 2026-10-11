@@ -128,7 +128,7 @@ func (p *LocationPolicy) ToRego() string {
 	return locationClaim + " in " + string(values) + "\n"
 }
 
-// RateLimitEntry is the shared shape of one "value" array entry for both CallPolicy and TimelinessPolicy:
+// RateLimitEntry is the shared shape of one "value" array entry for both CallPolicy and CallTimePolicy:
 type RateLimitEntry struct {
 	Min  *int   `yaml:"min"`
 	Max  *int   `yaml:"max"`
@@ -206,8 +206,8 @@ func scaleToMinutes(unit string) int {
 // minuteOfDayExpr is the Rego expression for "minutes since midnight" of the current evaluation time
 const minuteOfDayExpr = "((time.clock(time.now_ns())[0] * 60) + time.clock(time.now_ns())[1])"
 
-// TimelinessPolicy matches the "timeliness" clause
-type TimelinessPolicy struct {
+// CallTimePolicy matches the "call_time" clause
+type CallTimePolicy struct {
 	Operator Operator         `yaml:"operator"`
 	Value    []RateLimitEntry `yaml:"value"`
 }
@@ -217,9 +217,9 @@ type timeWindowMinutes struct {
 	Max int `json:"max"`
 }
 
-func (t *TimelinessPolicy) ToRego() string {
+func (t *CallTimePolicy) ToRego() string {
 	if len(t.Value) == 0 {
-		slog.Warn("Empty 'timeliness' value, the policy clause is dropped", "operator", t.Operator)
+		slog.Warn("Empty 'call_time' value, the policy clause is dropped", "operator", t.Operator)
 		return ""
 	}
 
@@ -232,12 +232,12 @@ func (t *TimelinessPolicy) ToRego() string {
 			invalidUnit = true
 		}
 	}
-	slog.Debug("Translating 'timeliness' policy",
+	slog.Debug("Translating 'call_time' policy",
 		"operator", t.Operator, "entries", len(t.Value))
 
 	var result string
 	if invalidUnit {
-		slog.Warn("'timeliness' doesn't support the selected unit of time, the rule will be skipped (so access granted)",
+		slog.Warn("'call_time' doesn't support the selected unit of time, the rule will be skipped (so access granted)",
 			"operator", t.Operator, "values", formatRateLimitEntries(t.Value))
 	}
 	if len(windowEntries) == 0 {

@@ -110,7 +110,7 @@
           "description": "placeholder (TODO fixme)",
           "access-policies": [
             {
-              "timeliness": {
+              "call_time": {
                 "value": [
                   {
                     "max": "7",
@@ -278,7 +278,7 @@
               }
             },
             {
-              "timeliness": {
+              "call_time": {
                 "value": [
                   {
                     "min": "7",
@@ -711,7 +711,7 @@
                 "value": ["Italy", "Spain"],
                 "operator": "OR"
               },
-              "timeliness": {
+              "call_time": {
                 "value": [
                   {
                     "min": "10",
