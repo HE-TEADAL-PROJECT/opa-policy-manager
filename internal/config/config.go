@@ -49,6 +49,10 @@ var (
 	// The minimum severity of the log records that are emitted ("debug", "info", "warn", "error")
 	// The default value is "debug", load from environment variable LOG_LEVEL.
 	LogLevel slog.Level
+
+	// The timezone used for time-based access policies (e.g. "call_time").
+	// The default value is "Europe/Rome", load from environment variable TIMEZONE
+	Timezone string
 )
 
 // ReloadConfig initializes or reloads the global variables based on the current environment variables. There is no need to call this function manually, as it is automatically called when the package is loaded.
@@ -73,6 +77,7 @@ func ReloadConfig() {
 		fmt.Fprintf(os.Stderr, "Error parsing LOG_LEVEL: %v\n", err)
 		LogLevel = slog.LevelDebug
 	}
+	Timezone = GetEnvOrDefault("TIMEZONE", "Europe/Rome")
 }
 
 func init() {

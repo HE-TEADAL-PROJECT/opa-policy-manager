@@ -24,6 +24,9 @@ func TestLoadDefaultConfig(t *testing.T) {
 	if TagBundleName("v1") != "teadal-policy-bundle-v1.tar.gz" {
 		t.Errorf("Expected TagBundleName('v1') to be 'teadal-policy-bundle-v1.tar.gz', got '%s'", TagBundleName("v1"))
 	}
+	if Timezone != "Europe/Rome" {
+		t.Errorf("Expected Timezone to be 'Europe/Rome', got '%s'", Timezone)
+	}
 }
 
 func TestLoadEnvConfig(t *testing.T) {
@@ -32,6 +35,7 @@ func TestLoadEnvConfig(t *testing.T) {
 	t.Setenv("MINIO_SECRET_KEY", "test-secret-key")
 	t.Setenv("BUCKET_NAME", "test-bucket")
 	t.Setenv("MINIO_BUNDLE_PREFIX", "test-bundle-prefix")
+	t.Setenv("TIMEZONE", "America/New_York")
 	ReloadConfig()
 	if MinioEndpoint != "test-endpoint" {
 		t.Errorf("Expected MinioEndpoint to be 'test-endpoint', got '%s'", MinioEndpoint)
@@ -53,5 +57,8 @@ func TestLoadEnvConfig(t *testing.T) {
 	}
 	if TagBundleName("v1") != "test-bundle-prefix-v1.tar.gz" {
 		t.Errorf("Expected TagBundleName('v1') to be 'test-bundle-prefix-v1.tar.gz', got '%s'", TagBundleName("v1"))
+	}
+	if Timezone != "America/New_York" {
+		t.Errorf("Expected Timezone to be 'America/New_York', got '%s'", Timezone)
 	}
 }

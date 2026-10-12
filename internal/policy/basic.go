@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"dspn-regogenerator/internal/config"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -203,8 +205,15 @@ func scaleToMinutes(unit string) int {
 	}
 }
 
-// minuteOfDayExpr is the Rego expression for "minutes since midnight" of the current evaluation time
-const minuteOfDayExpr = "((time.clock(time.now_ns())[0] * 60) + time.clock(time.now_ns())[1])"
+// minuteOfDayExpr returns the Rego expression for "minutes since midnight" of the current evaluation time
+// evaluated in the configured timezone (loaded from TIMEZONE, defaulting to "Europe/Rome").
+func minuteOfDayExpr() string {
+	tz := config.Timezone
+	if tz == "" {
+		tz = "Europe/Rome"
+	}
+	return fmt.Sprintf("((time.clock([time.now_ns(), %q])[0] * 60) + time.clock([time.now_ns(), %q])[1])", tz, tz)
+}
 
 // CallTimePolicy matches the "call_time" clause
 type CallTimePolicy struct {
@@ -244,15 +253,17 @@ func (t *CallTimePolicy) ToRego() string {
 		return result
 	}
 
+	minuteExpr := minuteOfDayExpr()
+
 	if t.Operator == OperatorAnd {
 		// AND: every window must hold simultaneously, one line per entry
 		for _, e := range windowEntries {
 			scale := scaleToMinutes(e.Unit)
 			if e.Min != nil {
-				result += fmt.Sprintf("%s >= %d\n", minuteOfDayExpr, *e.Min*scale)
+				result += fmt.Sprintf("%s >= %d\n", minuteExpr, *e.Min*scale)
 			}
 			if e.Max != nil {
-				result += fmt.Sprintf("%s <= %d\n", minuteOfDayExpr, *e.Max*scale)
+				result += fmt.Sprintf("%s <= %d\n", minuteExpr, *e.Max*scale)
 			}
 		}
 		return result
@@ -276,7 +287,7 @@ func (t *CallTimePolicy) ToRego() string {
 		panic(err)
 	}
 	result += fmt.Sprintf("count([w | w := %s[_]; %s >= w.min; %s <= w.max]) > 0\n",
-		string(windowsJSON), minuteOfDayExpr, minuteOfDayExpr)
+		string(windowsJSON), minuteExpr, minuteExpr)
 	return result
 }
 
