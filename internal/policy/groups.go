@@ -280,7 +280,7 @@ type PathMethodPolicies struct {
 }
 
 func (p *PathMethodPolicies) ToRego() []string {
-	if len(p.Policies) == 0 {
+	if p.Method == "" {
 		return []string{}
 	}
 	methodJson, err := json.Marshal(p.Method)
@@ -288,6 +288,9 @@ func (p *PathMethodPolicies) ToRego() []string {
 		panic(err)
 	}
 	methodMatch := "method == " + string(methodJson) + "\n"
+	if len(p.Policies) == 0 {
+		return []string{methodMatch}
+	}
 	methodClauses := translateClauses(p.Policies, p.Method+":"+p.Path)
 	blocks := make([]string, 0, len(methodClauses))
 	for _, clause := range methodClauses {

@@ -186,9 +186,38 @@ func ParseOpenAPIPolicies(specByteArray []byte) (*StructuredPolicies, error) {
 					"path", pathKey, "method", method.Key(),
 					"extensions", extensionKeys(method.Value().Extensions), "used", XTeadalPoliciesKey)
 			}
+			// HTTP methods are matched case-sensitively downstream
+			// Whatever case method.Key() returns from the parsed spec, normalize it to lowercase here.
+			methodKey := strings.ToLower(method.Key())
+			if methodKey != method.Key() {
+				slog.Debug("Normalized method key to lowercase",
+					"path", pathKey, "rawMethod", method.Key(), "method", methodKey)
+			}
+
 			// Decode the extension value if it exists
 			methodTagNode, ok := lookupPoliciesTag(method.Value().Extensions)
 			if !ok {
+				var pathPolicies policy.PathPolicies
+				if existing, ok := result.SpecializedPaths[pathKey]; ok {
+					pathPolicies = existing
+				} else {
+					pathPolicies = policy.PathPolicies{
+						Policies:           []policy.PolicyClause{},
+						Path:               pathKey,
+						SpecializedMethods: make(map[string]policy.PathMethodPolicies),
+					}
+				}
+				if len(pathPolicies.Policies) == 0 {
+					if pathPolicies.SpecializedMethods == nil {
+						pathPolicies.SpecializedMethods = make(map[string]policy.PathMethodPolicies)
+					}
+					pathPolicies.SpecializedMethods[methodKey] = policy.PathMethodPolicies{
+						Policies: []policy.PolicyClause{},
+						Path:     pathKey,
+						Method:   methodKey,
+					}
+					result.SpecializedPaths[pathKey] = pathPolicies
+				}
 				continue
 			}
 			methodScope := "method " + method.Key() + " of path " + pathKey
@@ -198,14 +227,6 @@ func ParseOpenAPIPolicies(specByteArray []byte) (*StructuredPolicies, error) {
 			}
 			tagsMatched++
 			clausesMatched += len(decodedTag.Policies)
-
-			// HTTP methods are matched case-sensitively downstream
-			// Whatever case method.Key() returns from the parsed spec, normalize it to lowercase here.
-			methodKey := strings.ToLower(method.Key())
-			if methodKey != method.Key() {
-				slog.Debug("Normalized method key to lowercase",
-					"path", pathKey, "rawMethod", method.Key(), "method", methodKey)
-			}
 			for i := range decodedTag.Policies {
 				slog.Debug("x-policies clause decoded from method-level tag",
 					"path", pathKey, "method", methodKey, "index", i,

@@ -87,9 +87,9 @@ user := token.payload.preferred_username
 roles contains role if some role in token.payload.realm_access.roles
 
 {{ if .PathPrefix -}}
-path := trim_prefix(request.path, "{{.PathPrefix}}")
+path := split(trim_prefix(request.path, "{{.PathPrefix}}"), "?")[0]
 {{- else -}}
-path := request.path
+path := split(request.path, "?")[0]
 {{- end }}
 method := lower(request.method)
 

@@ -122,7 +122,7 @@ request := input.attributes.request.http
 user := token.payload.preferred_username
 roles contains role if some role in token.payload.realm_access.roles
 
-path := request.path
+path := split(request.path, "?")[0]
 method := lower(request.method)
 
 default allow := false`
@@ -179,7 +179,7 @@ func TestGenerateServiceFolderWithPatPrefix(t *testing.T) {
 		t.Fatalf("Failed to read service file: %v", err)
 	}
 
-	expectedContent := `path := trim_prefix(request.path, "/api/v1")`
+	expectedContent := `path := split(trim_prefix(request.path, "/api/v1"), "?")[0]`
 	if !strings.Contains(string(content), expectedContent) {
 		t.Errorf("Service file content does not contain expected path prefix.\nGot:\n%s\nExpected:\n%s", string(content), expectedContent)
 	}
@@ -208,8 +208,8 @@ func TestGenerateServiceFolderHyphenatedName(t *testing.T) {
 	if !strings.Contains(string(content), "package generated_petstore") {
 		t.Errorf("Expected package generated_petstore, got:\n%s", string(content))
 	}
-	// Should have path := request.path without trim_prefix
-	if !strings.Contains(string(content), "path := request.path") {
-		t.Errorf("Expected path := request.path, got:\n%s", string(content))
+	// Should have path := split(request.path, "?")[0] without trim_prefix
+	if !strings.Contains(string(content), `path := split(request.path, "?")[0]`) {
+		t.Errorf("Expected path := split(request.path, \"?\")[0], got:\n%s", string(content))
 	}
 }

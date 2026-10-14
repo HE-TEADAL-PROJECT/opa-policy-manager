@@ -171,3 +171,39 @@ func TestParseBearerPathRules(t *testing.T) {
 		t.Errorf("Expected LocationPolicy value Spain, got %s", specPath.Policies[1].LocationPolicy.Value[1])
 	}
 }
+
+func TestParseUnrestrictedEndpointWithoutXPolicies(t *testing.T) {
+	spec := []byte(`{
+		"openapi": "3.1.0",
+		"info": {"title": "Test", "version": "1.0"},
+		"paths": {
+			"/public-inventory-stats": {
+				"get": {
+					"summary": "Public stats",
+					"responses": {"200": {"description": "ok"}}
+				}
+			}
+		}
+	}`)
+
+	r, err := parser.ParseOpenAPIPolicies(spec)
+	if err != nil {
+		t.Fatalf("ParseOpenAPIPolicies failed: %v", err)
+	}
+	if el, ok := r.SpecializedPaths["/public-inventory-stats"]; !ok {
+		t.Fatalf("Expected /public-inventory-stats in SpecializedPaths")
+	} else if method, ok := el.SpecializedMethods["get"]; !ok {
+		t.Fatalf("Expected 'get' method in SpecializedMethods")
+	} else if len(method.Policies) != 0 {
+		t.Errorf("Expected 0 policies for unrestricted get, got %d", len(method.Policies))
+	}
+
+	rego := r.ToRego()
+	if !strings.Contains(rego, `regex.match("^/public-inventory-stats$", path)`) {
+		t.Errorf("Expected rego to match /public-inventory-stats, got:\n%s", rego)
+	}
+	if !strings.Contains(rego, `method == "get"`) {
+		t.Errorf("Expected rego to check method == \"get\", got:\n%s", rego)
+	}
+}
+
