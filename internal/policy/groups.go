@@ -17,7 +17,6 @@ type PolicyClause struct {
 	UserPolicy     *UserPolicy     `yaml:"users"`
 	RolePolicy     *RolePolicy     `yaml:"roles"`
 	LocationPolicy *LocationPolicy `yaml:"location"`
-	CallPolicy     *CallPolicy     `yaml:"calls"`
 	CallTimePolicy *CallTimePolicy `yaml:"call_time"`
 }
 
@@ -47,12 +46,6 @@ func (p *PolicyClause) UnmarshalYAML(value *yaml.Node) error {
 				return err
 			}
 			p.LocationPolicy = &lp
-		case "call", "calls":
-			var cp CallPolicy
-			if err := valNode.Decode(&cp); err != nil {
-				return err
-			}
-			p.CallPolicy = &cp
 		case "call_time", "call-time", "calltime":
 			var ctp CallTimePolicy
 			if err := valNode.Decode(&ctp); err != nil {
@@ -88,17 +81,13 @@ func (p *PolicyClause) ToRego() string {
 		recognized++
 		addClause("location", p.LocationPolicy.ToRego())
 	}
-	if p.CallPolicy != nil {
-		recognized++
-		addClause("calls", p.CallPolicy.ToRego())
-	}
 	if p.CallTimePolicy != nil {
 		recognized++
 		addClause("call_time", p.CallTimePolicy.ToRego())
 	}
 	if recognized == 0 {
 		slog.Warn("Policy clause declares no recognized policy type, the clause is dropped from the generated policy",
-			"recognizedClauses", 0, "expectedClauseKeys", []string{"users", "roles", "location", "calls", "call_time"})
+			"recognizedClauses", 0, "expectedClauseKeys", []string{"users", "roles", "location", "call_time"})
 	}
 	return result
 }

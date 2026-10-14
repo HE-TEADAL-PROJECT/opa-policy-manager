@@ -130,7 +130,7 @@ func (p *LocationPolicy) ToRego() string {
 	return locationClaim + " in " + string(values) + "\n"
 }
 
-// RateLimitEntry is the shared shape of one "value" array entry for both CallPolicy and CallTimePolicy:
+// RateLimitEntry is the shape of one "value" array entry for CallTimePolicy:
 type RateLimitEntry struct {
 	Min  *int   `yaml:"min"`
 	Max  *int   `yaml:"max"`
@@ -291,14 +291,6 @@ func (t *CallTimePolicy) ToRego() string {
 	return result
 }
 
-// TODO: create the setup for this to work ------------------------------------------------------------
-
-// CallPolicy matches the "calls" clause
-type CallPolicy struct {
-	Operator Operator         `yaml:"operator"`
-	Value    []RateLimitEntry `yaml:"value"`
-}
-
 // formatRateLimitEntries renders rate-limit entries for logs
 func formatRateLimitEntries(entries []RateLimitEntry) string {
 	parts := make([]string, 0, len(entries))
@@ -313,12 +305,4 @@ func formatRateLimitEntries(entries []RateLimitEntry) string {
 		parts = append(parts, fmt.Sprintf("{min:%s max:%s unit:%s}", minValue, maxValue, e.Unit))
 	}
 	return strings.Join(parts, " ")
-}
-
-func (c *CallPolicy) ToRego() string {
-	if len(c.Value) == 0 {
-		slog.Warn("Empty 'calls' value, the policy clause is dropped", "operator", c.Operator)
-		return ""
-	}
-	return "# UNENFORCED: 'calls' rate-limit policy requires external setup; not evaluable in Rego alone\n"
 }

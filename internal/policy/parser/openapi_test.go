@@ -57,8 +57,10 @@ func TestParseOpenAPISpecializedPathConditions(t *testing.T) {
 	if len(r.SpecializedPaths) == 0 {
 		t.Errorf("Expected specialized paths, got none")
 	}
-	if el, ok := r.SpecializedPaths["/anything"]; !ok || el.Path != "/anything" || el.Policies[0].RolePolicy != nil || el.Policies[0].UserPolicy != nil || el.Policies[0].LocationPolicy != nil || el.Policies[0].CallPolicy == nil || *el.Policies[0].CallPolicy.Value[0].Max != 10000 || el.Policies[0].CallPolicy.Value[0].Unit != "call_per_year" {
+	if el, ok := r.SpecializedPaths["/anything"]; !ok || el.Path != "/anything" || el.Policies[0].RolePolicy != nil || el.Policies[0].UserPolicy != nil || el.Policies[0].LocationPolicy != nil {
 		t.Errorf("Expected specialized path /anything, got %v", el)
+	} else if deleteMethod, ok := el.SpecializedMethods["delete"]; !ok || len(deleteMethod.Policies) == 0 || deleteMethod.Policies[0].CallTimePolicy == nil {
+		t.Errorf("Expected delete method with CallTimePolicy on /anything, got %v", el.SpecializedMethods)
 	}
 }
 

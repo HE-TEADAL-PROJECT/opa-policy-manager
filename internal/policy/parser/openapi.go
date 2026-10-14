@@ -47,7 +47,7 @@ func extensionKeys(exts *orderedmap.Map[string, *yaml.Node]) []string {
 // logUnexpectedExtensions reports the extension names declared on a node when none of them is the expected x-policies tag
 func logUnexpectedExtensions(scope string, exts *orderedmap.Map[string, *yaml.Node]) {
 	keys := extensionKeys(exts)
-	if _, ok := exts.Get(XTeadalPoliciesKey); ok || len(keys) == 0 {
+	if _, ok := lookupPoliciesTag(exts); ok || len(keys) == 0 {
 		return
 	}
 	slog.Debug("No x-policies tag here, other extensions declared",
@@ -82,9 +82,6 @@ func clauseTypes(clause *policy.PolicyClause) []string {
 	}
 	if clause.LocationPolicy != nil {
 		types = append(types, "location")
-	}
-	if clause.CallPolicy != nil {
-		types = append(types, "calls")
 	}
 	if clause.CallTimePolicy != nil {
 		types = append(types, "call_time")
