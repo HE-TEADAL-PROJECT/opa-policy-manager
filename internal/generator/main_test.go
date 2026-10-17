@@ -21,14 +21,33 @@ func TestGenerateNewMain(t *testing.T) {
 	}
 
 	expectedContent := `package teadal
+
+import rego.v1
+
 import data.service1.allow as service1_allow
 import data.service2.allow as service2_allow
 ` + ImportMarker + `
 
 default allow := false
 
-allow if service1_allow
-allow if service2_allow
+request_host := host if {
+	raw := input.attributes.request.http.host
+	no_port := split(raw, ":")[0]
+	host := split(no_port, ".")[0]
+} else := host if {
+	raw := input.attributes.request.http.headers[":authority"]
+	no_port := split(raw, ":")[0]
+	host := split(no_port, ".")[0]
+} else := ""
+
+allow if {
+	request_host == "service1"
+	service1_allow
+}
+allow if {
+	request_host == "service2"
+	service2_allow
+}
 ` + RuleMarker + `
 `
 	if string(content) != expectedContent {
@@ -42,14 +61,33 @@ func TestUpdateMainFile(t *testing.T) {
 
 	// Create an initial main.rego file
 	initialContent := `package teadal
+
+import rego.v1
+
 import data.service1.allow as service1_allow
 import data.service2.allow as service2_allow
 ` + ImportMarker + `
 
 default allow := false
 
-allow if service1_allow
-allow if service2_allow
+request_host := host if {
+	raw := input.attributes.request.http.host
+	no_port := split(raw, ":")[0]
+	host := split(no_port, ".")[0]
+} else := host if {
+	raw := input.attributes.request.http.headers[":authority"]
+	no_port := split(raw, ":")[0]
+	host := split(no_port, ".")[0]
+} else := ""
+
+allow if {
+	request_host == "service1"
+	service1_allow
+}
+allow if {
+	request_host == "service2"
+	service2_allow
+}
 ` + RuleMarker + `
 `
 	err := os.WriteFile(outputDir+"/main.rego", []byte(initialContent), 0644)
@@ -67,6 +105,9 @@ allow if service2_allow
 		t.Fatalf("failed to read updated main.rego: %v", err)
 	}
 	expectedContent := `package teadal
+
+import rego.v1
+
 import data.service1.allow as service1_allow
 import data.service2.allow as service2_allow
 import data.service3.allow as service3_allow
@@ -75,10 +116,32 @@ import data.service4.allow as service4_allow
 
 default allow := false
 
-allow if service1_allow
-allow if service2_allow
-allow if service3_allow
-allow if service4_allow
+request_host := host if {
+	raw := input.attributes.request.http.host
+	no_port := split(raw, ":")[0]
+	host := split(no_port, ".")[0]
+} else := host if {
+	raw := input.attributes.request.http.headers[":authority"]
+	no_port := split(raw, ":")[0]
+	host := split(no_port, ".")[0]
+} else := ""
+
+allow if {
+	request_host == "service1"
+	service1_allow
+}
+allow if {
+	request_host == "service2"
+	service2_allow
+}
+allow if {
+	request_host == "service3"
+	service3_allow
+}
+allow if {
+	request_host == "service4"
+	service4_allow
+}
 ` + RuleMarker + `
 `
 	if string(content) != expectedContent {

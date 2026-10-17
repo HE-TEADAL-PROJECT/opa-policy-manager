@@ -30,10 +30,10 @@ func TestParseOpenAPIPathsConditions(t *testing.T) {
 	if r.Policies[0].RolePolicy != nil || r.Policies[0].UserPolicy != nil {
 		t.Errorf("Expected nil RolePolicy and UserPolicy, got %v and %v", r.Policies[0].RolePolicy, r.Policies[0].UserPolicy)
 	}
-	if r.Policies[0].StorageLocationPolicy == nil ||
-		r.Policies[0].StorageLocationPolicy.Operator != "OR" ||
-		r.Policies[0].StorageLocationPolicy.Value[0] != "Europe" || r.Policies[0].StorageLocationPolicy.Value[1] != "USA" {
-		t.Errorf("Expected non-nil StorageLocationPolicy, got nil")
+	if r.Policies[0].LocationPolicy == nil ||
+		r.Policies[0].LocationPolicy.Operator != "OR" ||
+		r.Policies[0].LocationPolicy.Value[0] != "Europe" || r.Policies[0].LocationPolicy.Value[1] != "USA" {
+		t.Errorf("Expected non-nil LocationPolicy, got nil or mismatch")
 	}
 }
 
@@ -57,8 +57,10 @@ func TestParseOpenAPISpecializedPathConditions(t *testing.T) {
 	if len(r.SpecializedPaths) == 0 {
 		t.Errorf("Expected specialized paths, got none")
 	}
-	if el, ok := r.SpecializedPaths["/anything"]; !ok || el.Path != "/anything" || el.Policies[0].RolePolicy != nil || el.Policies[0].UserPolicy != nil || el.Policies[0].StorageLocationPolicy != nil || el.Policies[0].CallPolicy.Value[0].Max != "10000" || el.Policies[0].CallPolicy.Value[0].UnitOfMeasure != "call_per_year" {
+	if el, ok := r.SpecializedPaths["/anything"]; !ok || el.Path != "/anything" || el.Policies[0].RolePolicy != nil || el.Policies[0].UserPolicy != nil || el.Policies[0].LocationPolicy != nil {
 		t.Errorf("Expected specialized path /anything, got %v", el)
+	} else if deleteMethod, ok := el.SpecializedMethods["delete"]; !ok || len(deleteMethod.Policies) == 0 || deleteMethod.Policies[0].CallTimePolicy == nil {
+		t.Errorf("Expected delete method with CallTimePolicy on /anything, got %v", el.SpecializedMethods)
 	}
 }
 
@@ -101,8 +103,9 @@ func TestParsing(t *testing.T) {
 	if url == nil {
 		t.Fatalf("Expected non-nil result, got nil")
 	}
-	if *url != "http://localhost/keycloak/realms/master/.well-known/openid-configuration" {
-		t.Errorf("Expected URL http://localhost/keycloak/realms/master/.well-known/openid-configuration, got %s", *url)
+	expectedURL := "http://keycloak.default.svc.cluster.local:8080/keycloak/realms/teadal/.well-known/openid-configuration"
+	if *url != expectedURL {
+		t.Errorf("Expected URL %s, got %s", expectedURL, *url)
 	}
 }
 
@@ -155,16 +158,52 @@ func TestParseBearerPathRules(t *testing.T) {
 		t.Errorf("Expected UserPolicy value user2@teadal.eu, got %s", specPath.Policies[1].UserPolicy.Value[1])
 	}
 
-	if specPath.Policies[1].StorageLocationPolicy == nil {
-		t.Errorf("Expected non-nil StorageLocationPolicy in path /bearer")
+	if specPath.Policies[1].LocationPolicy == nil {
+		t.Errorf("Expected non-nil LocationPolicy in path /bearer")
 	}
-	if specPath.Policies[1].StorageLocationPolicy.Operator != "OR" {
-		t.Errorf("Expected StorageLocationPolicy operator OR, got %s", specPath.Policies[1].StorageLocationPolicy.Operator)
+	if specPath.Policies[1].LocationPolicy.Operator != "OR" {
+		t.Errorf("Expected LocationPolicy operator OR, got %s", specPath.Policies[1].LocationPolicy.Operator)
 	}
-	if specPath.Policies[1].StorageLocationPolicy.Value[0] != "Italy" {
-		t.Errorf("Expected StorageLocationPolicy value Europe, got %s", specPath.Policies[1].StorageLocationPolicy.Value[0])
+	if specPath.Policies[1].LocationPolicy.Value[0] != "Italy" {
+		t.Errorf("Expected LocationPolicy value Italy, got %s", specPath.Policies[1].LocationPolicy.Value[0])
 	}
-	if specPath.Policies[1].StorageLocationPolicy.Value[1] != "Spain" {
-		t.Errorf("Expected StorageLocationPolicy value USA, got %s", specPath.Policies[1].StorageLocationPolicy.Value[1])
+	if specPath.Policies[1].LocationPolicy.Value[1] != "Spain" {
+		t.Errorf("Expected LocationPolicy value Spain, got %s", specPath.Policies[1].LocationPolicy.Value[1])
 	}
 }
+
+func TestParseUnrestrictedEndpointWithoutXPolicies(t *testing.T) {
+	spec := []byte(`{
+		"openapi": "3.1.0",
+		"info": {"title": "Test", "version": "1.0"},
+		"paths": {
+			"/public-inventory-stats": {
+				"get": {
+					"summary": "Public stats",
+					"responses": {"200": {"description": "ok"}}
+				}
+			}
+		}
+	}`)
+
+	r, err := parser.ParseOpenAPIPolicies(spec)
+	if err != nil {
+		t.Fatalf("ParseOpenAPIPolicies failed: %v", err)
+	}
+	if el, ok := r.SpecializedPaths["/public-inventory-stats"]; !ok {
+		t.Fatalf("Expected /public-inventory-stats in SpecializedPaths")
+	} else if method, ok := el.SpecializedMethods["get"]; !ok {
+		t.Fatalf("Expected 'get' method in SpecializedMethods")
+	} else if len(method.Policies) != 0 {
+		t.Errorf("Expected 0 policies for unrestricted get, got %d", len(method.Policies))
+	}
+
+	rego := r.ToRego()
+	if !strings.Contains(rego, `regex.match("^/public-inventory-stats$", path)`) {
+		t.Errorf("Expected rego to match /public-inventory-stats, got:\n%s", rego)
+	}
+	if !strings.Contains(rego, `method == "get"`) {
+		t.Errorf("Expected rego to check method == \"get\", got:\n%s", rego)
+	}
+}
+

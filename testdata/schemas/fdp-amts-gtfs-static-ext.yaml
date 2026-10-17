@@ -21,7 +21,7 @@ paths:
         - roles:
             value:
             - Generic_User
-            timeliness:
+            call_time:
               value:
               - min: 10
                 unit_of_measure: minutes
@@ -81,7 +81,7 @@ paths:
         - roles:
             value:
             - Generic_User
-            timeliness:
+            call_time:
               value:
               - min: 10
                 unit_of_measure: minutes
@@ -203,7 +203,7 @@ paths:
         - roles:
             value:
             - Generic_User
-            timeliness:
+            call_time:
               value:
               - min: 10
                 unit_of_measure: minutes
@@ -263,7 +263,7 @@ paths:
         - roles:
             value:
             - Generic_User
-            timeliness:
+            call_time:
               value:
               - min: 10
                 unit_of_measure: minutes
@@ -323,7 +323,7 @@ paths:
         - roles:
             value:
             - Generic_User
-            timeliness:
+            call_time:
               value:
               - min: 10
                 unit_of_measure: minutes
@@ -383,7 +383,7 @@ paths:
         - roles:
             value:
             - Generic_User
-            timeliness:
+            call_time:
               value:
               - min: 10
                 unit_of_measure: minutes
@@ -443,7 +443,7 @@ paths:
         - roles:
             value:
             - Generic_User
-            timeliness:
+            call_time:
               value:
               - min: 10
                 unit_of_measure: minutes

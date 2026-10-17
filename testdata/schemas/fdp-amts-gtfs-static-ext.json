@@ -32,7 +32,7 @@
                 "value": [
                   "Generic_User"
                 ],
-                "timeliness": {
+                "call_time": {
                   "value": [
                     {
                       "min": 10,
@@ -138,7 +138,7 @@
                 "value": [
                   "Generic_User"
                 ],
-                "timeliness": {
+                "call_time": {
                   "value": [
                     {
                       "min": 10,
@@ -348,7 +348,7 @@
                 "value": [
                   "Generic_User"
                 ],
-                "timeliness": {
+                "call_time": {
                   "value": [
                     {
                       "min": 10,
@@ -454,7 +454,7 @@
                 "value": [
                   "Generic_User"
                 ],
-                "timeliness": {
+                "call_time": {
                   "value": [
                     {
                       "min": 10,
@@ -560,7 +560,7 @@
                 "value": [
                   "Generic_User"
                 ],
-                "timeliness": {
+                "call_time": {
                   "value": [
                     {
                       "min": 10,
@@ -666,7 +666,7 @@
                 "value": [
                   "Generic_User"
                 ],
-                "timeliness": {
+                "call_time": {
                   "value": [
                     {
                       "min": 10,
@@ -772,7 +772,7 @@
                 "value": [
                   "Generic_User"
                 ],
-                "timeliness": {
+                "call_time": {
                   "value": [
                     {
                       "min": 10,
